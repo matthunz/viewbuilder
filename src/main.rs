@@ -2,6 +2,7 @@ pub mod element;
 pub use element::Element;
 
 pub mod tree;
+use taffy::prelude::Size;
 pub use tree::Tree;
 
 use crate::element::ElementData;
@@ -13,7 +14,7 @@ fn main() {
 
     let a = tree.insert(Element::text("Hello World!"));
 
-    let root = Element::builder().child(a).build(&mut tree);
+    let root = Element::builder().size(Size::from_points(100., 100.)).child(a).build(&mut tree);
 
-    dbg!(tree.display(root));
+    tree.display(root)
 }

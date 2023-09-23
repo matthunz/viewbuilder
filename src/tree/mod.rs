@@ -25,7 +25,17 @@ impl Tree {
             let elem_str = match elem.data {
                 ElementData::Text(ref content) => Cow::Owned(format!("\"{content}\"")),
                 ElementData::Canvas => Cow::Borrowed("Canvas"),
-                ElementData::Container => Cow::Borrowed("Container"),
+                ElementData::Container { size, .. } => {
+                    let mut s = String::from("Container");
+                    if let Some(size) = size {
+                        s.push('\n');
+                        for _ in 0..level + 1 {
+                            s.push_str("  ")
+                        }
+                        s.push_str(&format!("size: ({:?}, {:?})", size.width, size.height));
+                    }
+                    Cow::Owned(s)
+                }
             };
             println!("{indent}{elem_str}");
         }

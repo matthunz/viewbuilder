@@ -1,6 +1,7 @@
 use std::borrow::Cow;
 
 use slotmap::DefaultKey;
+use taffy::{prelude::Size, style::Dimension};
 
 use crate::{Click, Tree};
 
@@ -13,39 +14,50 @@ pub enum ElementKind {
 
 pub enum ElementData {
     Canvas,
-    Container,
+    Container { size: Option<Size<Dimension>> },
     Text(Cow<'static, str>),
 }
 
-pub struct Builder {
-    element: Option<Element>,
+#[derive(Default)]
+pub struct ContainerBuilder {
+    size: Option<Size<Dimension>>,
+    on_click: Option<Box<dyn FnMut(Click)>>,
+    pub children: Option<Vec<DefaultKey>>,
 }
 
-impl Builder {
+impl ContainerBuilder {
     pub fn child(&mut self, key: DefaultKey) -> &mut Self {
-        let elem = self.element.as_mut().unwrap();
-        if let Some(ref mut children) = elem.children {
+        if let Some(ref mut children) = self.children {
             children.push(key);
         } else {
-            elem.children = Some(vec![key])
+            self.children = Some(vec![key])
         }
         self
     }
 
     pub fn on_click(&mut self, handler: Box<dyn FnMut(Click)>) -> &mut Self {
-        self.element.as_mut().unwrap().on_click = Some(handler);
+        self.on_click = Some(handler);
+        self
+    }
+
+    pub fn size(&mut self, size: Size<Dimension>) -> &mut Self {
+        self.size = Some(size);
         self
     }
 
     pub fn build(&mut self, tree: &mut Tree) -> DefaultKey {
-        tree.insert(self.element.take().unwrap())
+        let mut elem = Element::new(ElementData::Container {
+            size: self.size.take(),
+        });
+        elem.children = self.children.take();
+
+        tree.insert(elem)
     }
 }
 
 pub struct Element {
     pub data: ElementData,
     pub children: Option<Vec<DefaultKey>>,
-    on_click: Option<Box<dyn FnMut(Click)>>,
 }
 
 impl Element {
@@ -53,14 +65,12 @@ impl Element {
         Self {
             data,
             children: None,
-            on_click: None,
+
         }
     }
 
-    pub fn builder() -> Builder {
-        Builder {
-            element: Some(Self::new(ElementData::Container)),
-        }
+    pub fn builder() -> ContainerBuilder {
+        ContainerBuilder ::default()
     }
 
     pub fn text(content: impl Into<Cow<'static, str>>) -> Self {
@@ -70,16 +80,8 @@ impl Element {
     pub fn kind(&self) -> ElementKind {
         match self.data {
             ElementData::Canvas => ElementKind::Canvas,
-            ElementData::Container => ElementKind::Container,
+            ElementData::Container {..} => ElementKind::Container,
             ElementData::Text(_) => ElementKind::Text,
-        }
-    }
-
-    pub fn child(&mut self, child: DefaultKey) {
-        if let Some(ref mut children) = self.children {
-            children.push(child);
-        } else {
-            self.children = Some(vec![child])
         }
     }
 }

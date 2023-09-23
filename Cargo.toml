@@ -4,4 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+kurbo = "0.9.5"
 slotmap = "1.0.6"
+taffy = "0.3.13"
