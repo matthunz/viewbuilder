@@ -1,15 +1,20 @@
 use super::Tree;
-use crate::Element;
+use crate::{element::ElementKind, Element};
 use slotmap::DefaultKey;
 
-enum Item {
+enum Operation {
     Key(DefaultKey),
-    Pop,
+    Pop(ElementKind),
+}
+
+pub enum Item<'a> {
+    Element { element: &'a Element, level: usize },
+    Pop { kind: ElementKind, level: usize },
 }
 
 pub struct Iter<'a> {
     tree: &'a Tree,
-    stack: Vec<Item>,
+    stack: Vec<Operation>,
     count: usize,
 }
 
@@ -17,35 +22,40 @@ impl<'a> Iter<'a> {
     pub(crate) fn new(tree: &'a Tree, root: DefaultKey) -> Self {
         Iter {
             tree,
-            stack: vec![Item::Key(root)],
+            stack: vec![Operation::Key(root)],
             count: 0,
         }
     }
 }
 
 impl<'a> Iterator for Iter<'a> {
-    type Item = (usize, &'a Element);
+    type Item = Item<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        while let Some(item) = self.stack.pop() {
-            match item {
-                Item::Key(key) => {
-                    let elem = &self.tree.elements[key];
+        self.stack.pop().map(|item| match item {
+            Operation::Key(key) => {
+                let elem = &self.tree.elements[key];
 
-                    self.stack.push(Item::Pop);
-                    for child in elem.children.iter().flatten().copied().map(Item::Key) {
-                        self.stack.push(child);
-                    }
-
-                    let count = self.count;
-                    self.count += 1;
-
-                    return Some((count, elem));
+                self.stack.push(Operation::Pop(elem.kind()));
+                for child in elem.children.iter().flatten().copied().map(Operation::Key) {
+                    self.stack.push(child);
                 }
-                Item::Pop => self.count -= 1,
-            }
-        }
 
-        None
+                let count = self.count;
+                self.count += 1;
+
+                Item::Element {
+                    element: elem,
+                    level: count,
+                }
+            }
+            Operation::Pop(kind) => {
+                self.count -= 1;
+                Item::Pop {
+                    kind,
+                    level: self.count,
+                }
+            }
+        })
     }
 }

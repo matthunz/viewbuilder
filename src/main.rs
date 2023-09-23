@@ -14,7 +14,15 @@ fn main() {
 
     let a = tree.insert(Element::text("Hello World!"));
 
-    let root = Element::builder().size(Size::from_points(100., 100.)).child(a).build(&mut tree);
+    let b = Element::builder()
+        .size(Size::from_points(100., 100.))
+        .child(a)
+        .build(&mut tree);
 
-    tree.display(root)
+    let root = Element::builder()
+        .size(Size::from_points(100., 100.))
+        .child(b)
+        .build(&mut tree);
+
+    println!("{}", tree.display(root));
 }

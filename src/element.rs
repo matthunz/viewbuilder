@@ -5,7 +5,7 @@ use taffy::{prelude::Size, style::Dimension};
 
 use crate::{Click, Tree};
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum ElementKind {
     Container,
     Text,
@@ -76,7 +76,6 @@ impl Element {
 
     pub fn kind(&self) -> ElementKind {
         match self.data {
-          
             ElementData::Container { .. } => ElementKind::Container,
             ElementData::Text(_) => ElementKind::Text,
         }

@@ -1,9 +1,10 @@
-use crate::{Element, ElementData};
+use crate::{element::ElementKind, Element, ElementData};
 use slotmap::{DefaultKey, SlotMap};
-use std::borrow::Cow;
 
 mod iter;
 pub use iter::Iter;
+
+use self::iter::Item;
 
 #[derive(Default)]
 pub struct Tree {
@@ -15,29 +16,47 @@ impl Tree {
         Iter::new(self, root)
     }
 
-    pub fn display(&self, root: DefaultKey) {
-        for (level, elem) in self.iter(root) {
-            let mut indent = String::new();
-            for _ in 0..level {
-                indent.push_str("  ")
-            }
+    pub fn display(&self, root: DefaultKey) -> String {
+        let mut s = String::new();
 
-            let elem_str = match elem.data {
-                ElementData::Text(ref content) => format!("\"{content}\""),
-                ElementData::Container { size, .. } => {
-                    let mut s = String::from("Container");
-                    if let Some(size) = size {
-                        s.push('\n');
-                        for _ in 0..level + 1 {
-                            s.push_str("  ")
-                        }
-                        s.push_str(&format!("size: ({:?}, {:?})", size.width, size.height));
+        for item in self.iter(root) {
+            match item {
+                Item::Element { element, level } => {
+                    for _ in 0..level {
+                        s.push_str("  ");
                     }
-                    s
+
+                    match &element.data {
+                        ElementData::Text(content) => s.push_str(&format!("\"{}\",", content)),
+                        ElementData::Container { size } => {
+                            s.push_str("{\n");
+                            if let Some(size) = size {
+                                for _ in 0..level + 1 {
+                                    s.push_str("  ");
+                                }
+
+                                s.push_str(&format!(
+                                    "size: ({:?}, {:?}),\n",
+                                    size.width, size.height
+                                ));
+                            }
+                        }
+                    }
                 }
-            };
-            println!("{indent}{elem_str}");
+                Item::Pop { kind, level } => {
+                    if kind == ElementKind::Container {
+                        s.push('\n');
+
+                        for _ in 0..level {
+                            s.push_str("  ");
+                        }
+
+                        s.push_str("},");
+                    }
+                }
+            }
         }
+        s
     }
 
     pub fn insert(&mut self, element: Element) -> DefaultKey {
