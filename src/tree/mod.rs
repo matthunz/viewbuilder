@@ -99,7 +99,7 @@ impl Tree {
                     }
                 }
                 Item::Pop { kind, level } => {
-                    if kind == NodeKind::Container {
+                    if kind == NodeKind::Element {
                         s.push('\n');
 
                         for _ in 0..level {
@@ -164,8 +164,33 @@ impl Tree {
             }
         }
 
+        // Compute the layout of the taffy tree.
         let root_layout = self.nodes.nodes[root].layout_key.unwrap();
         taffy::compute_layout(&mut self.inner.taffy, root_layout, Size::MAX_CONTENT).unwrap();
+
+        // Compute the absolute layout of each node.
+        let mut stack: Vec<taffy::prelude::Layout> = Vec::new();
+        for item in self.nodes.iter_mut(root) {
+            match item {
+                iter_mut::Item::Node { node, level: _ } => {
+                    let mut layout = self
+                        .inner
+                        .taffy
+                        .layout(node.layout_key.unwrap())
+                        .unwrap()
+                        .clone();
+                    if let Some(parent_layout) = stack.last() {
+                        layout.location.x += parent_layout.location.x;
+                        layout.location.y += parent_layout.location.y;
+                    }
+                    node.layout = Some(layout);
+                    stack.push(layout);
+                }
+                iter_mut::Item::Pop { kind: _, level: _ } => {
+                    stack.pop();
+                }
+            }
+        }
     }
 
     pub fn semantics(&mut self) -> TreeUpdate {
@@ -192,7 +217,7 @@ impl Tree {
     pub fn paint(&mut self, root: DefaultKey, canvas: &mut Canvas) {
         for item in self.nodes.iter_mut(root) {
             if let iter_mut::Item::Node { node, level: _ } = item {
-                node.paint(&self.inner.taffy, canvas);
+                node.paint(canvas);
             }
         }
     }

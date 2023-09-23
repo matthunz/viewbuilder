@@ -2,27 +2,45 @@ use accesskit::NodeBuilder;
 use skia_safe::{Canvas, Paint, Rect};
 use slotmap::DefaultKey;
 use std::borrow::Cow;
-use taffy::{style::Style, Taffy};
+use taffy::{prelude::Layout, style::Style, Taffy};
 
 pub mod element;
-pub use element::Element;
+pub use self::element::Element;
 
+/// Kind of data type of a node.
 #[derive(Debug, PartialEq, Eq)]
 pub enum NodeKind {
-    Container,
+    /// Element node kind.
+    Element,
+
+    /// Text node kind.
     Text,
 }
 
+/// Data type of a node.
 pub enum NodeData {
+    /// Element node.
     Element(Element),
+
+    /// Text node.
     Text(Cow<'static, str>),
 }
 
 pub struct Node {
+    /// Data type of the node.
     pub data: NodeData,
+
+    /// Parent node id.
     pub parent: Option<DefaultKey>,
+
+    /// Child node ids.
     pub children: Option<Vec<DefaultKey>>,
+
+    /// Layout key for the taffy node.
     pub layout_key: Option<DefaultKey>,
+
+    /// Absolute layout of the node, relative to the window.
+    pub layout: Option<Layout>,
 }
 
 impl Node {
@@ -32,6 +50,7 @@ impl Node {
             parent: None,
             children: None,
             layout_key: None,
+            layout: None,
         }
     }
 
@@ -41,7 +60,7 @@ impl Node {
 
     pub fn kind(&self) -> NodeKind {
         match self.data {
-            NodeData::Element { .. } => NodeKind::Container,
+            NodeData::Element { .. } => NodeKind::Element,
             NodeData::Text(_) => NodeKind::Text,
         }
     }
@@ -70,9 +89,8 @@ impl Node {
         }
     }
 
-    pub fn paint(&mut self, taffy: &Taffy, canvas: &mut Canvas) {
-        let layout = taffy.layout(self.layout_key.unwrap()).unwrap();
-
+    pub fn paint(&mut self, canvas: &mut Canvas) {
+        let layout = self.layout.as_ref().unwrap();
         if let NodeData::Element(ref elem) = self.data {
             if let Some(background_color) = elem.background_color {
                 let paint = Paint::new(background_color, None);
