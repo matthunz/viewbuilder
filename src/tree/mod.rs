@@ -1,4 +1,7 @@
-use crate::{node::NodeKind, Event, Node, NodeData};
+use crate::{
+    node::{Element, NodeKind},
+    Event, Node, NodeData,
+};
 use slotmap::{DefaultKey, SlotMap};
 
 mod iter;
@@ -16,7 +19,10 @@ impl Tree {
         let node = &mut self.nodes[key];
         match event {
             Event::Click(click) => {
-                if let NodeData::Element { ref mut on_click, .. } = node.data {
+                if let NodeData::Element(Element {
+                    ref mut on_click, ..
+                }) = node.data
+                {
                     on_click.as_mut().unwrap()(click)
                 }
             }
@@ -39,7 +45,7 @@ impl Tree {
 
                     match &element.data {
                         NodeData::Text(content) => s.push_str(&format!("\"{}\",", content)),
-                        NodeData::Element { size, .. } => {
+                        NodeData::Element(Element { size, .. }) => {
                             s.push_str("{\n");
                             if let Some(size) = size {
                                 for _ in 0..level + 1 {
@@ -70,7 +76,7 @@ impl Tree {
         s
     }
 
-    pub fn insert(&mut self, element: Node) -> DefaultKey {
-        self.nodes.insert(element)
+    pub fn insert(&mut self, node: impl Into<Node>) -> DefaultKey {
+        self.nodes.insert(node.into())
     }
 }
