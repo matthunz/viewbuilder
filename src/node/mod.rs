@@ -1,5 +1,5 @@
 use accesskit::NodeBuilder;
-use skia_safe::{Canvas, Paint, Rect};
+use skia_safe::{Canvas, Color4f, Font, FontStyle, Paint, Rect, TextBlob, Typeface};
 use slotmap::DefaultKey;
 use std::borrow::Cow;
 use taffy::{prelude::Layout, style::Style, Taffy};
@@ -92,15 +92,32 @@ impl Node {
 
     pub fn paint(&mut self, canvas: &mut Canvas) {
         let layout = self.layout.as_ref().unwrap();
-        if let NodeData::Element(ref elem) = self.data {
-            if let Some(background_color) = elem.background_color {
-                let paint = Paint::new(background_color, None);
-                canvas.draw_rect(
-                    Rect::new(
+        match &self.data {
+            NodeData::Element(elem) => {
+                if let Some(background_color) = elem.background_color {
+                    let paint = Paint::new(background_color, None);
+                    canvas.draw_rect(
+                        Rect::new(
+                            layout.location.x,
+                            layout.location.y,
+                            layout.location.x + layout.size.width,
+                            layout.location.y + layout.size.height,
+                        ),
+                        &paint,
+                    );
+                }
+            }
+            NodeData::Text(content) => {
+                let typeface = Typeface::new("Arial", FontStyle::default()).unwrap();
+                let font = Font::new(typeface, 100.);
+                let text_blob = TextBlob::new(content, &font).unwrap();
+                let paint = Paint::new(Color4f::new(0., 0., 0., 1.), None);
+                let height = text_blob.bounds().height();
+                canvas.draw_text_blob(
+                    text_blob,
+                    (
                         layout.location.x,
-                        layout.location.y,
-                        layout.location.x + layout.size.width,
-                        layout.location.y + layout.size.height,
+                        layout.location.y + height,
                     ),
                     &paint,
                 );

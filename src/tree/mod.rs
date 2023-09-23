@@ -189,6 +189,10 @@ impl Tree {
     }
 
     pub fn layout(&mut self, root: DefaultKey) {
+        if self.inner.changes.is_empty() {
+            return;
+        }
+        
         for key in &self.inner.changes {
             let child_layout_keys: Vec<_> = self.nodes.nodes[*key]
                 .children
@@ -268,6 +272,7 @@ impl Tree {
                 node.paint(canvas);
             }
         }
+        self.inner.changes.clear();
     }
 
     pub fn target(&self, root: DefaultKey, point: Point) -> Option<DefaultKey> {
