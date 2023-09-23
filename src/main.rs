@@ -2,7 +2,6 @@ use skia_safe::Color4f;
 use std::rc::Rc;
 use std::sync::atomic::{AtomicI64, Ordering};
 use taffy::style::FlexDirection;
-use viewbuilder::render::Renderer;
 use viewbuilder::{node::Element, Tree};
 
 fn main() {
@@ -12,7 +11,6 @@ fn main() {
     let dec_count = inc_count.clone();
 
     let text = tree.insert("0");
-
     let root = Element::builder()
         .flex_direction(FlexDirection::Column)
         .child(Element::builder().child(text).build(&mut tree))
@@ -43,6 +41,5 @@ fn main() {
         )
         .build(&mut tree);
 
-    let renderer = Renderer::new();
-    renderer.run(tree, root)
+    viewbuilder::run(tree, root)
 }

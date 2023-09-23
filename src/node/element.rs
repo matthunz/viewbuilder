@@ -1,5 +1,5 @@
 use super::NodeData;
-use crate::{Click, MouseIn, MouseOut, Node, Tree};
+use crate::{event, Node, Tree};
 use skia_safe::Color4f;
 use slotmap::DefaultKey;
 use taffy::{
@@ -11,9 +11,9 @@ use taffy::{
 pub struct Builder {
     size: Option<Size<Dimension>>,
     flex_direction: Option<FlexDirection>,
-    on_click: Option<Box<dyn FnMut(&mut Tree, Click)>>,
-    pub on_mouse_in: Option<Box<dyn FnMut(&mut Tree, MouseIn)>>,
-    pub on_mouse_out: Option<Box<dyn FnMut(&mut Tree, MouseOut)>>,
+    on_click: Option<Box<dyn FnMut(&mut Tree, event::Click)>>,
+    pub on_mouse_in: Option<Box<dyn FnMut(&mut Tree, event::MouseIn)>>,
+    pub on_mouse_out: Option<Box<dyn FnMut(&mut Tree, event::MouseOut)>>,
     background_color: Option<Color4f>,
     pub children: Option<Vec<DefaultKey>>,
 }
@@ -28,17 +28,20 @@ impl Builder {
         self
     }
 
-    pub fn on_click(&mut self, handler: Box<dyn FnMut(&mut Tree, Click)>) -> &mut Self {
+    pub fn on_click(&mut self, handler: Box<dyn FnMut(&mut Tree, event::Click)>) -> &mut Self {
         self.on_click = Some(handler);
         self
     }
 
-    pub fn on_mouse_in(&mut self, handler: Box<dyn FnMut(&mut Tree, MouseIn)>) -> &mut Self {
+    pub fn on_mouse_in(&mut self, handler: Box<dyn FnMut(&mut Tree, event::MouseIn)>) -> &mut Self {
         self.on_mouse_in = Some(handler);
         self
     }
 
-    pub fn on_mouse_out(&mut self, handler: Box<dyn FnMut(&mut Tree, MouseOut)>) -> &mut Self {
+    pub fn on_mouse_out(
+        &mut self,
+        handler: Box<dyn FnMut(&mut Tree, event::MouseOut)>,
+    ) -> &mut Self {
         self.on_mouse_out = Some(handler);
         self
     }
@@ -81,9 +84,9 @@ impl Builder {
 
 pub struct Element {
     pub size: Option<Size<Dimension>>,
-    pub on_click: Option<Box<dyn FnMut(&mut Tree, Click)>>,
-    pub on_mouse_in: Option<Box<dyn FnMut(&mut Tree, MouseIn)>>,
-    pub on_mouse_out: Option<Box<dyn FnMut(&mut Tree, MouseOut)>>,
+    pub on_click: Option<Box<dyn FnMut(&mut Tree, event::Click)>>,
+    pub on_mouse_in: Option<Box<dyn FnMut(&mut Tree, event::MouseIn)>>,
+    pub on_mouse_out: Option<Box<dyn FnMut(&mut Tree, event::MouseOut)>>,
     pub background_color: Option<Color4f>,
     pub flex_direction: Option<FlexDirection>,
 }

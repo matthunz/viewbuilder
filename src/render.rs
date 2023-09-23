@@ -28,7 +28,7 @@ use winit::{
     window::{Window, WindowBuilder},
 };
 
-use crate::Tree;
+use crate::{event, Tree};
 
 // Guarantee the drop order inside the FnMut closure. `Window` _must_ be dropped after
 // `DirectContext`.
@@ -235,36 +235,36 @@ impl Renderer {
 
                                     tree.send(
                                         last_target,
-                                        crate::Event::MouseOut(crate::MouseOut {
+                                        crate::Event::MouseOut(event::MouseOut {
                                             target: last_target,
                                         }),
                                     );
 
                                     tree.send(
                                         target,
-                                        crate::Event::MouseIn(crate::MouseIn { target }),
+                                        crate::Event::MouseIn(event::MouseIn { target }),
                                     );
                                 }
                             } else {
                                 hover_target = Some(target);
-                                tree.send(target, crate::Event::MouseIn(crate::MouseIn { target }));
+                                tree.send(target, crate::Event::MouseIn(event::MouseIn { target }));
                             }
                         } else if let Some(last_target) = hover_target {
                             hover_target = None;
 
                             tree.send(
                                 last_target,
-                                crate::Event::MouseOut(crate::MouseOut {
+                                crate::Event::MouseOut(event::MouseOut {
                                     target: last_target,
                                 }),
                             );
                         }
                     }
                     WindowEvent::MouseInput {
-                        device_id,
+                        device_id: _,
                         state,
-                        button,
-                        modifiers,
+                        button: _,
+                        modifiers: _,
                     } => match state {
                         ElementState::Pressed => {
                             if let Some(pos) = cursor_pos {
@@ -277,7 +277,7 @@ impl Renderer {
                             if let Some(clicked) = clicked.take() {
                                 tree.send(
                                     clicked,
-                                    crate::Event::Click(crate::Click { target: clicked }),
+                                    crate::Event::Click(event::Click { target: clicked }),
                                 )
                             }
                         }

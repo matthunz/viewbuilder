@@ -108,7 +108,7 @@ impl Node {
                     Some(taffy::node::MeasureFunc::Boxed(Box::new(move |_, _| {
                         Size {
                             width: bounds.width() / 2.,
-                            height: bounds.height(),
+                            height: bounds.height() / 2.,
                         }
                     }))),
                 )
@@ -141,7 +141,7 @@ impl Node {
                 let height = text_blob.bounds().height();
                 canvas.draw_text_blob(
                     text_blob,
-                    (layout.location.x, layout.location.y + height),
+                    (layout.location.x, layout.location.y + height / 2.),
                     &paint,
                 );
             }

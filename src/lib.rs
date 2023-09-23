@@ -2,26 +2,17 @@ pub mod node;
 pub use node::Node;
 
 pub mod tree;
-use slotmap::DefaultKey;
 
+use slotmap::DefaultKey;
 pub use tree::Tree;
 
-pub mod render;
+mod render;
+pub use render::Renderer;
 
-pub enum Event {
-    Click(Click),
-    MouseIn(MouseIn),
-    MouseOut(MouseOut),
-}
+pub mod event;
+pub use event::Event;
 
-pub struct Click {
-    pub target: DefaultKey,
-}
-
-pub struct MouseIn {
-    pub target: DefaultKey,
-}
-
-pub struct MouseOut {
-    pub target: DefaultKey,
+pub fn run(tree: Tree, root: DefaultKey) {
+    let renderer = Renderer::new();
+    renderer.run(tree, root)
 }

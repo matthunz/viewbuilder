@@ -1,6 +1,7 @@
 use crate::{
+    event,
     node::{Element, NodeData, NodeKind},
-    Click, Event, MouseIn, MouseOut, Node,
+    Event, Node,
 };
 use accesskit::{NodeClassSet, NodeId, TreeUpdate};
 use kurbo::Point;
@@ -35,15 +36,15 @@ impl Default for Inner {
 }
 
 enum Handler {
-    Click(Box<dyn FnMut(&mut Tree, Click)>, Click),
-    MouseIn(Box<dyn FnMut(&mut Tree, MouseIn)>, MouseIn),
-    MouseOut(Box<dyn FnMut(&mut Tree, MouseOut)>, MouseOut),
+    Click(Box<dyn FnMut(&mut Tree, event::Click)>, event::Click),
+    MouseIn(Box<dyn FnMut(&mut Tree, event::MouseIn)>, event::MouseIn),
+    MouseOut(Box<dyn FnMut(&mut Tree, event::MouseOut)>, event::MouseOut),
 }
 
 enum HandlerFn {
-    Click(Box<dyn FnMut(&mut Tree, Click)>),
-    MouseIn(Box<dyn FnMut(&mut Tree, MouseIn)>),
-    MouseOut(Box<dyn FnMut(&mut Tree, MouseOut)>),
+    Click(Box<dyn FnMut(&mut Tree, event::Click)>),
+    MouseIn(Box<dyn FnMut(&mut Tree, event::MouseIn)>),
+    MouseOut(Box<dyn FnMut(&mut Tree, event::MouseOut)>),
 }
 
 #[derive(Default)]

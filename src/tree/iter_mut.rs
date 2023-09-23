@@ -1,8 +1,7 @@
-use std::marker::PhantomData;
-
 use super::Nodes;
 use crate::{node::NodeKind, Node};
 use slotmap::DefaultKey;
+use std::marker::PhantomData;
 
 enum Operation {
     Key(DefaultKey),
