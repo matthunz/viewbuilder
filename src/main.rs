@@ -1,32 +1,20 @@
-pub mod node;
-pub use node::Node;
-
-pub mod tree;
 use taffy::prelude::Size;
-pub use tree::Tree;
-
-use crate::node::{Element, NodeData};
-
-pub enum Event {
-    Click(Click),
-}
-
-pub struct Click {}
+use viewbuilder::{node::Element, Tree};
 
 fn main() {
     let mut tree = Tree::default();
 
-    let a = tree.insert("Hello World!");
-
-    let b = Element::builder()
+    Element::builder()
         .size(Size::from_points(100., 100.))
-        .on_click(Box::new(move |tree, _| tree.set_text(a, "New!")))
-        .child(a)
-        .build(&mut tree);
-
-    let root = Element::builder()
-        .size(Size::from_points(100., 100.))
-        .child(b)
+        .child(
+            Element::builder()
+                .size(Size::from_points(100., 100.))
+                .on_click(Box::new(move |tree, click| {
+                    tree.set_text(click.target, "New!")
+                }))
+                .child(tree.insert("Hello World!"))
+                .build(&mut tree),
+        )
         .build(&mut tree);
 
     dbg!(tree.semantics());

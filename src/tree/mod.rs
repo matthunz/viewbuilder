@@ -1,8 +1,8 @@
 use std::{borrow::Cow, num::NonZeroU128};
 
 use crate::{
-    node::{Element, NodeKind},
-    Event, Node, NodeData,
+    node::{Element, NodeData, NodeKind},
+    Event, Node,
 };
 use accesskit::{NodeClassSet, NodeId, TreeUpdate};
 use slotmap::{DefaultKey, SlotMap};

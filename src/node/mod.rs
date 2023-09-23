@@ -19,7 +19,6 @@ pub enum NodeData {
 pub struct Node {
     pub data: NodeData,
     pub children: Option<Vec<DefaultKey>>,
-
 }
 
 impl Node {
@@ -27,7 +26,6 @@ impl Node {
         Self {
             data,
             children: None,
-       
         }
     }
 
