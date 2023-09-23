@@ -8,8 +8,15 @@ enum Operation {
 }
 
 pub enum Item<'a> {
-    Node { node: &'a Node, level: usize },
-    Pop { kind: NodeKind, level: usize },
+    Node {
+        key: DefaultKey,
+        node: &'a Node,
+        level: usize,
+    },
+    Pop {
+        kind: NodeKind,
+        level: usize,
+    },
 }
 
 pub struct Iter<'a> {
@@ -45,6 +52,7 @@ impl<'a> Iterator for Iter<'a> {
                 self.count += 1;
 
                 Item::Node {
+                    key,
                     node: elem,
                     level: count,
                 }

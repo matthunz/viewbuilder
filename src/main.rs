@@ -1,6 +1,5 @@
 use skia_safe::Color4f;
 use taffy::prelude::Size;
-use taffy::style::FlexDirection;
 use viewbuilder::render::Renderer;
 use viewbuilder::{node::Element, Tree};
 
@@ -12,23 +11,24 @@ fn main() {
             Element::builder()
                 .size(Size::from_points(100., 100.))
                 .background_color(Color4f::new(1., 0., 0., 1.))
+                .on_mouse_in(Box::new(|_tree, _event| {
+                    dbg!("in 1");
+                }))
+                .on_mouse_out(Box::new(|_tree, _event| {
+                    dbg!("out 1");
+                }))
                 .build(&mut tree),
         )
         .child(
             Element::builder()
-                .flex_direction(FlexDirection::Column)
-                .child(
-                    Element::builder()
-                        .size(Size::from_points(100., 100.))
-                        .background_color(Color4f::new(1., 0., 0., 1.))
-                        .build(&mut tree),
-                )
-                .child(
-                    Element::builder()
-                        .size(Size::from_points(100., 100.))
-                        .background_color(Color4f::new(0., 1., 0., 1.))
-                        .build(&mut tree),
-                )
+                .size(Size::from_points(100., 100.))
+                .background_color(Color4f::new(0., 1., 0., 1.))
+                .on_mouse_in(Box::new(|_tree, _event| {
+                    dbg!("in 2");
+                }))
+                .on_mouse_out(Box::new(|_tree, _event| {
+                    dbg!("out 2");
+                }))
                 .build(&mut tree),
         )
         .build(&mut tree);

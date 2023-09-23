@@ -1,8 +1,9 @@
 use crate::{
     node::{Element, NodeData, NodeKind},
-    Event, Node,
+    Click, Event, MouseIn, MouseOut, Node,
 };
 use accesskit::{NodeClassSet, NodeId, TreeUpdate};
+use kurbo::Point;
 use skia_safe::Canvas;
 use slotmap::{DefaultKey, SlotMap};
 use std::{borrow::Cow, num::NonZeroU128};
@@ -33,6 +34,18 @@ impl Default for Inner {
     }
 }
 
+enum Handler {
+    Click(Box<dyn FnMut(&mut Tree, Click)>, Click),
+    MouseIn(Box<dyn FnMut(&mut Tree, MouseIn)>, MouseIn),
+    MouseOut(Box<dyn FnMut(&mut Tree, MouseOut)>, MouseOut),
+}
+
+enum HandlerFn {
+    Click(Box<dyn FnMut(&mut Tree, Click)>),
+    MouseIn(Box<dyn FnMut(&mut Tree, MouseIn)>),
+    MouseOut(Box<dyn FnMut(&mut Tree, MouseOut)>),
+}
+
 #[derive(Default)]
 pub struct Tree {
     pub nodes: Nodes,
@@ -42,30 +55,64 @@ pub struct Tree {
 impl Tree {
     pub fn send(&mut self, key: DefaultKey, event: Event) {
         let node = &mut self.nodes.nodes[key];
-        let (mut handler, click) = match event {
+        let handler = match event {
             Event::Click(click) => {
                 if let NodeData::Element(Element {
                     ref mut on_click, ..
                 }) = node.data
                 {
-                    (on_click.take().unwrap(), click)
+                    Handler::Click(on_click.take().unwrap(), click)
+                } else {
+                    todo!()
+                }
+            }
+            Event::MouseIn(mouse_in) => {
+                if let NodeData::Element(Element {
+                    ref mut on_mouse_in,
+                    ..
+                }) = node.data
+                {
+                    Handler::MouseIn(on_mouse_in.take().unwrap(), mouse_in)
+                } else {
+                    todo!()
+                }
+            }
+            Event::MouseOut(mouse_out) => {
+                if let NodeData::Element(Element {
+                    ref mut on_mouse_out,
+                    ..
+                }) = node.data
+                {
+                    Handler::MouseOut(on_mouse_out.take().unwrap(), mouse_out)
                 } else {
                     todo!()
                 }
             }
         };
 
-        handler(self, click);
+        let handler_fn = match handler {
+            Handler::Click(mut f, click) => {
+                f(self, click);
+                HandlerFn::Click(f)
+            }
+            Handler::MouseIn(mut f, hover) => {
+                f(self, hover);
+                HandlerFn::MouseIn(f)
+            }
+            Handler::MouseOut(mut f, mouse_out) => {
+                f(self, mouse_out);
+                HandlerFn::MouseOut(f)
+            }
+        };
 
         let node = &mut self.nodes.nodes[key];
-        if let NodeData::Element(Element {
-            ref mut on_click, ..
-        }) = node.data
-        {
-            *on_click = Some(handler);
-        } else {
-            todo!()
-        };
+        if let NodeData::Element(ref mut elem) = node.data {
+            match handler_fn {
+                HandlerFn::Click(f) => elem.on_click = Some(f),
+                HandlerFn::MouseIn(f) => elem.on_mouse_in = Some(f),
+                HandlerFn::MouseOut(f) => elem.on_mouse_out = Some(f),
+            }
+        }
     }
 
     pub fn display(&self, root: DefaultKey) -> String {
@@ -76,6 +123,7 @@ impl Tree {
                 Item::Node {
                     node: element,
                     level,
+                    ..
                 } => {
                     for _ in 0..level {
                         s.push_str("  ");
@@ -220,6 +268,34 @@ impl Tree {
                 node.paint(canvas);
             }
         }
+    }
+
+    pub fn target(&self, root: DefaultKey, point: Point) -> Option<DefaultKey> {
+        self.nodes
+            .iter(root)
+            .filter_map(|item| {
+                if let Item::Node {
+                    key,
+                    node,
+                    level: _,
+                } = item
+                {
+                    let layout = node.layout.unwrap();
+                    if point.x >= layout.location.x as _
+                        && point.y >= layout.location.y as _
+                        && point.x <= (layout.location.x + layout.size.width) as _
+                        && point.y <= (layout.location.y + layout.size.height) as _
+                    {
+                        Some((key, layout))
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                }
+            })
+            .max_by_key(|(_, layout)| layout.order)
+            .map(|(key, _layout)| key)
     }
 }
 

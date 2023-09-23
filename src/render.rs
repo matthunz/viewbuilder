@@ -10,6 +10,7 @@ use glutin::{
     surface::{Surface as GlutinSurface, SurfaceAttributesBuilder, WindowSurface},
 };
 use glutin_winit::DisplayBuilder;
+use kurbo::Point;
 use raw_window_handle::HasRawWindowHandle;
 use skia_safe::{
     gpu::{self, gl::FramebufferInfo, BackendRenderTarget, SurfaceOrigin},
@@ -169,6 +170,8 @@ impl Renderer {
     pub fn run(mut self, mut tree: Tree, root: DefaultKey) {
         let mut previous_frame_start = Instant::now();
 
+        let mut hover_target = None;
+
         self.event_loop.run(move |event, _, control_flow| {
             let frame_start = Instant::now();
             let mut draw_frame = false;
@@ -214,6 +217,44 @@ impl Renderer {
                         }
 
                         self.window.request_redraw();
+                    }
+                    WindowEvent::CursorMoved {
+                        device_id: _,
+                        position,
+                        modifiers: _,
+                    } => {
+                        if let Some(target) = tree.target(root, Point::new(position.x, position.y))
+                        {
+                            if let Some(last_target) = hover_target {
+                                if target != last_target {
+                                    hover_target = Some(target);
+
+                                    tree.send(
+                                        last_target,
+                                        crate::Event::MouseOut(crate::MouseOut {
+                                            target: last_target,
+                                        }),
+                                    );
+
+                                    tree.send(
+                                        target,
+                                        crate::Event::MouseIn(crate::MouseIn { target }),
+                                    );
+                                }
+                            } else {
+                                hover_target = Some(target);
+                                tree.send(target, crate::Event::MouseIn(crate::MouseIn { target }));
+                            }
+                        } else if let Some(last_target) = hover_target {
+                            hover_target = None;
+
+                            tree.send(
+                                last_target,
+                                crate::Event::MouseOut(crate::MouseOut {
+                                    target: last_target,
+                                }),
+                            );
+                        }
                     }
                     _ => (),
                 },
