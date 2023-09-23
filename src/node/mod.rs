@@ -1,5 +1,5 @@
 use accesskit::NodeBuilder;
-use skia_safe::{Canvas, Color4f, Paint, Rect};
+use skia_safe::{Canvas, Paint, Rect};
 use slotmap::DefaultKey;
 use std::borrow::Cow;
 use taffy::{style::Style, Taffy};
@@ -56,6 +56,10 @@ impl Node {
             if let Some(size) = elem.size {
                 style.size = size;
             }
+
+            if let Some(flex_direction) = elem.flex_direction {
+                style.flex_direction = flex_direction;
+            }
         }
 
         if let Some(layout_key) = self.layout_key {
@@ -69,16 +73,20 @@ impl Node {
     pub fn paint(&mut self, taffy: &Taffy, canvas: &mut Canvas) {
         let layout = taffy.layout(self.layout_key.unwrap()).unwrap();
 
-        let paint = Paint::new(Color4f::new(1., 0., 0., 1.), None);
-        canvas.draw_rect(
-            Rect::new(
-                layout.location.x,
-                layout.location.y,
-                layout.location.x + layout.size.width,
-                layout.location.y + layout.size.height,
-            ),
-            &paint,
-        );
+        if let NodeData::Element(ref elem) = self.data {
+            if let Some(background_color) = elem.background_color {
+                let paint = Paint::new(background_color, None);
+                canvas.draw_rect(
+                    Rect::new(
+                        layout.location.x,
+                        layout.location.y,
+                        layout.location.x + layout.size.width,
+                        layout.location.y + layout.size.height,
+                    ),
+                    &paint,
+                );
+            }
+        }
     }
 }
 
