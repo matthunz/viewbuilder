@@ -1,5 +1,8 @@
+use render::Renderer;
 use taffy::prelude::Size;
 use viewbuilder::{node::Element, Tree};
+
+mod render;
 
 fn main() {
     let mut tree = Tree::default();
@@ -17,5 +20,6 @@ fn main() {
         )
         .build(&mut tree);
 
-    dbg!(tree.semantics());
+    let r = Renderer::new();
+    r.run()
 }
