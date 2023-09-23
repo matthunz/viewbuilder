@@ -10,7 +10,7 @@ pub enum NodeKind {
 }
 
 pub enum NodeData {
-    Element { size: Option<Size<Dimension>> },
+    Element { size: Option<Size<Dimension>>,  on_click: Option<Box<dyn FnMut(Click)>>,},
     Text(Cow<'static, str>),
 }
 
@@ -44,6 +44,7 @@ impl ElementBuilder {
     pub fn build(&mut self, tree: &mut Tree) -> DefaultKey {
         let mut elem = Node::new(NodeData::Element {
             size: self.size.take(),
+            on_click: self.on_click.take()
         });
         elem.children = self.children.take();
 

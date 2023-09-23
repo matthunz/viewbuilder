@@ -34,7 +34,7 @@ impl<'a> Iterator for Iter<'a> {
     fn next(&mut self) -> Option<Self::Item> {
         self.stack.pop().map(|item| match item {
             Operation::Key(key) => {
-                let elem = &self.tree.elements[key];
+                let elem = &self.tree.nodes[key];
 
                 self.stack.push(Operation::Pop(elem.kind()));
                 for child in elem.children.iter().flatten().copied().map(Operation::Key) {
