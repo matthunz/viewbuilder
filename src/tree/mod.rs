@@ -1,0 +1,37 @@
+use crate::{Element, ElementData};
+use slotmap::{DefaultKey, SlotMap};
+use std::borrow::Cow;
+
+mod iter;
+pub use iter::Iter;
+
+#[derive(Default)]
+pub struct Tree {
+    elements: SlotMap<DefaultKey, Element>,
+}
+
+impl Tree {
+    pub fn iter(&self, root: DefaultKey) -> Iter {
+        Iter::new(self, root)
+    }
+
+    pub fn display(&self, root: DefaultKey) {
+        for (level, elem) in self.iter(root) {
+            let mut indent = String::new();
+            for _ in 0..level {
+                indent.push_str("  ")
+            }
+
+            let elem_str = match elem.data {
+                ElementData::Text(ref content) => Cow::Owned(format!("\"{content}\"")),
+                ElementData::Canvas => Cow::Borrowed("Canvas"),
+                ElementData::Container => Cow::Borrowed("Container"),
+            };
+            println!("{indent}{elem_str}");
+        }
+    }
+
+    pub fn insert(&mut self, element: Element) -> DefaultKey {
+        self.elements.insert(element)
+    }
+}
