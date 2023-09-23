@@ -142,8 +142,26 @@ impl Tree {
 
     pub fn layout(&mut self, root: DefaultKey) {
         for key in &self.inner.changes {
+            let child_layout_keys: Vec<_> = self.nodes.nodes[*key]
+                .children
+                .iter()
+                .flatten()
+                .filter_map(|child| self.nodes.nodes[*child].layout_key)
+                .collect();
+
             let node = &mut self.nodes.nodes[*key];
-            node.layout(&mut self.inner.taffy)
+            node.layout(&mut self.inner.taffy);
+
+            let layout_key = node.layout_key.unwrap();
+            let layout_children = self.inner.taffy.children(layout_key).unwrap();
+            for child_layout_key in child_layout_keys {
+                if !layout_children.contains(&child_layout_key) {
+                    self.inner
+                        .taffy
+                        .add_child(layout_key, child_layout_key)
+                        .unwrap();
+                }
+            }
         }
 
         let root_layout = self.nodes.nodes[root].layout_key.unwrap();

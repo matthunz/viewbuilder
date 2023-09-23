@@ -71,11 +71,14 @@ impl Node {
 
         let paint = Paint::new(Color4f::new(1., 0., 0., 1.), None);
         canvas.draw_rect(
-            Rect::new(0., 0., layout.size.width, layout.size.height),
+            Rect::new(
+                layout.location.x,
+                layout.location.y,
+                layout.location.x + layout.size.width,
+                layout.location.y + layout.size.height,
+            ),
             &paint,
         );
-
-        dbg!(layout);
     }
 }
 
