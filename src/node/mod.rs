@@ -2,10 +2,13 @@ use accesskit::NodeBuilder;
 use skia_safe::{Canvas, Color4f, Font, FontStyle, Paint, Rect, TextBlob, Typeface};
 use slotmap::DefaultKey;
 use std::borrow::Cow;
-use taffy::{prelude::Layout, style::Style, Taffy};
+use taffy::{
+    prelude::{Layout, Size},
+    style::Style,
+    Taffy,
+};
 
 pub mod element;
-
 pub use self::element::Element;
 
 /// Kind of data type of a node.
@@ -72,14 +75,17 @@ impl Node {
 
     pub fn layout(&mut self, taffy: &mut Taffy) {
         let mut style = Style::default();
-        if let NodeData::Element(ref mut elem) = self.data {
-            if let Some(size) = elem.size {
-                style.size = size;
-            }
+        match self.data {
+            NodeData::Element(ref mut elem) => {
+                if let Some(size) = elem.size {
+                    style.size = size;
+                }
 
-            if let Some(flex_direction) = elem.flex_direction {
-                style.flex_direction = flex_direction;
+                if let Some(flex_direction) = elem.flex_direction {
+                    style.flex_direction = flex_direction;
+                }
             }
+            _ => {}
         }
 
         if let Some(layout_key) = self.layout_key {
@@ -87,6 +93,26 @@ impl Node {
         } else {
             let layout_key = taffy.new_leaf(style).unwrap();
             self.layout_key = Some(layout_key);
+        }
+
+        if let NodeData::Text(ref content) = self.data {
+            let typeface = Typeface::new("Arial", FontStyle::default()).unwrap();
+            let font = Font::new(typeface, 100.);
+            let text_blob = TextBlob::new(content, &font).unwrap();
+            let bounds = text_blob.bounds().clone();
+
+            // TODO this is a measure func for paragraphs
+            taffy
+                .set_measure(
+                    self.layout_key.unwrap(),
+                    Some(taffy::node::MeasureFunc::Boxed(Box::new(move |_, _| {
+                        Size {
+                            width: bounds.width() / 2.,
+                            height: bounds.height(),
+                        }
+                    }))),
+                )
+                .unwrap();
         }
     }
 
@@ -115,10 +141,7 @@ impl Node {
                 let height = text_blob.bounds().height();
                 canvas.draw_text_blob(
                     text_blob,
-                    (
-                        layout.location.x,
-                        layout.location.y + height,
-                    ),
+                    (layout.location.x, layout.location.y + height),
                     &paint,
                 );
             }

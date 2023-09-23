@@ -1,33 +1,44 @@
-use std::sync::atomic::{AtomicI64, Ordering};
-
 use skia_safe::Color4f;
-use taffy::prelude::Size;
+use std::rc::Rc;
+use std::sync::atomic::{AtomicI64, Ordering};
+use taffy::style::FlexDirection;
 use viewbuilder::render::Renderer;
 use viewbuilder::{node::Element, Tree};
 
 fn main() {
     let mut tree = Tree::default();
 
-    let mut count = AtomicI64::new(0);
+    let inc_count = Rc::new(AtomicI64::new(0));
+    let dec_count = inc_count.clone();
 
     let text = tree.insert("0");
 
-    let mut root = Element::builder()
+    let root = Element::builder()
+        .flex_direction(FlexDirection::Column)
+        .child(Element::builder().child(text).build(&mut tree))
         .child(
             Element::builder()
-                .size(Size::from_points(100., 100.))
-                .child(text)
-                .build(&mut tree),
-        )
-        .child(
-            Element::builder()
-                .on_mouse_in(Box::new(move |tree, event| {
-                    count.fetch_add(1, Ordering::SeqCst);
-                    tree.set_text(text, count.load(Ordering::SeqCst).to_string())
-                }))
-                .size(Size::from_points(100., 100.))
-                .background_color(Color4f::new(1., 1., 0., 1.))
-                .child(tree.insert("More!"))
+                .flex_direction(FlexDirection::Row)
+                .child(
+                    Element::builder()
+                        .on_click(Box::new(move |tree, _event| {
+                            inc_count.fetch_add(1, Ordering::SeqCst);
+                            tree.set_text(text, inc_count.load(Ordering::SeqCst).to_string())
+                        }))
+                        .background_color(Color4f::new(1., 1., 0., 1.))
+                        .child(tree.insert("More!"))
+                        .build(&mut tree),
+                )
+                .child(
+                    Element::builder()
+                        .on_click(Box::new(move |tree, _event| {
+                            dec_count.fetch_sub(1, Ordering::SeqCst);
+                            tree.set_text(text, dec_count.load(Ordering::SeqCst).to_string())
+                        }))
+                        .background_color(Color4f::new(1., 1., 0., 1.))
+                        .child(tree.insert("Less!"))
+                        .build(&mut tree),
+                )
                 .build(&mut tree),
         )
         .build(&mut tree);

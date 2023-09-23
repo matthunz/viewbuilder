@@ -23,7 +23,7 @@ use std::{
     time::{Duration, Instant},
 };
 use winit::{
-    event::{Event, KeyboardInput, VirtualKeyCode, WindowEvent},
+    event::{ElementState, Event, KeyboardInput, VirtualKeyCode, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
     window::{Window, WindowBuilder},
 };
@@ -171,6 +171,8 @@ impl Renderer {
         let mut previous_frame_start = Instant::now();
 
         let mut hover_target = None;
+        let mut cursor_pos = None;
+        let mut clicked = None;
 
         self.event_loop.run(move |event, _, control_flow| {
             let frame_start = Instant::now();
@@ -223,6 +225,8 @@ impl Renderer {
                         position,
                         modifiers: _,
                     } => {
+                        cursor_pos = Some(position);
+
                         if let Some(target) = tree.target(root, Point::new(position.x, position.y))
                         {
                             if let Some(last_target) = hover_target {
@@ -256,6 +260,28 @@ impl Renderer {
                             );
                         }
                     }
+                    WindowEvent::MouseInput {
+                        device_id,
+                        state,
+                        button,
+                        modifiers,
+                    } => match state {
+                        ElementState::Pressed => {
+                            if let Some(pos) = cursor_pos {
+                                if let Some(target) = tree.target(root, Point::new(pos.x, pos.y)) {
+                                    clicked = Some(target);
+                                }
+                            }
+                        }
+                        ElementState::Released => {
+                            if let Some(clicked) = clicked.take() {
+                                tree.send(
+                                    clicked,
+                                    crate::Event::Click(crate::Click { target: clicked }),
+                                )
+                            }
+                        }
+                    },
                     _ => (),
                 },
                 Event::RedrawRequested(_) => {

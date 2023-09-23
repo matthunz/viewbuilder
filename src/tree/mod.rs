@@ -55,42 +55,23 @@ pub struct Tree {
 impl Tree {
     pub fn send(&mut self, key: DefaultKey, event: Event) {
         let node = &mut self.nodes.nodes[key];
-        let handler = match event {
-            Event::Click(click) => {
-                if let NodeData::Element(Element {
-                    ref mut on_click, ..
-                }) = node.data
-                {
-                    Handler::Click(on_click.take().unwrap(), click)
-                } else {
-                    todo!()
-                }
+        let handler = if let NodeData::Element(ref mut elem) = node.data {
+            match event {
+                Event::Click(click) => elem.on_click.take().map(|f| Handler::Click(f, click)),
+                Event::MouseIn(mouse_in) => elem
+                    .on_mouse_in
+                    .take()
+                    .map(|f| Handler::MouseIn(f, mouse_in)),
+                Event::MouseOut(mouse_out) => elem
+                    .on_mouse_out
+                    .take()
+                    .map(|f| Handler::MouseOut(f, mouse_out)),
             }
-            Event::MouseIn(mouse_in) => {
-                if let NodeData::Element(Element {
-                    ref mut on_mouse_in,
-                    ..
-                }) = node.data
-                {
-                    Handler::MouseIn(on_mouse_in.take().unwrap(), mouse_in)
-                } else {
-                    todo!()
-                }
-            }
-            Event::MouseOut(mouse_out) => {
-                if let NodeData::Element(Element {
-                    ref mut on_mouse_out,
-                    ..
-                }) = node.data
-                {
-                    Handler::MouseOut(on_mouse_out.take().unwrap(), mouse_out)
-                } else {
-                    todo!()
-                }
-            }
+        } else {
+            None
         };
 
-        let handler_fn = match handler {
+        let handler_fn = handler.map(|handler| match handler {
             Handler::Click(mut f, click) => {
                 f(self, click);
                 HandlerFn::Click(f)
@@ -103,14 +84,16 @@ impl Tree {
                 f(self, mouse_out);
                 HandlerFn::MouseOut(f)
             }
-        };
+        });
 
         let node = &mut self.nodes.nodes[key];
-        if let NodeData::Element(ref mut elem) = node.data {
-            match handler_fn {
-                HandlerFn::Click(f) => elem.on_click = Some(f),
-                HandlerFn::MouseIn(f) => elem.on_mouse_in = Some(f),
-                HandlerFn::MouseOut(f) => elem.on_mouse_out = Some(f),
+        if let Some(handler_fn) = handler_fn {
+            if let NodeData::Element(ref mut elem) = node.data {
+                match handler_fn {
+                    HandlerFn::Click(f) => elem.on_click = Some(f),
+                    HandlerFn::MouseIn(f) => elem.on_mouse_in = Some(f),
+                    HandlerFn::MouseOut(f) => elem.on_mouse_out = Some(f),
+                }
             }
         }
     }
@@ -192,7 +175,7 @@ impl Tree {
         if self.inner.changes.is_empty() {
             return;
         }
-        
+
         for key in &self.inner.changes {
             let child_layout_keys: Vec<_> = self.nodes.nodes[*key]
                 .children
@@ -285,6 +268,10 @@ impl Tree {
                     level: _,
                 } = item
                 {
+                    if node.kind() == NodeKind::Text {
+                        return None;
+                    }
+
                     let layout = node.layout.unwrap();
                     if point.x >= layout.location.x as _
                         && point.y >= layout.location.y as _
