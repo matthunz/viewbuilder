@@ -7,13 +7,11 @@ use crate::{Click, Tree};
 
 #[derive(Debug)]
 pub enum ElementKind {
-    Canvas,
     Container,
     Text,
 }
 
 pub enum ElementData {
-    Canvas,
     Container { size: Option<Size<Dimension>> },
     Text(Cow<'static, str>),
 }
@@ -65,12 +63,11 @@ impl Element {
         Self {
             data,
             children: None,
-
         }
     }
 
     pub fn builder() -> ContainerBuilder {
-        ContainerBuilder ::default()
+        ContainerBuilder::default()
     }
 
     pub fn text(content: impl Into<Cow<'static, str>>) -> Self {
@@ -79,8 +76,8 @@ impl Element {
 
     pub fn kind(&self) -> ElementKind {
         match self.data {
-            ElementData::Canvas => ElementKind::Canvas,
-            ElementData::Container {..} => ElementKind::Container,
+          
+            ElementData::Container { .. } => ElementKind::Container,
             ElementData::Text(_) => ElementKind::Text,
         }
     }
