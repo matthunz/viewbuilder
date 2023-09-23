@@ -1,6 +1,7 @@
 use accesskit::NodeBuilder;
 use slotmap::DefaultKey;
 use std::borrow::Cow;
+use taffy::{style::Style, Taffy};
 
 pub mod element;
 pub use element::Element;
@@ -19,6 +20,7 @@ pub enum NodeData {
 pub struct Node {
     pub data: NodeData,
     pub children: Option<Vec<DefaultKey>>,
+    pub layout_key: Option<DefaultKey>,
 }
 
 impl Node {
@@ -26,6 +28,7 @@ impl Node {
         Self {
             data,
             children: None,
+            layout_key: None,
         }
     }
 
@@ -42,6 +45,22 @@ impl Node {
 
     pub fn semantics(&self) -> NodeBuilder {
         NodeBuilder::default()
+    }
+
+    pub fn layout(&mut self, taffy: &mut Taffy) {
+        let mut style = Style::default();
+        if let NodeData::Element(ref mut elem) = self.data {
+            if let Some(size) = elem.size {
+                style.size = size;
+            }
+        }
+
+        if let Some(layout_key) = self.layout_key {
+            taffy.set_style(layout_key, style).unwrap();
+        } else {
+            let layout_key = taffy.new_leaf(style).unwrap();
+            self.layout_key = Some(layout_key);
+        }
     }
 }
 

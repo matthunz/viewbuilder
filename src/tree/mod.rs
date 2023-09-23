@@ -9,7 +9,7 @@ use slotmap::{DefaultKey, SlotMap};
 
 mod iter;
 pub use iter::Iter;
-use taffy::{prelude::Size, style::Dimension};
+use taffy::{prelude::Size, style::Dimension, style_helpers::TaffyMaxContent, Taffy};
 
 use self::iter::Item;
 
@@ -17,6 +17,7 @@ struct Inner {
     pub(crate) changes: Vec<DefaultKey>,
     next_id: NonZeroU128,
     unused_ids: Vec<NodeId>,
+    taffy: Taffy,
 }
 
 impl Default for Inner {
@@ -25,6 +26,7 @@ impl Default for Inner {
             changes: Default::default(),
             next_id: NonZeroU128::MIN,
             unused_ids: Default::default(),
+            taffy: Taffy::default(),
         }
     }
 }
@@ -135,6 +137,16 @@ impl Tree {
         } else {
             todo!()
         }
+    }
+
+    pub fn layout(&mut self, root: DefaultKey) {
+        for key in &self.inner.changes {
+            let node = &mut self.nodes[*key];
+            node.layout(&mut self.inner.taffy)
+        }
+
+        let root_layout = self.nodes[root].layout_key.unwrap();
+        taffy::compute_layout(&mut self.inner.taffy, root_layout, Size::MAX_CONTENT).unwrap();
     }
 
     pub fn semantics(&mut self) -> TreeUpdate {
