@@ -1,15 +1,15 @@
 use super::Tree;
-use crate::{element::ElementKind, Element};
+use crate::{node::NodeKind, Node};
 use slotmap::DefaultKey;
 
 enum Operation {
     Key(DefaultKey),
-    Pop(ElementKind),
+    Pop(NodeKind),
 }
 
 pub enum Item<'a> {
-    Element { element: &'a Element, level: usize },
-    Pop { kind: ElementKind, level: usize },
+    Element { element: &'a Node, level: usize },
+    Pop { kind: NodeKind, level: usize },
 }
 
 pub struct Iter<'a> {

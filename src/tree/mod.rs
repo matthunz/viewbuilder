@@ -1,4 +1,4 @@
-use crate::{element::ElementKind, Element, ElementData};
+use crate::{node::NodeKind, Node, NodeData};
 use slotmap::{DefaultKey, SlotMap};
 
 mod iter;
@@ -8,7 +8,7 @@ use self::iter::Item;
 
 #[derive(Default)]
 pub struct Tree {
-    elements: SlotMap<DefaultKey, Element>,
+    elements: SlotMap<DefaultKey, Node>,
 }
 
 impl Tree {
@@ -27,8 +27,8 @@ impl Tree {
                     }
 
                     match &element.data {
-                        ElementData::Text(content) => s.push_str(&format!("\"{}\",", content)),
-                        ElementData::Container { size } => {
+                        NodeData::Text(content) => s.push_str(&format!("\"{}\",", content)),
+                        NodeData::Element { size } => {
                             s.push_str("{\n");
                             if let Some(size) = size {
                                 for _ in 0..level + 1 {
@@ -44,7 +44,7 @@ impl Tree {
                     }
                 }
                 Item::Pop { kind, level } => {
-                    if kind == ElementKind::Container {
+                    if kind == NodeKind::Container {
                         s.push('\n');
 
                         for _ in 0..level {
@@ -59,7 +59,7 @@ impl Tree {
         s
     }
 
-    pub fn insert(&mut self, element: Element) -> DefaultKey {
+    pub fn insert(&mut self, element: Node) -> DefaultKey {
         self.elements.insert(element)
     }
 }

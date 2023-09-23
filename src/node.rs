@@ -1,29 +1,27 @@
 use std::borrow::Cow;
-
 use slotmap::DefaultKey;
 use taffy::{prelude::Size, style::Dimension};
-
 use crate::{Click, Tree};
 
 #[derive(Debug, PartialEq, Eq)]
-pub enum ElementKind {
+pub enum NodeKind {
     Container,
     Text,
 }
 
-pub enum ElementData {
-    Container { size: Option<Size<Dimension>> },
+pub enum NodeData {
+    Element { size: Option<Size<Dimension>> },
     Text(Cow<'static, str>),
 }
 
 #[derive(Default)]
-pub struct ContainerBuilder {
+pub struct ElementBuilder {
     size: Option<Size<Dimension>>,
     on_click: Option<Box<dyn FnMut(Click)>>,
     pub children: Option<Vec<DefaultKey>>,
 }
 
-impl ContainerBuilder {
+impl ElementBuilder {
     pub fn child(&mut self, key: DefaultKey) -> &mut Self {
         if let Some(ref mut children) = self.children {
             children.push(key);
@@ -44,7 +42,7 @@ impl ContainerBuilder {
     }
 
     pub fn build(&mut self, tree: &mut Tree) -> DefaultKey {
-        let mut elem = Element::new(ElementData::Container {
+        let mut elem = Node::new(NodeData::Element {
             size: self.size.take(),
         });
         elem.children = self.children.take();
@@ -53,31 +51,31 @@ impl ContainerBuilder {
     }
 }
 
-pub struct Element {
-    pub data: ElementData,
+pub struct Node {
+    pub data: NodeData,
     pub children: Option<Vec<DefaultKey>>,
 }
 
-impl Element {
-    pub fn new(data: ElementData) -> Self {
+impl Node {
+    pub fn new(data: NodeData) -> Self {
         Self {
             data,
             children: None,
         }
     }
 
-    pub fn builder() -> ContainerBuilder {
-        ContainerBuilder::default()
+    pub fn builder() -> ElementBuilder {
+        ElementBuilder::default()
     }
 
     pub fn text(content: impl Into<Cow<'static, str>>) -> Self {
-        Self::new(ElementData::Text(content.into()))
+        Self::new(NodeData::Text(content.into()))
     }
 
-    pub fn kind(&self) -> ElementKind {
+    pub fn kind(&self) -> NodeKind {
         match self.data {
-            ElementData::Container { .. } => ElementKind::Container,
-            ElementData::Text(_) => ElementKind::Text,
+            NodeData::Element { .. } => NodeKind::Container,
+            NodeData::Text(_) => NodeKind::Text,
         }
     }
 }
