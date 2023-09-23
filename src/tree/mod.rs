@@ -4,7 +4,7 @@ use crate::{
 };
 use accesskit::{NodeClassSet, NodeId, TreeUpdate};
 use kurbo::Point;
-use skia_safe::Canvas;
+use skia_safe::{Canvas, Color4f};
 use slotmap::{DefaultKey, SlotMap};
 use std::{borrow::Cow, num::NonZeroU128};
 use taffy::{prelude::Size, style::Dimension, style_helpers::TaffyMaxContent, Taffy};
@@ -323,6 +323,11 @@ pub struct ElementRef<'a> {
 impl<'a> ElementRef<'a> {
     pub fn set_size(&mut self, size: Size<Dimension>) {
         self.element.size = Some(size);
+        self.inner.changes.push(self.key);
+    }
+
+    pub fn set_background_color(&mut self, color: Color4f) {
+        self.element.background_color = Some(color);
         self.inner.changes.push(self.key);
     }
 }
