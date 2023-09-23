@@ -15,6 +15,7 @@ use skia_safe::{
     gpu::{self, gl::FramebufferInfo, BackendRenderTarget, SurfaceOrigin},
     Color, ColorType, Surface,
 };
+use slotmap::DefaultKey;
 use std::{
     ffi::CString,
     num::NonZeroU32,
@@ -25,6 +26,8 @@ use winit::{
     event_loop::{ControlFlow, EventLoop},
     window::{Window, WindowBuilder},
 };
+
+use crate::Tree;
 
 // Guarantee the drop order inside the FnMut closure. `Window` _must_ be dropped after
 // `DirectContext`.
@@ -163,7 +166,7 @@ impl Renderer {
         }
     }
 
-    pub fn run(mut self) {
+    pub fn run(mut self, mut tree: Tree, root: DefaultKey) {
         let mut previous_frame_start = Instant::now();
 
         self.event_loop.run(move |event, _, control_flow| {
@@ -229,7 +232,11 @@ impl Renderer {
             if draw_frame {
                 let canvas = self.surface.canvas();
                 canvas.clear(Color::WHITE);
-                //renderer::render_frame(frame % 360, 12, 60, canvas);
+
+                // PAINT
+                tree.layout(root);
+                tree.paint(root, canvas);
+
                 self.gr_context.flush_and_submit();
                 self.gl_surface.swap_buffers(&self.gl_context).unwrap();
             }

@@ -6,6 +6,8 @@ use slotmap::DefaultKey;
 
 pub use tree::Tree;
 
+pub mod render;
+
 pub enum Event {
     Click(Click),
 }

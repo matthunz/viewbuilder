@@ -37,7 +37,13 @@ impl Builder {
         }));
         elem.children = self.children.take();
 
-        tree.insert(elem)
+        let key = tree.insert(elem);
+        for child in self.children.iter().flatten() {
+            let node = &mut tree.nodes.nodes[*child];
+            node.parent = Some(key);
+        }
+
+        key
     }
 }
 

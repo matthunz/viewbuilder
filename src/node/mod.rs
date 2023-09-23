@@ -1,4 +1,5 @@
 use accesskit::NodeBuilder;
+use skia_safe::{Canvas, Color4f, Paint, Rect};
 use slotmap::DefaultKey;
 use std::borrow::Cow;
 use taffy::{style::Style, Taffy};
@@ -19,6 +20,7 @@ pub enum NodeData {
 
 pub struct Node {
     pub data: NodeData,
+    pub parent: Option<DefaultKey>,
     pub children: Option<Vec<DefaultKey>>,
     pub layout_key: Option<DefaultKey>,
 }
@@ -27,6 +29,7 @@ impl Node {
     pub fn new(data: NodeData) -> Self {
         Self {
             data,
+            parent: None,
             children: None,
             layout_key: None,
         }
@@ -61,6 +64,18 @@ impl Node {
             let layout_key = taffy.new_leaf(style).unwrap();
             self.layout_key = Some(layout_key);
         }
+    }
+
+    pub fn paint(&mut self, taffy: &Taffy, canvas: &mut Canvas) {
+        let layout = taffy.layout(self.layout_key.unwrap()).unwrap();
+
+        let paint = Paint::new(Color4f::new(1., 0., 0., 1.), None);
+        canvas.draw_rect(
+            Rect::new(0., 0., layout.size.width, layout.size.height),
+            &paint,
+        );
+
+        dbg!(layout);
     }
 }
 

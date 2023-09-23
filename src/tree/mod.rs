@@ -1,17 +1,19 @@
-use std::{borrow::Cow, num::NonZeroU128};
-
 use crate::{
     node::{Element, NodeData, NodeKind},
     Event, Node,
 };
 use accesskit::{NodeClassSet, NodeId, TreeUpdate};
+use skia_safe::Canvas;
 use slotmap::{DefaultKey, SlotMap};
-
-mod iter;
-pub use iter::Iter;
+use std::{borrow::Cow, num::NonZeroU128};
 use taffy::{prelude::Size, style::Dimension, style_helpers::TaffyMaxContent, Taffy};
 
+mod iter;
 use self::iter::Item;
+pub use self::iter::Iter;
+
+mod iter_mut;
+pub use iter_mut::IterMut;
 
 struct Inner {
     pub(crate) changes: Vec<DefaultKey>,
@@ -33,13 +35,13 @@ impl Default for Inner {
 
 #[derive(Default)]
 pub struct Tree {
-    nodes: SlotMap<DefaultKey, Node>,
+    pub nodes: Nodes,
     inner: Inner,
 }
 
 impl Tree {
     pub fn send(&mut self, key: DefaultKey, event: Event) {
-        let node = &mut self.nodes[key];
+        let node = &mut self.nodes.nodes[key];
         let (mut handler, click) = match event {
             Event::Click(click) => {
                 if let NodeData::Element(Element {
@@ -55,7 +57,7 @@ impl Tree {
 
         handler(self, click);
 
-        let node = &mut self.nodes[key];
+        let node = &mut self.nodes.nodes[key];
         if let NodeData::Element(Element {
             ref mut on_click, ..
         }) = node.data
@@ -66,16 +68,15 @@ impl Tree {
         };
     }
 
-    pub fn iter(&self, root: DefaultKey) -> Iter {
-        Iter::new(self, root)
-    }
-
     pub fn display(&self, root: DefaultKey) -> String {
         let mut s = String::new();
 
-        for item in self.iter(root) {
+        for item in self.nodes.iter(root) {
             match item {
-                Item::Element { element, level } => {
+                Item::Node {
+                    node: element,
+                    level,
+                } => {
                     for _ in 0..level {
                         s.push_str("  ");
                     }
@@ -114,13 +115,13 @@ impl Tree {
     }
 
     pub fn insert(&mut self, node: impl Into<Node>) -> DefaultKey {
-        let key = self.nodes.insert(node.into());
+        let key = self.nodes.nodes.insert(node.into());
         self.inner.changes.push(key);
         key
     }
 
     pub fn element(&mut self, key: DefaultKey) -> ElementRef {
-        if let NodeData::Element(ref mut element) = self.nodes[key].data {
+        if let NodeData::Element(ref mut element) = self.nodes.nodes[key].data {
             ElementRef {
                 key,
                 element,
@@ -132,7 +133,7 @@ impl Tree {
     }
 
     pub fn set_text(&mut self, key: DefaultKey, content: impl Into<Cow<'static, str>>) {
-        if let NodeData::Text(ref mut dst) = self.nodes[key].data {
+        if let NodeData::Text(ref mut dst) = self.nodes.nodes[key].data {
             *dst = content.into();
         } else {
             todo!()
@@ -141,18 +142,18 @@ impl Tree {
 
     pub fn layout(&mut self, root: DefaultKey) {
         for key in &self.inner.changes {
-            let node = &mut self.nodes[*key];
+            let node = &mut self.nodes.nodes[*key];
             node.layout(&mut self.inner.taffy)
         }
 
-        let root_layout = self.nodes[root].layout_key.unwrap();
+        let root_layout = self.nodes.nodes[root].layout_key.unwrap();
         taffy::compute_layout(&mut self.inner.taffy, root_layout, Size::MAX_CONTENT).unwrap();
     }
 
     pub fn semantics(&mut self) -> TreeUpdate {
         let mut tree_update = TreeUpdate::default();
         for key in &self.inner.changes {
-            let node = &mut self.nodes[*key];
+            let node = &mut self.nodes.nodes[*key];
 
             let semantics_builder = node.semantics();
             let semantics = semantics_builder.build(&mut NodeClassSet::lock_global());
@@ -168,6 +169,29 @@ impl Tree {
             tree_update.nodes.push((id, semantics));
         }
         tree_update
+    }
+
+    pub fn paint(&mut self, root: DefaultKey, canvas: &mut Canvas) {
+        for item in self.nodes.iter_mut(root) {
+            if let iter_mut::Item::Node { node, level: _ } = item {
+                node.paint(&self.inner.taffy, canvas);
+            }
+        }
+    }
+}
+
+#[derive(Default)]
+pub struct Nodes {
+    pub nodes: SlotMap<DefaultKey, Node>,
+}
+
+impl Nodes {
+    pub fn iter(&self, root: DefaultKey) -> Iter {
+        Iter::new(self, root)
+    }
+
+    pub fn iter_mut(&mut self, root: DefaultKey) -> IterMut {
+        IterMut::new(self, root)
     }
 }
 

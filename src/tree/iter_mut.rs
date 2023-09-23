@@ -1,3 +1,5 @@
+use std::marker::PhantomData;
+
 use super::Nodes;
 use crate::{node::NodeKind, Node};
 use slotmap::DefaultKey;
@@ -8,33 +10,36 @@ enum Operation {
 }
 
 pub enum Item<'a> {
-    Node { node: &'a Node, level: usize },
+    Node { node: &'a mut Node, level: usize },
     Pop { kind: NodeKind, level: usize },
 }
 
-pub struct Iter<'a> {
-    tree: &'a Nodes,
+pub struct IterMut<'a> {
+    tree: *mut Nodes,
     stack: Vec<Operation>,
     count: usize,
+    _marker: PhantomData<&'a mut Nodes>,
 }
 
-impl<'a> Iter<'a> {
-    pub(crate) fn new(tree: &'a Nodes, root: DefaultKey) -> Self {
-        Iter {
+impl<'a> IterMut<'a> {
+    pub(crate) fn new(tree: &'a mut Nodes, root: DefaultKey) -> Self {
+        IterMut {
             tree,
             stack: vec![Operation::Key(root)],
             count: 0,
+            _marker: PhantomData,
         }
     }
 }
 
-impl<'a> Iterator for Iter<'a> {
+impl<'a> Iterator for IterMut<'a> {
     type Item = Item<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.stack.pop().map(|item| match item {
             Operation::Key(key) => {
-                let elem = &self.tree.nodes[key];
+                let tree = unsafe { &mut *self.tree };
+                let elem = &mut tree.nodes[key];
 
                 self.stack.push(Operation::Pop(elem.kind()));
                 for child in elem.children.iter().flatten().copied().map(Operation::Key) {

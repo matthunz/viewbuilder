@@ -1,13 +1,11 @@
-use render::Renderer;
 use taffy::prelude::Size;
+use viewbuilder::render::Renderer;
 use viewbuilder::{node::Element, Tree};
-
-mod render;
 
 fn main() {
     let mut tree = Tree::default();
 
-    Element::builder()
+    let root = Element::builder()
         .size(Size::from_points(100., 100.))
         .child(
             Element::builder()
@@ -20,6 +18,6 @@ fn main() {
         )
         .build(&mut tree);
 
-    let r = Renderer::new();
-    r.run()
+    let renderer = Renderer::new();
+    renderer.run(tree, root)
 }
