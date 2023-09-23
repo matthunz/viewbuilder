@@ -6,7 +6,7 @@ use taffy::{prelude::Size, style::Dimension};
 #[derive(Default)]
 pub struct Builder {
     size: Option<Size<Dimension>>,
-    on_click: Option<Box<dyn FnMut(Click)>>,
+    on_click: Option<Box<dyn FnMut(&mut Tree, Click)>>,
     pub children: Option<Vec<DefaultKey>>,
 }
 
@@ -20,7 +20,7 @@ impl Builder {
         self
     }
 
-    pub fn on_click(&mut self, handler: Box<dyn FnMut(Click)>) -> &mut Self {
+    pub fn on_click(&mut self, handler: Box<dyn FnMut(&mut Tree, Click)>) -> &mut Self {
         self.on_click = Some(handler);
         self
     }
@@ -43,11 +43,13 @@ impl Builder {
 
 pub struct Element {
     pub size: Option<Size<Dimension>>,
-    pub on_click: Option<Box<dyn FnMut(Click)>>,
+    pub on_click: Option<Box<dyn FnMut(&mut Tree, Click)>>,
 }
 
 impl Element {
     pub fn builder() -> Builder {
         Builder::default()
     }
+
+
 }

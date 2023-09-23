@@ -20,9 +20,7 @@ fn main() {
 
     let b = Element::builder()
         .size(Size::from_points(100., 100.))
-        .on_click(Box::new(|_| {
-            dbg!("click");
-        }))
+        .on_click(Box::new(move |tree, _| tree.set_text(a, "New!")))
         .child(a)
         .build(&mut tree);
 
@@ -31,7 +29,8 @@ fn main() {
         .child(b)
         .build(&mut tree);
 
-    tree.send(b, Event::Click(Click {}));
+    println!("{}", tree.display(root));
 
+    tree.send(b, Event::Click(Click {}));
     println!("{}", tree.display(root));
 }
