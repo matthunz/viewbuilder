@@ -1,3 +1,4 @@
+use accesskit::NodeBuilder;
 use slotmap::DefaultKey;
 use std::borrow::Cow;
 
@@ -18,6 +19,7 @@ pub enum NodeData {
 pub struct Node {
     pub data: NodeData,
     pub children: Option<Vec<DefaultKey>>,
+
 }
 
 impl Node {
@@ -25,6 +27,7 @@ impl Node {
         Self {
             data,
             children: None,
+       
         }
     }
 
@@ -37,6 +40,10 @@ impl Node {
             NodeData::Element { .. } => NodeKind::Container,
             NodeData::Text(_) => NodeKind::Text,
         }
+    }
+
+    pub fn semantics(&self) -> NodeBuilder {
+        NodeBuilder::default()
     }
 }
 

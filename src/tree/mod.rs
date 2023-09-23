@@ -1,9 +1,10 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, num::NonZeroU128};
 
 use crate::{
     node::{Element, NodeKind},
     Event, Node, NodeData,
 };
+use accesskit::{NodeClassSet, NodeId, TreeUpdate};
 use slotmap::{DefaultKey, SlotMap};
 
 mod iter;
@@ -12,9 +13,20 @@ use taffy::{prelude::Size, style::Dimension};
 
 use self::iter::Item;
 
-#[derive(Default)]
 struct Inner {
     pub(crate) changes: Vec<DefaultKey>,
+    next_id: NonZeroU128,
+    unused_ids: Vec<NodeId>,
+}
+
+impl Default for Inner {
+    fn default() -> Self {
+        Self {
+            changes: Default::default(),
+            next_id: NonZeroU128::MIN,
+            unused_ids: Default::default(),
+        }
+    }
 }
 
 #[derive(Default)]
@@ -100,7 +112,9 @@ impl Tree {
     }
 
     pub fn insert(&mut self, node: impl Into<Node>) -> DefaultKey {
-        self.nodes.insert(node.into())
+        let key = self.nodes.insert(node.into());
+        self.inner.changes.push(key);
+        key
     }
 
     pub fn element(&mut self, key: DefaultKey) -> ElementRef {
@@ -121,6 +135,27 @@ impl Tree {
         } else {
             todo!()
         }
+    }
+
+    pub fn semantics(&mut self) -> TreeUpdate {
+        let mut tree_update = TreeUpdate::default();
+        for key in &self.inner.changes {
+            let node = &mut self.nodes[*key];
+
+            let semantics_builder = node.semantics();
+            let semantics = semantics_builder.build(&mut NodeClassSet::lock_global());
+
+            let id = if let Some(id) = self.inner.unused_ids.pop() {
+                id
+            } else {
+                let id = self.inner.next_id;
+                self.inner.next_id = self.inner.next_id.checked_add(1).unwrap();
+                NodeId(id)
+            };
+
+            tree_update.nodes.push((id, semantics));
+        }
+        tree_update
     }
 }
 

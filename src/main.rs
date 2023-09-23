@@ -29,8 +29,5 @@ fn main() {
         .child(b)
         .build(&mut tree);
 
-    println!("{}", tree.display(root));
-
-    tree.send(b, Event::Click(Click {}));
-    println!("{}", tree.display(root));
+    dbg!(tree.semantics());
 }
