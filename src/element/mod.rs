@@ -27,8 +27,8 @@ impl Default for Element {
 }
 
 macro_rules! make_builder_fn {
-    ($fn_name:ident, $set_fn_name:ident, $ty:path) => {
-        /// Set the size of this element.
+    ($name:literal, $fn_name:ident, $set_fn_name:ident, $ty:path) => {
+        #[doc = concat!("Set the ", $name, " of this element.")]
         pub fn $fn_name(&mut self, $fn_name: $ty) -> &mut Self {
             self.data_mut().$set_fn_name($fn_name);
             self
@@ -52,18 +52,34 @@ impl Element {
         self
     }
 
-    make_builder_fn!(size, set_size, Size<Dimension>);
-    make_builder_fn!(flex_direction, set_flex_direction, FlexDirection);
-    make_builder_fn!(align_items, set_align_items, AlignItems);
-    make_builder_fn!(justify_content, set_justify_content, JustifyContent);
+    make_builder_fn!("size", size, set_size, Size<Dimension>);
+    make_builder_fn!(
+        "flex direction",
+        flex_direction,
+        set_flex_direction,
+        FlexDirection
+    );
+    make_builder_fn!("item alignment", align_items, set_align_items, AlignItems);
+    make_builder_fn!(
+        "content justification",
+        justify_content,
+        set_justify_content,
+        JustifyContent
+    );
 
     make_builder_fn!(
+        "click handler",
         on_click,
         set_on_click,
         Box<dyn FnMut(&mut Context, event::Click)>
     );
 
-    make_builder_fn!(background_color, set_background_color, Color4f);
+    make_builder_fn!(
+        "background color",
+        background_color,
+        set_background_color,
+        Color4f
+    );
 
     pub fn data_mut(&mut self) -> &mut ElementData {
         self.data.as_mut().unwrap()
