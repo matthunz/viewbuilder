@@ -78,14 +78,17 @@ pub struct ElementData {
 }
 
 impl ElementData {
+    /// Get a reference to the attribute of this kind if present.
     pub fn attr(&self, kind: AttributeKind) -> Option<&Attribute> {
         self.attributes.iter().find(|attr| attr.kind() == kind)
     }
 
+    /// Get a mutable reference to the attribute of this kind if present.
     pub fn attr_mut(&mut self, kind: AttributeKind) -> Option<&mut Attribute> {
         self.attributes.iter_mut().find(|attr| attr.kind() == kind)
     }
 
+    /// Remove an attribute by kind from this element.
     pub fn remove(&mut self, kind: AttributeKind) -> Option<Attribute> {
         self.attributes
             .iter()
