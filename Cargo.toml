@@ -29,4 +29,5 @@ raw-window-handle = { version = "0.5.2", optional = true }
 skia-safe = { version = "0.64.0", features = ["gl"], optional = true }
 winit = { version = "0.28.6", optional = true }
 interpolation = "0.3.0"
+tokio = { version = "1.32.0", features = ["full"] }
 

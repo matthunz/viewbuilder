@@ -20,8 +20,10 @@ use slotmap::DefaultKey;
 use std::{
     ffi::CString,
     num::NonZeroU32,
-    time::{Duration, Instant}, sync::mpsc,
+    sync::{mpsc, Arc},
+    time::{Duration, Instant},
 };
+use tokio::sync::Notify;
 use winit::{
     event::{ElementState, Event, KeyboardInput, VirtualKeyCode, WindowEvent},
     event_loop::{ControlFlow, EventLoop, EventLoopBuilder},
@@ -48,6 +50,7 @@ pub struct Renderer {
     fb_info: FramebufferInfo,
     pub tx: mpsc::Sender<UserEvent>,
     rx: mpsc::Receiver<UserEvent>,
+    pub notify: Arc<Notify>,
 }
 
 impl Renderer {
@@ -172,6 +175,7 @@ impl Renderer {
             fb_info,
             tx,
             rx,
+            notify: Arc::new(Notify::default()),
         }
     }
 
@@ -322,6 +326,8 @@ impl Renderer {
                 previous_frame_start = frame_start;
             }
             if draw_frame {
+                self.notify.notify_waiters();
+
                 let canvas = self.surface.canvas();
                 canvas.clear(Color::WHITE);
 

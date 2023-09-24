@@ -1,7 +1,4 @@
-use std::{
-    thread::{self, sleep},
-    time::{Duration, Instant},
-};
+use std::time::Instant;
 
 use skia_safe::Color4f;
 use taffy::{
@@ -10,7 +7,8 @@ use taffy::{
 };
 use viewbuilder::{render::UserEvent, Element, Renderer, Tree};
 
-fn main() {
+#[tokio::main]
+async fn main() {
     // TODO this is really early stage, an animation frame should be requested
 
     let mut tree = Tree::default();
@@ -23,8 +21,9 @@ fn main() {
 
     let renderer = Renderer::new();
     let tx = renderer.tx.clone();
+    let notify = renderer.notify.clone();
 
-    thread::spawn(move || {
+    tokio::spawn(async move {
         let start = Instant::now();
         loop {
             let t = (Instant::now() - start).as_millis() as f32;
@@ -36,7 +35,7 @@ fn main() {
             })))
             .unwrap();
 
-            sleep(Duration::from_millis(5))
+            notify.notified().await;
         }
     });
 
