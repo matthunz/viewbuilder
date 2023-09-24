@@ -39,7 +39,7 @@ but you can bring your own state management tools or build your own framework us
 ### Hello World
 ```rust
 let mut tree = Tree::default();
-let root = Element::builder()
+let root = Element::new()
     .align_items(AlignItems::Center)
     .justify_content(JustifyContent::Center)
     .child(tree.insert("Hello World!"))
@@ -53,10 +53,10 @@ viewbuilder::run(tree, root)
 fn button(
     tree: &mut Tree,
     label: &'static str,
-    mut f: impl FnMut(&mut Tree) + 'static,
+    mut handler: impl FnMut(&mut Tree) + 'static,
 ) -> ElementKey {
-    Element::builder()
-        .on_click(Box::new(move |tree, _event| f(tree)))
+    Element::new()
+        .on_click(Box::new(move |tree, _event| handler(tree)))
         .background_color(Color4f::new(1., 1., 0., 1.))
         .child(tree.insert(label))
         .build(tree)
