@@ -49,7 +49,7 @@ pub struct Renderer {
 impl Renderer {
     pub fn new() -> Self {
         let el = EventLoop::new();
-        let winit_window_builder = WindowBuilder::new().with_title("rust-skia-gl-window");
+        let winit_window_builder = WindowBuilder::new().with_title("Viewbuilder");
 
         let template = ConfigTemplateBuilder::new()
             .with_alpha_size(8)
@@ -274,11 +274,21 @@ impl Renderer {
                             }
                         }
                         ElementState::Released => {
-                            if let Some(clicked) = clicked.take() {
-                                tree.send(
-                                    clicked,
-                                    crate::Event::Click(event::Click { target: clicked }),
-                                )
+                            if let Some(pos) = cursor_pos {
+                                if let Some(clicked) = clicked.take() {
+                                    if let Some(target) =
+                                        tree.target(root, Point::new(pos.x, pos.y))
+                                    {
+                                        if target == clicked {
+                                            tree.send(
+                                                clicked,
+                                                crate::Event::Click(event::Click {
+                                                    target: clicked,
+                                                }),
+                                            )
+                                        }
+                                    }
+                                }
                             }
                         }
                     },
