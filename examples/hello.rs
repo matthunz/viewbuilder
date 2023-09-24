@@ -1,8 +1,13 @@
-use viewbuilder::Tree;
+use taffy::style::{AlignItems, JustifyContent};
+use viewbuilder::{node::Element, Tree};
 
 fn main() {
     let mut tree = Tree::default();
-    let text = tree.insert("Hello World!");
+    let root = Element::builder()
+        .align_items(AlignItems::Center)
+        .justify_content(JustifyContent::Center)
+        .child(tree.insert("Hello World!"))
+        .build(&mut tree);
 
-    viewbuilder::run(tree, text)
+    viewbuilder::run(tree, root)
 }

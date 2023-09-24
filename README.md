@@ -2,6 +2,9 @@
 
 [Examples](https://github.com/matthunz/viewbuilder/tree/main/examples)
 
+
+
+
 Cross-platform user interface framework for Rust.
 
 This crate provides an HTML-like render API for the backend of a UI.
@@ -16,12 +19,12 @@ but you can bring your own state management tools or build your own framework us
  - High performance rendering with [rust-skia](https://github.com/rust-skia/rust-skia)
 
 ```rust
-use viewbuilder::Tree;
+let mut tree = Tree::default();
+let root = Element::builder()
+    .align_items(AlignItems::Center)
+    .justify_content(JustifyContent::Center)
+    .child(tree.insert("Hello World!"))
+    .build(&mut tree);
 
-fn main() {
-    let mut tree = Tree::default();
-    let text = tree.insert("Hello World!");
-
-    viewbuilder::run(tree, text)
-}
+viewbuilder::run(tree, root)
 ```

@@ -4,7 +4,7 @@ use skia_safe::Color4f;
 use slotmap::DefaultKey;
 use taffy::{
     prelude::Size,
-    style::{Dimension, FlexDirection},
+    style::{Dimension, FlexDirection, AlignItems, JustifyContent},
 };
 
 #[derive(Default)]
@@ -53,6 +53,14 @@ impl Builder {
 
     pub fn flex_direction(&mut self, flex_direction: FlexDirection) -> &mut Self {
         self.flex_direction = Some(flex_direction);
+        self
+    }
+
+    pub fn align_items(&mut self, align_items: AlignItems) -> &mut Self {
+        self
+    }
+
+    pub fn justify_content(&mut self, justify_content: JustifyContent) -> &mut Self {
         self
     }
 
