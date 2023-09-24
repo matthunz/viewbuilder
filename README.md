@@ -1,5 +1,7 @@
 # Viewbuilder
 
+[Examples](https://github.com/matthunz/viewbuilder/tree/main/examples)
+
 Cross-platform user interface framework for Rust.
 
 This crate provides an HTML-like render API for the backend of a UI.
