@@ -20,15 +20,17 @@ use slotmap::DefaultKey;
 use std::{
     ffi::CString,
     num::NonZeroU32,
-    time::{Duration, Instant},
+    time::{Duration, Instant}, sync::mpsc,
 };
 use winit::{
     event::{ElementState, Event, KeyboardInput, VirtualKeyCode, WindowEvent},
-    event_loop::{ControlFlow, EventLoop},
+    event_loop::{ControlFlow, EventLoop, EventLoopBuilder},
     window::{Window, WindowBuilder},
 };
 
 use crate::{event, Tree};
+
+pub struct UserEvent(pub Box<dyn FnOnce(&mut Tree) + Send>);
 
 // Guarantee the drop order inside the FnMut closure. `Window` _must_ be dropped after
 // `DirectContext`.
@@ -40,15 +42,17 @@ pub struct Renderer {
     gr_context: skia_safe::gpu::DirectContext,
     gl_context: PossiblyCurrentContext,
     window: Window,
-    event_loop: EventLoop<()>,
+    event_loop: EventLoop<UserEvent>,
     num_samples: usize,
     stencil_size: usize,
     fb_info: FramebufferInfo,
+    pub tx: mpsc::Sender<UserEvent>,
+    rx: mpsc::Receiver<UserEvent>,
 }
 
 impl Renderer {
     pub fn new() -> Self {
-        let el = EventLoop::new();
+        let el = EventLoopBuilder::with_user_event().build();
         let winit_window_builder = WindowBuilder::new().with_title("Viewbuilder");
 
         let template = ConfigTemplateBuilder::new()
@@ -154,6 +158,8 @@ impl Renderer {
 
         let surface = create_surface(&window, fb_info, &mut gr_context, num_samples, stencil_size);
 
+        let (tx, rx) = mpsc::channel();
+
         Self {
             surface,
             gl_surface,
@@ -164,6 +170,8 @@ impl Renderer {
             num_samples,
             stencil_size,
             fb_info,
+            tx,
+            rx,
         }
     }
 
@@ -174,9 +182,15 @@ impl Renderer {
         let mut cursor_pos = None;
         let mut clicked = None;
 
+        let proxy = self.event_loop.create_proxy();
+
         self.event_loop.run(move |event, _, control_flow| {
             let frame_start = Instant::now();
             let mut draw_frame = false;
+
+            if let Ok(event) = self.rx.try_recv() {
+                proxy.send_event(event).ok().unwrap();
+            }
 
             #[allow(deprecated)]
             match event {
@@ -297,6 +311,7 @@ impl Renderer {
                 Event::RedrawRequested(_) => {
                     draw_frame = true;
                 }
+                Event::UserEvent(UserEvent(update)) => update(&mut tree),
                 _ => (),
             }
             let expected_frame_length_seconds = 1.0 / 20.0;

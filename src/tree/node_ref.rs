@@ -1,6 +1,7 @@
 use crate::{element::ElementData, node::NodeData, Node, Tree};
 use skia_safe::Color4f;
 use slotmap::DefaultKey;
+use taffy::{prelude::Size, style::Dimension};
 
 /// Reference to an element in a tree.
 pub struct NodeRef<'a> {
@@ -37,6 +38,12 @@ impl<'a> NodeRef<'a> {
     /// Update the background color.
     pub fn set_background_color(&mut self, color: Color4f) {
         self.as_mut().background_color = Some(color);
+        self.tree.inner.changes.push(self.key);
+    }
+
+    /// Update the background color.
+    pub fn set_size(&mut self, size: Size<Dimension>) {
+        self.as_mut().size = Some(size);
         self.tree.inner.changes.push(self.key);
     }
 }

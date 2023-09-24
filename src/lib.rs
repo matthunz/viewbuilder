@@ -16,7 +16,7 @@ pub use tree::{NodeRef, Tree};
 pub mod element;
 pub use element::Element;
 
-mod render;
+pub mod render;
 pub use render::Renderer;
 
 pub mod event;
