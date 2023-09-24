@@ -6,7 +6,6 @@
 //! It supports layout, drawing, and accessability.
 
 pub mod node;
-
 pub use node::Node;
 
 pub mod tree;
@@ -32,7 +31,11 @@ slotmap::new_key_type! {
 ///
 /// This will create a new window and render the tree,
 /// propagating events and re-rendering as they occuring.
-pub fn run(tree: Context, root: NodeKey) {
+pub fn run(f: impl FnOnce(&mut Context) -> NodeKey) {
     let renderer = Renderer::new();
-    renderer.run(tree, root)
+
+    let mut cx = Context::default();
+    let root = f(&mut cx);
+
+    renderer.run(cx, root)
 }

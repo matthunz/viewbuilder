@@ -28,21 +28,22 @@ pub enum NodeData {
     Text(Cow<'static, str>),
 }
 
+/// Node of a tree.
 pub struct Node {
     /// Data type of the node.
-    pub data: NodeData,
+    pub(crate) data: NodeData,
 
     /// Parent node id.
-    pub parent: Option<NodeKey>,
+    pub(crate)  parent: Option<NodeKey>,
 
     /// Child node ids.
-    pub children: Option<Vec<NodeKey>>,
+    pub(crate)  children: Option<Vec<NodeKey>>,
 
     /// Layout key for the taffy node.
-    pub layout_key: Option<DefaultKey>,
+    pub(crate)  layout_key: Option<DefaultKey>,
 
     /// Absolute layout of the node, relative to the window.
-    pub layout: Option<Layout>,
+    pub(crate)  layout: Option<Layout>,
 }
 
 impl Node {

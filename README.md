@@ -38,15 +38,16 @@ but you can bring your own state management tools or build your own framework us
 
 ### Hello World
 ```rust
-fn main() {
-    let mut cx = Context::default();
-    let root = Element::new()
+fn app(cx: &mut Context) -> NodeKey {
+    Element::new()
         .align_items(AlignItems::Center)
         .justify_content(JustifyContent::Center)
         .child(cx.insert("Hello World!"))
-        .build(&mut cx);
+        .build(cx)
+}
 
-    viewbuilder::run(tree, root)
+fn main() {
+    viewbuilder::run(app)
 }
 ```
 

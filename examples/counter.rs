@@ -17,32 +17,33 @@ fn button(
         .build(cx)
 }
 
-fn main() {
-    let mut cx = Context::default();
-
+fn app(cx: &mut Context) -> NodeKey {
     let inc_count = Rc::new(AtomicI64::new(0));
     let dec_count = inc_count.clone();
 
     let text = cx.insert("0");
-    let root = Element::new()
+    
+    Element::new()
         .flex_direction(FlexDirection::Column)
-        .child(Element::new().child(text).build(&mut cx))
+        .child(Element::new().child(text).build(cx))
         .child(
             Element::new()
                 .flex_direction(FlexDirection::Row)
-                .child(button(&mut cx, "More!", move |cx| {
+                .child(button(cx, "More!", move |cx| {
                     inc_count.fetch_add(1, Ordering::SeqCst);
                     cx.node(text)
                         .set_text(inc_count.load(Ordering::SeqCst).to_string())
                 }))
-                .child(button(&mut cx, "Less!", move |cx| {
+                .child(button(cx, "Less!", move |cx| {
                     dec_count.fetch_sub(1, Ordering::SeqCst);
                     cx.node(text)
                         .set_text(dec_count.load(Ordering::SeqCst).to_string())
                 }))
-                .build(&mut cx),
+                .build(cx),
         )
-        .build(&mut cx);
+        .build(cx)
+}
 
-    viewbuilder::run(cx, root)
+fn main() {
+    viewbuilder::run(app)
 }
