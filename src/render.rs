@@ -19,6 +19,7 @@ use skia_safe::{
 
 use std::{
     ffi::CString,
+    future::Future,
     num::NonZeroU32,
     sync::{mpsc, Arc},
     time::{Duration, Instant},
@@ -179,6 +180,43 @@ impl Renderer {
         }
     }
 
+    pub fn animation(
+        &self,
+        _key: NodeKey,
+        min: f32,
+        max: f32,
+        f: impl Fn(&mut Context, f32) + Send + Sync + 'static,
+    ) -> impl Future<Output = ()> {
+        let tx = self.tx.clone();
+        let notify = self.notify.clone();
+
+        let mut is_forward = true;
+        let mut start = Instant::now();
+
+        async move {
+            let f = Arc::new(f);
+            loop {
+                let elapsed = Instant::now() - start;
+                let millis = elapsed.as_millis() as f32;
+
+                let (begin, end) = if is_forward { (min, max) } else { (max, min) };
+                let interpolated: f32 = interpolation::lerp(&begin, &end, &(millis / max));
+                let size = interpolated.min(max).max(min);
+
+                if elapsed >= Duration::from_secs(1) {
+                    start = Instant::now();
+                    is_forward = !is_forward;
+                }
+
+                let f2 = f.clone();
+                tx.send(UserEvent(Box::new(move |cx| f2(cx, size))))
+                    .unwrap();
+
+                notify.notified().await;
+            }
+        }
+    }
+
     pub fn run(mut self, mut tree: Context, root: NodeKey) {
         let mut previous_frame_start = Instant::now();
 
@@ -321,9 +359,8 @@ impl Renderer {
                 Event::UserEvent(UserEvent(update)) => update(&mut tree),
                 _ => (),
             }
-            let expected_frame_length_seconds = 1.0 / 20.0;
-            let frame_duration = Duration::from_secs_f32(expected_frame_length_seconds);
 
+            let frame_duration = Duration::from_millis(10);
             if frame_start - previous_frame_start > frame_duration {
                 draw_frame = true;
                 previous_frame_start = frame_start;
