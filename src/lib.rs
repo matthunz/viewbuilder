@@ -6,16 +6,15 @@
 //! It supports layout, drawing, and accessability.
 //!
 //! ```
+//! use viewbuilder::{Context, Element, NodeKey};
+//! use taffy::prelude::{AlignItems, JustifyContent};
+//! 
 //! fn app(cx: &mut Context) -> NodeKey {
 //!     Element::new()
 //!         .align_items(AlignItems::Center)
 //!         .justify_content(JustifyContent::Center)
 //!         .child(cx.insert("Hello World!"))
 //!         .build(cx)
-//! }
-//! 
-//! fn main() {
-//!     viewbuilder::run(app)
 //! }
 //! ```
 //!
