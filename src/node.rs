@@ -80,16 +80,16 @@ impl Node {
     pub fn layout(&mut self, taffy: &mut Taffy) {
         let mut style = Style::default();
         if let NodeData::Element(ref mut elem) = self.data {
-            if let Some(size) = elem.size {
+            if let Some(size) = elem.size() {
                 style.size = size;
             }
 
-            if let Some(flex_direction) = elem.flex_direction {
+            if let Some(flex_direction) = elem.flex_direction() {
                 style.flex_direction = flex_direction;
             }
 
-            style.align_items = elem.align_items;
-            style.justify_content = elem.justify_content;
+            style.align_items = elem.align_items();
+            style.justify_content = elem.justify_content();
         }
 
         if let Some(layout_key) = self.layout_key {
@@ -125,7 +125,7 @@ impl Node {
         let layout = self.layout.as_ref().unwrap();
         match &self.data {
             NodeData::Element(elem) => {
-                if let Some(background_color) = elem.background_color {
+                if let Some(background_color) = elem.background_color() {
                     let paint = Paint::new(background_color, None);
                     canvas.draw_rect(
                         Rect::new(

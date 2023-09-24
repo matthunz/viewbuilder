@@ -68,13 +68,13 @@ impl Context {
         let node = &mut self.tree[key];
         let handler = if let NodeData::Element(ref mut elem) = node.data {
             match event {
-                Event::Click(click) => elem.on_click.take().map(|f| Handler::Click(f, click)),
+                Event::Click(click) => elem.on_click().take().map(|f| Handler::Click(f, click)),
                 Event::MouseIn(mouse_in) => elem
-                    .on_mouse_in
+                    .on_mouse_in()
                     .take()
                     .map(|f| Handler::MouseIn(f, mouse_in)),
                 Event::MouseOut(mouse_out) => elem
-                    .on_mouse_out
+                    .on_mouse_out()
                     .take()
                     .map(|f| Handler::MouseOut(f, mouse_out)),
             }
@@ -101,9 +101,9 @@ impl Context {
         if let Some(handler_fn) = handler_fn {
             if let NodeData::Element(ref mut elem) = node.data {
                 match handler_fn {
-                    HandlerFn::Click(f) => elem.on_click = Some(f),
-                    HandlerFn::MouseIn(f) => elem.on_mouse_in = Some(f),
-                    HandlerFn::MouseOut(f) => elem.on_mouse_out = Some(f),
+                    HandlerFn::Click(f) => elem.set_on_click(f),
+                    HandlerFn::MouseIn(f) => elem.set_on_mouse_in(f),
+                    HandlerFn::MouseOut(f) => elem.set_on_mouse_out(f),
                 }
             }
         }

@@ -20,6 +20,16 @@ impl Default for Element {
     }
 }
 
+macro_rules! make_builder_fn {
+    ($fn_name:ident, $set_fn_name:ident, $ty:path) => {
+        /// Set the size of this element.
+        pub fn $fn_name(&mut self, $fn_name: $ty) -> &mut Self {
+            self.data_mut().$set_fn_name($fn_name);
+            self
+        }
+    };
+}
+
 impl Element {
     /// Create a new element.
     pub fn new() -> Self {
@@ -36,59 +46,18 @@ impl Element {
         self
     }
 
-    /// Set the click handler for this element.
-    pub fn on_click(&mut self, handler: Box<dyn FnMut(&mut Context, event::Click)>) -> &mut Self {
-        self.data_mut().on_click = Some(handler);
-        self
-    }
+    make_builder_fn!(size, set_size, Size<Dimension>);
+    make_builder_fn!(flex_direction, set_flex_direction, FlexDirection);
+    make_builder_fn!(align_items, set_align_items, AlignItems);
+    make_builder_fn!(justify_content, set_justify_content, JustifyContent);
 
-    /// Set the mouse-in handler for this element.
-    pub fn on_mouse_in(
-        &mut self,
-        handler: Box<dyn FnMut(&mut Context, event::MouseIn)>,
-    ) -> &mut Self {
-        self.data_mut().on_mouse_in = Some(handler);
-        self
-    }
+    make_builder_fn!(
+        on_click,
+        set_on_click,
+        Box<dyn FnMut(&mut Context, event::Click)>
+    );
 
-    /// Set the mouse-out handler for this element.
-    pub fn on_mouse_out(
-        &mut self,
-        handler: Box<dyn FnMut(&mut Context, event::MouseOut)>,
-    ) -> &mut Self {
-        self.data_mut().on_mouse_out = Some(handler);
-        self
-    }
-
-    /// Set the size of this element.
-    pub fn size(&mut self, size: Size<Dimension>) -> &mut Self {
-        self.data_mut().size = Some(size);
-        self
-    }
-
-    /// Set the flex direction of this element.
-    pub fn flex_direction(&mut self, flex_direction: FlexDirection) -> &mut Self {
-        self.data_mut().flex_direction = Some(flex_direction);
-        self
-    }
-
-    /// Set the item alignment of this element.
-    pub fn align_items(&mut self, align_items: AlignItems) -> &mut Self {
-        self.data_mut().align_items = Some(align_items);
-        self
-    }
-
-    /// Set the content justification of this element.
-    pub fn justify_content(&mut self, justify_content: JustifyContent) -> &mut Self {
-        self.data_mut().justify_content = Some(justify_content);
-        self
-    }
-
-    /// Set the background color of this element.
-    pub fn background_color(&mut self, color: Color4f) -> &mut Self {
-        self.data_mut().background_color = Some(color);
-        self
-    }
+    make_builder_fn!(background_color, set_background_color, Color4f);
 
     pub fn data_mut(&mut self) -> &mut ElementData {
         self.data.as_mut().unwrap()
@@ -108,15 +77,158 @@ impl Element {
     }
 }
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum AttributeKind {
+    Size,
+    FlexDirection,
+    AlignItems,
+    JustifyContent,
+    OnClick,
+    OnMouseIn,
+    OnMouseOut,
+    BackgroundColor,
+}
+
+pub enum AttributeValue {
+    Size(Size<Dimension>),
+    FlexDirection(FlexDirection),
+    AlignItems(AlignItems),
+    JustifyContent(JustifyContent),
+    OnClick(Box<dyn FnMut(&mut Context, event::Click)>),
+    OnMouseIn(Box<dyn FnMut(&mut Context, event::MouseIn)>),
+    OnMouseOut(Box<dyn FnMut(&mut Context, event::MouseOut)>),
+    Color(Color4f),
+}
+
+pub struct Attribute {
+    kind: AttributeKind,
+    value: AttributeValue,
+}
+
+impl Attribute {
+    pub fn kind(&self) -> AttributeKind {
+        self.kind
+    }
+
+    pub fn value(&self) -> &AttributeValue {
+        &self.value
+    }
+}
+
+macro_rules! make_style_fn {
+    ($fn_name:ident, $set_fn_name:ident, $ty:path, $kind_ty:ident, $value_ty:ident) => {
+        pub fn $fn_name(&self) -> Option<$ty> {
+            self.attr(AttributeKind::$kind_ty)
+                .map(|attr| match attr.value {
+                    AttributeValue::$value_ty(size) => size,
+                    _ => todo!(),
+                })
+        }
+
+        pub fn $set_fn_name(&mut self, $fn_name: $ty) {
+            if let Some(attr_val) =
+                self.attr_mut(AttributeKind::$kind_ty)
+                    .map(|attr| match attr.value {
+                        AttributeValue::$value_ty(ref mut val) => val,
+                        _ => todo!(),
+                    })
+            {
+                *attr_val = $fn_name;
+            } else {
+                self.attributes.push(Attribute {
+                    kind: AttributeKind::$kind_ty,
+                    value: AttributeValue::$value_ty($fn_name),
+                })
+            }
+        }
+    };
+
+    ($fn_name:ident, $set_fn_name:ident, $ty:path, $kind_ty:ident) => {
+        make_style_fn!($fn_name, $set_fn_name, $ty, $kind_ty, $kind_ty);
+    };
+}
+
+macro_rules! make_handler_fn {
+    ($fn_name:ident, $set_fn_name:ident, $ty:ident, $kind_ty:ident) => {
+        pub fn $fn_name(&mut self) -> Option<Box<dyn FnMut(&mut Context, event::$ty)>> {
+            if let Some(attr) = self.remove(AttributeKind::$kind_ty) {
+                match attr.value {
+                    AttributeValue::$kind_ty(f) => Some(f),
+                    _ => todo!(),
+                }
+            } else {
+                None
+            }
+        }
+
+        pub fn $set_fn_name(&mut self, handler: Box<dyn FnMut(&mut Context, event::$ty)>) {
+            if let Some(attr_val) =
+                self.attr_mut(AttributeKind::$kind_ty)
+                    .map(|attr| match attr.value {
+                        AttributeValue::$kind_ty(ref mut val) => val,
+                        _ => todo!(),
+                    })
+            {
+                *attr_val = handler;
+            } else {
+                self.attributes.push(Attribute {
+                    kind: AttributeKind::$kind_ty,
+                    value: AttributeValue::$kind_ty(handler),
+                })
+            }
+        }
+    };
+}
+
 /// Data of an element.
 #[derive(Default)]
 pub struct ElementData {
-    pub(crate) size: Option<Size<Dimension>>,
-    pub(crate) on_click: Option<Box<dyn FnMut(&mut Context, event::Click)>>,
-    pub(crate) on_mouse_in: Option<Box<dyn FnMut(&mut Context, event::MouseIn)>>,
-    pub(crate) on_mouse_out: Option<Box<dyn FnMut(&mut Context, event::MouseOut)>>,
-    pub(crate) background_color: Option<Color4f>,
-    pub(crate) flex_direction: Option<FlexDirection>,
-    pub(crate) align_items: Option<AlignItems>,
-    pub(crate) justify_content: Option<JustifyContent>,
+    attributes: Vec<Attribute>,
+}
+
+impl ElementData {
+    pub fn attr(&self, kind: AttributeKind) -> Option<&Attribute> {
+        self.attributes.iter().find(|attr| attr.kind == kind)
+    }
+
+    pub fn attr_mut(&mut self, kind: AttributeKind) -> Option<&mut Attribute> {
+        self.attributes.iter_mut().find(|attr| attr.kind == kind)
+    }
+
+    pub fn remove(&mut self, kind: AttributeKind) -> Option<Attribute> {
+        self.attributes
+            .iter()
+            .position(|attr| attr.kind == kind)
+            .map(|idx| self.attributes.remove(idx))
+    }
+
+    make_style_fn!(size, set_size, Size<Dimension>, Size, Size);
+
+    make_style_fn!(
+        flex_direction,
+        set_flex_direction,
+        FlexDirection,
+        FlexDirection
+    );
+
+    make_style_fn!(align_items, set_align_items, AlignItems, AlignItems);
+
+    make_style_fn!(
+        justify_content,
+        set_justify_content,
+        JustifyContent,
+        JustifyContent
+    );
+
+    make_style_fn!(
+        background_color,
+        set_background_color,
+        Color4f,
+        BackgroundColor,
+        Color
+    );
+
+    make_handler_fn!(on_click, set_on_click, Click, OnClick);
+    make_handler_fn!(on_mouse_in, set_on_mouse_in, MouseIn, OnMouseIn);
+    make_handler_fn!(on_mouse_out, set_on_mouse_out, MouseOut, OnMouseOut);
 }

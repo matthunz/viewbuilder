@@ -1,5 +1,4 @@
 use crate::{
-    element::ElementData,
     node::{NodeData, NodeKind},
     Node, NodeKey,
 };
@@ -89,9 +88,9 @@ impl Tree {
 
                     match &element.data {
                         NodeData::Text(content) => s.push_str(&format!("\"{}\",", content)),
-                        NodeData::Element(ElementData { size, .. }) => {
+                        NodeData::Element(data) => {
                             s.push_str("{\n");
-                            if let Some(size) = size {
+                            if let Some(size) = data.size() {
                                 for _ in 0..level + 1 {
                                     s.push_str("  ");
                                 }

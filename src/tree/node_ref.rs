@@ -1,5 +1,5 @@
 use crate::{element::ElementData, node::NodeData, Context, Node, NodeKey};
-use skia_safe::Color4f;
+
 use std::borrow::Cow;
 use taffy::{prelude::Size, style::Dimension};
 
@@ -55,15 +55,9 @@ impl<'a> NodeRef<'a> {
         }
     }
 
-    /// Update the background color of the element.
-    pub fn set_background_color(&mut self, color: Color4f) {
-        self.as_mut().background_color = Some(color);
-        self.tree.changes.push(self.key);
-    }
-
     /// Update the size of the element.
     pub fn set_size(&mut self, size: Size<Dimension>) {
-        self.as_mut().size = Some(size);
+        self.as_mut().set_size(size);
         self.tree.changes.push(self.key);
     }
 }
