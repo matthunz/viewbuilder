@@ -1,4 +1,4 @@
-use super::Nodes;
+use super::Tree;
 use crate::{node::NodeKind, Node, NodeKey};
 
 enum Operation {
@@ -19,13 +19,13 @@ pub enum Item<'a> {
 }
 
 pub struct Iter<'a> {
-    tree: &'a Nodes,
+    tree: &'a Tree,
     stack: Vec<Operation>,
     count: usize,
 }
 
 impl<'a> Iter<'a> {
-    pub(crate) fn new(tree: &'a Nodes, root: NodeKey) -> Self {
+    pub(crate) fn new(tree: &'a Tree, root: NodeKey) -> Self {
         Iter {
             tree,
             stack: vec![Operation::Key(root)],

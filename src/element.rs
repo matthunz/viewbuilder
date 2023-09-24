@@ -1,4 +1,4 @@
-use crate::{event, node::NodeData, Node, NodeKey, Tree};
+use crate::{event, node::NodeData, Context, Node, NodeKey};
 use skia_safe::Color4f;
 use taffy::{
     prelude::Size,
@@ -37,13 +37,16 @@ impl Element {
     }
 
     /// Set the click handler for this element.
-    pub fn on_click(&mut self, handler: Box<dyn FnMut(&mut Tree, event::Click)>) -> &mut Self {
+    pub fn on_click(&mut self, handler: Box<dyn FnMut(&mut Context, event::Click)>) -> &mut Self {
         self.data_mut().on_click = Some(handler);
         self
     }
 
     /// Set the mouse-in handler for this element.
-    pub fn on_mouse_in(&mut self, handler: Box<dyn FnMut(&mut Tree, event::MouseIn)>) -> &mut Self {
+    pub fn on_mouse_in(
+        &mut self,
+        handler: Box<dyn FnMut(&mut Context, event::MouseIn)>,
+    ) -> &mut Self {
         self.data_mut().on_mouse_in = Some(handler);
         self
     }
@@ -51,7 +54,7 @@ impl Element {
     /// Set the mouse-out handler for this element.
     pub fn on_mouse_out(
         &mut self,
-        handler: Box<dyn FnMut(&mut Tree, event::MouseOut)>,
+        handler: Box<dyn FnMut(&mut Context, event::MouseOut)>,
     ) -> &mut Self {
         self.data_mut().on_mouse_out = Some(handler);
         self
@@ -92,13 +95,13 @@ impl Element {
     }
 
     /// Build the element and insert it into the tree.
-    pub fn build(&mut self, tree: &mut Tree) -> NodeKey {
+    pub fn build(&mut self, cx: &mut Context) -> NodeKey {
         let mut elem = Node::new(NodeData::Element(self.data.take().unwrap()));
         elem.children = self.children.take();
 
-        let key = tree.insert(elem);
+        let key = cx.insert(elem);
         for child in self.children.iter().flatten() {
-            let node = &mut tree.nodes.nodes[*child];
+            let node = &mut cx.nodes[*child];
             node.parent = Some(key);
         }
         key
@@ -109,9 +112,9 @@ impl Element {
 #[derive(Default)]
 pub struct ElementData {
     pub(crate) size: Option<Size<Dimension>>,
-    pub(crate) on_click: Option<Box<dyn FnMut(&mut Tree, event::Click)>>,
-    pub(crate) on_mouse_in: Option<Box<dyn FnMut(&mut Tree, event::MouseIn)>>,
-    pub(crate) on_mouse_out: Option<Box<dyn FnMut(&mut Tree, event::MouseOut)>>,
+    pub(crate) on_click: Option<Box<dyn FnMut(&mut Context, event::Click)>>,
+    pub(crate) on_mouse_in: Option<Box<dyn FnMut(&mut Context, event::MouseIn)>>,
+    pub(crate) on_mouse_out: Option<Box<dyn FnMut(&mut Context, event::MouseOut)>>,
     pub(crate) background_color: Option<Color4f>,
     pub(crate) flex_direction: Option<FlexDirection>,
     pub(crate) align_items: Option<AlignItems>,

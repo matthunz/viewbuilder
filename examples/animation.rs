@@ -5,13 +5,13 @@ use taffy::{
     prelude::Size,
     style::{AlignItems, JustifyContent},
 };
-use viewbuilder::{render::UserEvent, Element, Renderer, Tree};
+use viewbuilder::{render::UserEvent, Context, Element, Renderer};
 
 #[tokio::main]
 async fn main() {
     // TODO this is really early stage, an animation frame should be requested
 
-    let mut tree = Tree::default();
+    let mut tree = Context::default();
     let root = Element::new()
         .align_items(AlignItems::Center)
         .justify_content(JustifyContent::Center)

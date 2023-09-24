@@ -1,16 +1,22 @@
 use std::borrow::Cow;
 
-use crate::{element::ElementData, node::NodeData, Node, NodeKey, Tree};
+use crate::{element::ElementData, node::NodeData, Context, Node, NodeKey};
 use skia_safe::Color4f;
 use taffy::{prelude::Size, style::Dimension};
 
 /// Reference to an element in a tree.
+///
+/// This struct is created with [`Tree::node`].
 pub struct NodeRef<'a> {
-    pub(crate) key: NodeKey,
-    pub(crate) tree: &'a mut Tree,
+    key: NodeKey,
+    tree: &'a mut Context,
 }
 
 impl<'a> NodeRef<'a> {
+    pub(crate) fn new(key: NodeKey, tree: &'a mut Context) -> Self {
+        Self { key, tree }
+    }
+
     /// Move the reference to the parent element.
     pub fn parent(&mut self) -> &mut Self {
         let parent_key = self.node().parent.unwrap();
@@ -37,10 +43,10 @@ impl<'a> NodeRef<'a> {
     }
 
     /// Update the text of a text node.
-    /// 
+    ///
     /// ## Panics
     /// This function will panic if the current reference is to an element,
-    /// not to a text node. 
+    /// not to a text node.
     pub fn set_text(&mut self, content: impl Into<Cow<'static, str>>) {
         if let NodeData::Text(ref mut dst) = self.node().data {
             *dst = content.into();

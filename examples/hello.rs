@@ -1,8 +1,8 @@
 use taffy::style::{AlignItems, JustifyContent};
-use viewbuilder::{Element, Tree};
+use viewbuilder::{Context, Element};
 
 fn main() {
-    let mut tree = Tree::default();
+    let mut tree = Context::default();
     let root = Element::new()
         .align_items(AlignItems::Center)
         .justify_content(JustifyContent::Center)

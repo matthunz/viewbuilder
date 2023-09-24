@@ -1,15 +1,7 @@
-use crate::{
-    element::ElementData,
-    event,
-    node::{NodeData, NodeKind},
-    Event, Node, NodeKey,
-};
-use accesskit::{NodeClassSet, NodeId, TreeUpdate};
+use crate::{node::NodeKind, Node, NodeKey};
 use kurbo::Point;
-use skia_safe::Canvas;
 use slotmap::SlotMap;
-use std::{borrow::Cow, num::NonZeroU128, ops::{Index, IndexMut}};
-use taffy::{prelude::Size, style_helpers::TaffyMaxContent, Taffy};
+use std::ops::{Index, IndexMut};
 
 mod iter;
 pub use self::iter::{Item, Iter};
@@ -20,237 +12,31 @@ pub use iter_mut::{ItemMut, IterMut};
 mod node_ref;
 pub use self::node_ref::NodeRef;
 
-pub(crate) struct Inner {
-    pub(crate) changes: Vec<NodeKey>,
-    next_id: NonZeroU128,
-    unused_ids: Vec<NodeId>,
-    taffy: Taffy,
-}
-
-impl Default for Inner {
-    fn default() -> Self {
-        Self {
-            changes: Default::default(),
-            next_id: NonZeroU128::MIN,
-            unused_ids: Default::default(),
-            taffy: Taffy::default(),
-        }
-    }
-}
-
-enum Handler {
-    Click(Box<dyn FnMut(&mut Tree, event::Click)>, event::Click),
-    MouseIn(Box<dyn FnMut(&mut Tree, event::MouseIn)>, event::MouseIn),
-    MouseOut(Box<dyn FnMut(&mut Tree, event::MouseOut)>, event::MouseOut),
-}
-
-enum HandlerFn {
-    Click(Box<dyn FnMut(&mut Tree, event::Click)>),
-    MouseIn(Box<dyn FnMut(&mut Tree, event::MouseIn)>),
-    MouseOut(Box<dyn FnMut(&mut Tree, event::MouseOut)>),
-}
-
+/// Tree of user interface nodes.
 #[derive(Default)]
 pub struct Tree {
-    pub nodes: Nodes,
-    pub(crate) inner: Inner,
+    nodes: SlotMap<NodeKey, Node>,
 }
 
 impl Tree {
-    pub fn send(&mut self, key: NodeKey, event: Event) {
-        let node = &mut self.nodes.nodes[key];
-        let handler = if let NodeData::Element(ref mut elem) = node.data {
-            match event {
-                Event::Click(click) => elem.on_click.take().map(|f| Handler::Click(f, click)),
-                Event::MouseIn(mouse_in) => elem
-                    .on_mouse_in
-                    .take()
-                    .map(|f| Handler::MouseIn(f, mouse_in)),
-                Event::MouseOut(mouse_out) => elem
-                    .on_mouse_out
-                    .take()
-                    .map(|f| Handler::MouseOut(f, mouse_out)),
-            }
-        } else {
-            None
-        };
-
-        let handler_fn = handler.map(|handler| match handler {
-            Handler::Click(mut f, click) => {
-                f(self, click);
-                HandlerFn::Click(f)
-            }
-            Handler::MouseIn(mut f, hover) => {
-                f(self, hover);
-                HandlerFn::MouseIn(f)
-            }
-            Handler::MouseOut(mut f, mouse_out) => {
-                f(self, mouse_out);
-                HandlerFn::MouseOut(f)
-            }
-        });
-
-        let node = &mut self.nodes.nodes[key];
-        if let Some(handler_fn) = handler_fn {
-            if let NodeData::Element(ref mut elem) = node.data {
-                match handler_fn {
-                    HandlerFn::Click(f) => elem.on_click = Some(f),
-                    HandlerFn::MouseIn(f) => elem.on_mouse_in = Some(f),
-                    HandlerFn::MouseOut(f) => elem.on_mouse_out = Some(f),
-                }
-            }
-        }
+    pub fn iter(&self, root: NodeKey) -> Iter {
+        Iter::new(self, root)
     }
 
-    pub fn display(&self, root: NodeKey) -> String {
-        let mut s = String::new();
-
-        for item in self.nodes.iter(root) {
-            match item {
-                Item::Node {
-                    node: element,
-                    level,
-                    ..
-                } => {
-                    for _ in 0..level {
-                        s.push_str("  ");
-                    }
-
-                    match &element.data {
-                        NodeData::Text(content) => s.push_str(&format!("\"{}\",", content)),
-                        NodeData::Element(ElementData { size, .. }) => {
-                            s.push_str("{\n");
-                            if let Some(size) = size {
-                                for _ in 0..level + 1 {
-                                    s.push_str("  ");
-                                }
-
-                                s.push_str(&format!(
-                                    "size: ({:?}, {:?}),\n",
-                                    size.width, size.height
-                                ));
-                            }
-                        }
-                    }
-                }
-                Item::Pop { kind, level } => {
-                    if kind == NodeKind::Element {
-                        s.push('\n');
-
-                        for _ in 0..level {
-                            s.push_str("  ");
-                        }
-
-                        s.push_str("},");
-                    }
-                }
-            }
-        }
-        s
+    pub fn iter_mut(&mut self, root: NodeKey) -> IterMut {
+        IterMut::new(self, root)
     }
 
-    pub fn insert(&mut self, node: impl Into<Node>) -> NodeKey {
-        let key = self.nodes.nodes.insert(node.into());
-        self.inner.changes.push(key);
-        key
+    pub(crate) fn insert(&mut self, node: Node) -> NodeKey {
+        self.nodes.insert(node)
     }
 
-    /// Get a reference to the node stored under the given key.
-    pub fn node(&mut self, key: NodeKey) -> NodeRef {
-        NodeRef { key, tree: self }
-    }
-
-  
-    pub fn layout(&mut self, root: NodeKey) {
-        if self.inner.changes.is_empty() {
-            return;
-        }
-
-        for key in &self.inner.changes {
-            let child_layout_keys: Vec<_> = self.nodes.nodes[*key]
-                .children
-                .iter()
-                .flatten()
-                .filter_map(|child| self.nodes.nodes[*child].layout_key)
-                .collect();
-
-            let node = &mut self.nodes.nodes[*key];
-            node.layout(&mut self.inner.taffy);
-
-            let layout_key = node.layout_key.unwrap();
-            let layout_children = self.inner.taffy.children(layout_key).unwrap();
-            for child_layout_key in child_layout_keys {
-                if !layout_children.contains(&child_layout_key) {
-                    self.inner
-                        .taffy
-                        .add_child(layout_key, child_layout_key)
-                        .unwrap();
-                }
-            }
-        }
-
-        // Compute the layout of the taffy tree.
-        let root_layout = self.nodes.nodes[root].layout_key.unwrap();
-        taffy::compute_layout(&mut self.inner.taffy, root_layout, Size::MAX_CONTENT).unwrap();
-
-        // Compute the absolute layout of each node.
-        let mut stack: Vec<taffy::prelude::Layout> = Vec::new();
-        for item in self.nodes.iter_mut(root) {
-            match item {
-                iter_mut::ItemMut::Node { node, level: _ } => {
-                    let mut layout = self
-                        .inner
-                        .taffy
-                        .layout(node.layout_key.unwrap())
-                        .unwrap()
-                        .clone();
-                    if let Some(parent_layout) = stack.last() {
-                        layout.location.x += parent_layout.location.x;
-                        layout.location.y += parent_layout.location.y;
-                    }
-                    node.layout = Some(layout);
-                    stack.push(layout);
-                }
-                iter_mut::ItemMut::Pop { kind: _, level: _ } => {
-                    stack.pop();
-                }
-            }
-        }
-    }
-
-    pub fn semantics(&mut self) -> TreeUpdate {
-        let mut tree_update = TreeUpdate::default();
-        for key in &self.inner.changes {
-            let node = &mut self.nodes.nodes[*key];
-
-            let semantics_builder = node.semantics();
-            let semantics = semantics_builder.build(&mut NodeClassSet::lock_global());
-
-            let id = if let Some(id) = self.inner.unused_ids.pop() {
-                id
-            } else {
-                let id = self.inner.next_id;
-                self.inner.next_id = self.inner.next_id.checked_add(1).unwrap();
-                NodeId(id)
-            };
-
-            tree_update.nodes.push((id, semantics));
-        }
-        tree_update
-    }
-
-    pub fn paint(&mut self, root: NodeKey, canvas: &mut Canvas) {
-        for item in self.nodes.iter_mut(root) {
-            if let iter_mut::ItemMut::Node { node, level: _ } = item {
-                node.paint(canvas);
-            }
-        }
-        self.inner.changes.clear();
-    }
-
+    /// Get the target under the current point.
+    ///
+    /// This function will return `Some` with a key to the node at `point`
+    /// with the highest layout order. Otherwise `None` is returned.
     pub fn target(&self, root: NodeKey, point: Point) -> Option<NodeKey> {
-        self.nodes
-            .iter(root)
+        self.iter(root)
             .filter_map(|item| {
                 if let Item::Node {
                     key,
@@ -258,10 +44,12 @@ impl Tree {
                     level: _,
                 } = item
                 {
+                    // Ignore text nodes
                     if node.kind() == NodeKind::Text {
                         return None;
                     }
 
+                    // Check if `point` is contained inside the current element.
                     let layout = node.layout.unwrap();
                     if point.x >= layout.location.x as _
                         && point.y >= layout.location.y as _
@@ -281,24 +69,7 @@ impl Tree {
     }
 }
 
-
-#[derive(Default)]
-pub struct Nodes {
-    pub nodes: SlotMap<NodeKey, Node>,
-}
-
-impl Nodes {
-    pub fn iter(&self, root: NodeKey) -> Iter {
-        Iter::new(self, root)
-    }
-
-    pub fn iter_mut(&mut self, root: NodeKey) -> IterMut {
-        IterMut::new(self, root)
-    }
-}
-
-
-impl Index<NodeKey> for Nodes {
+impl Index<NodeKey> for Tree {
     type Output = Node;
 
     fn index(&self, index: NodeKey) -> &Self::Output {
@@ -306,7 +77,7 @@ impl Index<NodeKey> for Nodes {
     }
 }
 
-impl IndexMut<NodeKey> for Nodes {
+impl IndexMut<NodeKey> for Tree {
     fn index_mut(&mut self, index: NodeKey) -> &mut Self::Output {
         &mut self.nodes[index]
     }

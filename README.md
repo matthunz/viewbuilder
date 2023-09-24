@@ -38,27 +38,29 @@ but you can bring your own state management tools or build your own framework us
 
 ### Hello World
 ```rust
-let mut tree = Tree::default();
-let root = Element::new()
-    .align_items(AlignItems::Center)
-    .justify_content(JustifyContent::Center)
-    .child(tree.insert("Hello World!"))
-    .build(&mut tree);
+fn main() {
+    let mut tree = Context::default();
+    let root = Element::new()
+        .align_items(AlignItems::Center)
+        .justify_content(JustifyContent::Center)
+        .child(tree.insert("Hello World!"))
+        .build(&mut tree);
 
-viewbuilder::run(tree, root)
+    viewbuilder::run(tree, root)
+}
 ```
 
 ### Button Component
 ```rust
 fn button(
-    tree: &mut Tree,
+    cx: &mut Context,
     label: &'static str,
-    mut handler: impl FnMut(&mut Tree) + 'static,
+    mut handler: impl FnMut(&mut Context) + 'static,
 ) -> NodeKey {
     Element::new()
-        .on_click(Box::new(move |tree, _event| handler(tree)))
+        .on_click(Box::new(move |cx, _event| handler(cx)))
         .background_color(Color4f::new(1., 1., 0., 1.))
-        .child(tree.insert(label))
-        .build(tree)
+        .child(cx.insert(label))
+        .build(cx)
 }
 ```

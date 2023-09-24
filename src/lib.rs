@@ -9,7 +9,9 @@ pub mod node;
 pub use node::Node;
 
 pub mod tree;
-pub use tree::{NodeRef, Tree};
+
+mod context;
+pub use context::Context;
 
 pub mod element;
 pub use element::Element;
@@ -29,7 +31,7 @@ slotmap::new_key_type! {
 ///
 /// This will create a new window and render the tree,
 /// propagating events and re-rendering as they occuring.
-pub fn run(tree: Tree, root: NodeKey) {
+pub fn run(tree: Context, root: NodeKey) {
     let renderer = Renderer::new();
     renderer.run(tree, root)
 }

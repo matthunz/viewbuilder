@@ -1,4 +1,4 @@
-use super::Nodes;
+use super::Tree;
 use crate::{node::NodeKind, Node, NodeKey};
 use std::marker::PhantomData;
 
@@ -13,14 +13,14 @@ pub enum ItemMut<'a> {
 }
 
 pub struct IterMut<'a> {
-    tree: *mut Nodes,
+    tree: *mut Tree,
     stack: Vec<Operation>,
     count: usize,
-    _marker: PhantomData<&'a mut Nodes>,
+    _marker: PhantomData<&'a mut Tree>,
 }
 
 impl<'a> IterMut<'a> {
-    pub(crate) fn new(tree: &'a mut Nodes, root: NodeKey) -> Self {
+    pub(crate) fn new(tree: &'a mut Tree, root: NodeKey) -> Self {
         IterMut {
             tree,
             stack: vec![Operation::Key(root)],

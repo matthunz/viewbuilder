@@ -30,9 +30,9 @@ use winit::{
     window::{Window, WindowBuilder},
 };
 
-use crate::{event, NodeKey, Tree};
+use crate::{event, Context, NodeKey};
 
-pub struct UserEvent(pub Box<dyn FnOnce(&mut Tree) + Send>);
+pub struct UserEvent(pub Box<dyn FnOnce(&mut Context) + Send>);
 
 // Guarantee the drop order inside the FnMut closure. `Window` _must_ be dropped after
 // `DirectContext`.
@@ -179,7 +179,7 @@ impl Renderer {
         }
     }
 
-    pub fn run(mut self, mut tree: Tree, root: NodeKey) {
+    pub fn run(mut self, mut tree: Context, root: NodeKey) {
         let mut previous_frame_start = Instant::now();
 
         let mut hover_target = None;
@@ -245,7 +245,8 @@ impl Renderer {
                     } => {
                         cursor_pos = Some(position);
 
-                        if let Some(target) = tree.target(root, Point::new(position.x, position.y))
+                        if let Some(target) =
+                            tree.nodes.target(root, Point::new(position.x, position.y))
                         {
                             if let Some(last_target) = hover_target {
                                 if target != last_target {
@@ -286,7 +287,9 @@ impl Renderer {
                     } => match state {
                         ElementState::Pressed => {
                             if let Some(pos) = cursor_pos {
-                                if let Some(target) = tree.target(root, Point::new(pos.x, pos.y)) {
+                                if let Some(target) =
+                                    tree.nodes.target(root, Point::new(pos.x, pos.y))
+                                {
                                     clicked = Some(target);
                                 }
                             }
@@ -295,7 +298,7 @@ impl Renderer {
                             if let Some(pos) = cursor_pos {
                                 if let Some(clicked) = clicked.take() {
                                     if let Some(target) =
-                                        tree.target(root, Point::new(pos.x, pos.y))
+                                        tree.nodes.target(root, Point::new(pos.x, pos.y))
                                     {
                                         if target == clicked {
                                             tree.send(
