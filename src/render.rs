@@ -1,3 +1,4 @@
+use crate::{event, Context, NodeKey};
 use gl::types::*;
 use glutin::{
     config::{ConfigTemplateBuilder, GlConfig},
@@ -16,7 +17,6 @@ use skia_safe::{
     gpu::{self, gl::FramebufferInfo, BackendRenderTarget, SurfaceOrigin},
     Color, ColorType, Surface,
 };
-
 use std::{
     ffi::CString,
     future::Future,
@@ -30,8 +30,6 @@ use winit::{
     event_loop::{ControlFlow, EventLoop, EventLoopBuilder},
     window::{Window, WindowBuilder},
 };
-
-use crate::{event, Context, NodeKey};
 
 pub struct UserEvent(pub Box<dyn FnOnce(&mut Context) + Send>);
 
@@ -284,7 +282,7 @@ impl Renderer {
                         cursor_pos = Some(position);
 
                         if let Some(target) =
-                            tree.nodes.target(root, Point::new(position.x, position.y))
+                            tree.tree.target(root, Point::new(position.x, position.y))
                         {
                             if let Some(last_target) = hover_target {
                                 if target != last_target {
@@ -326,7 +324,7 @@ impl Renderer {
                         ElementState::Pressed => {
                             if let Some(pos) = cursor_pos {
                                 if let Some(target) =
-                                    tree.nodes.target(root, Point::new(pos.x, pos.y))
+                                    tree.tree.target(root, Point::new(pos.x, pos.y))
                                 {
                                     clicked = Some(target);
                                 }
@@ -336,7 +334,7 @@ impl Renderer {
                             if let Some(pos) = cursor_pos {
                                 if let Some(clicked) = clicked.take() {
                                     if let Some(target) =
-                                        tree.nodes.target(root, Point::new(pos.x, pos.y))
+                                        tree.tree.target(root, Point::new(pos.x, pos.y))
                                     {
                                         if target == clicked {
                                             tree.send(

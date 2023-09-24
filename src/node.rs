@@ -34,16 +34,16 @@ pub struct Node {
     pub(crate) data: NodeData,
 
     /// Parent node id.
-    pub(crate)  parent: Option<NodeKey>,
+    pub(crate) parent: Option<NodeKey>,
 
     /// Child node ids.
-    pub(crate)  children: Option<Vec<NodeKey>>,
+    pub(crate) children: Option<Vec<NodeKey>>,
 
     /// Layout key for the taffy node.
-    pub(crate)  layout_key: Option<DefaultKey>,
+    pub(crate) layout_key: Option<DefaultKey>,
 
     /// Absolute layout of the node, relative to the window.
-    pub(crate)  layout: Option<Layout>,
+    pub(crate) layout: Option<Layout>,
 }
 
 impl Node {
@@ -79,20 +79,17 @@ impl Node {
     /// Setup the layout node.
     pub fn layout(&mut self, taffy: &mut Taffy) {
         let mut style = Style::default();
-        match self.data {
-            NodeData::Element(ref mut elem) => {
-                if let Some(size) = elem.size {
-                    style.size = size;
-                }
-
-                if let Some(flex_direction) = elem.flex_direction {
-                    style.flex_direction = flex_direction;
-                }
-
-                style.align_items = elem.align_items;
-                style.justify_content = elem.justify_content;
+        if let NodeData::Element(ref mut elem) = self.data {
+            if let Some(size) = elem.size {
+                style.size = size;
             }
-            _ => {}
+
+            if let Some(flex_direction) = elem.flex_direction {
+                style.flex_direction = flex_direction;
+            }
+
+            style.align_items = elem.align_items;
+            style.justify_content = elem.justify_content;
         }
 
         if let Some(layout_key) = self.layout_key {

@@ -101,7 +101,7 @@ impl Element {
 
         let key = cx.insert(elem);
         for child in self.children.iter().flatten() {
-            let node = &mut cx.nodes[*child];
+            let node = &mut cx.tree[*child];
             node.parent = Some(key);
         }
         key

@@ -1,4 +1,8 @@
-use crate::{node::NodeKind, Node, NodeKey};
+use crate::{
+    element::ElementData,
+    node::{NodeData, NodeKind},
+    Node, NodeKey,
+};
 use kurbo::Point;
 use slotmap::SlotMap;
 use std::ops::{Index, IndexMut};
@@ -66,6 +70,54 @@ impl Tree {
             })
             .max_by_key(|(_, layout)| layout.order)
             .map(|(key, _layout)| key)
+    }
+
+    /// Display the tree as a string starting from a root key.
+    pub fn display(&self, root: NodeKey) -> String {
+        let mut s = String::new();
+
+        for item in self.iter(root) {
+            match item {
+                Item::Node {
+                    node: element,
+                    level,
+                    ..
+                } => {
+                    for _ in 0..level {
+                        s.push_str("  ");
+                    }
+
+                    match &element.data {
+                        NodeData::Text(content) => s.push_str(&format!("\"{}\",", content)),
+                        NodeData::Element(ElementData { size, .. }) => {
+                            s.push_str("{\n");
+                            if let Some(size) = size {
+                                for _ in 0..level + 1 {
+                                    s.push_str("  ");
+                                }
+
+                                s.push_str(&format!(
+                                    "size: ({:?}, {:?}),\n",
+                                    size.width, size.height
+                                ));
+                            }
+                        }
+                    }
+                }
+                Item::Pop { kind, level } => {
+                    if kind == NodeKind::Element {
+                        s.push('\n');
+
+                        for _ in 0..level {
+                            s.push_str("  ");
+                        }
+
+                        s.push_str("},");
+                    }
+                }
+            }
+        }
+        s
     }
 }
 

@@ -22,7 +22,7 @@ fn app(cx: &mut Context) -> NodeKey {
     let dec_count = inc_count.clone();
 
     let text = cx.insert("0");
-    
+
     Element::new()
         .flex_direction(FlexDirection::Column)
         .child(Element::new().child(text).build(cx))

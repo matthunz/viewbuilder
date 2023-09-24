@@ -1,34 +1,13 @@
 use crate::{
-    element::ElementData,
     event,
-    node::{NodeData, NodeKind},
-    tree::{Item, ItemMut, NodeRef, Tree},
+    node::NodeData,
+    tree::{ItemMut, NodeRef, Tree},
     Event, Node, NodeKey,
 };
 use accesskit::{NodeClassSet, NodeId, TreeUpdate};
-
 use skia_safe::Canvas;
-
 use std::num::NonZeroU128;
 use taffy::{prelude::Size, style_helpers::TaffyMaxContent, Taffy};
-
-pub(crate) struct Inner {
-    pub(crate) changes: Vec<NodeKey>,
-    next_id: NonZeroU128,
-    unused_ids: Vec<NodeId>,
-    taffy: Taffy,
-}
-
-impl Default for Inner {
-    fn default() -> Self {
-        Self {
-            changes: Default::default(),
-            next_id: NonZeroU128::MIN,
-            unused_ids: Default::default(),
-            taffy: Taffy::default(),
-        }
-    }
-}
 
 enum Handler {
     Click(Box<dyn FnMut(&mut Context, event::Click)>, event::Click),
@@ -45,15 +24,48 @@ enum HandlerFn {
     MouseOut(Box<dyn FnMut(&mut Context, event::MouseOut)>),
 }
 
-#[derive(Default)]
+/// Render context for a UI tree.
+///
+/// This struct acts a state machine where changes to the tree are stored between paint cycles.
+///
+/// 1. [`Context::layout`] computes the layout of the tree, based on changes made.
+///
+/// 2. [`Context::semantics`] computes the semantics tree update, also based on changes made.
+///
+/// 2. [`Context::paint`] will paint the tree top-down and clear any changes.
 pub struct Context {
-    pub nodes: Tree,
-    pub(crate) inner: Inner,
+    /// Node tree.
+    pub tree: Tree,
+
+    /// Changes to be rendered in the next paint cycle.
+    pub(crate) changes: Vec<NodeKey>,
+
+    /// Next semantics node ID.
+    next_id: NonZeroU128,
+
+    /// Unused semantics node IDs.
+    unused_ids: Vec<NodeId>,
+
+    /// Taffy layout tree.
+    taffy: Taffy,
+}
+
+impl Default for Context {
+    fn default() -> Self {
+        Self {
+            tree: Tree::default(),
+            changes: Default::default(),
+            next_id: NonZeroU128::MIN,
+            unused_ids: Default::default(),
+            taffy: Taffy::default(),
+        }
+    }
 }
 
 impl Context {
+    /// Send an event to an element in the tree.
     pub fn send(&mut self, key: NodeKey, event: Event) {
-        let node = &mut self.nodes[key];
+        let node = &mut self.tree[key];
         let handler = if let NodeData::Element(ref mut elem) = node.data {
             match event {
                 Event::Click(click) => elem.on_click.take().map(|f| Handler::Click(f, click)),
@@ -85,7 +97,7 @@ impl Context {
             }
         });
 
-        let node = &mut self.nodes[key];
+        let node = &mut self.tree[key];
         if let Some(handler_fn) = handler_fn {
             if let NodeData::Element(ref mut elem) = node.data {
                 match handler_fn {
@@ -97,56 +109,10 @@ impl Context {
         }
     }
 
-    pub fn display(&self, root: NodeKey) -> String {
-        let mut s = String::new();
-
-        for item in self.nodes.iter(root) {
-            match item {
-                Item::Node {
-                    node: element,
-                    level,
-                    ..
-                } => {
-                    for _ in 0..level {
-                        s.push_str("  ");
-                    }
-
-                    match &element.data {
-                        NodeData::Text(content) => s.push_str(&format!("\"{}\",", content)),
-                        NodeData::Element(ElementData { size, .. }) => {
-                            s.push_str("{\n");
-                            if let Some(size) = size {
-                                for _ in 0..level + 1 {
-                                    s.push_str("  ");
-                                }
-
-                                s.push_str(&format!(
-                                    "size: ({:?}, {:?}),\n",
-                                    size.width, size.height
-                                ));
-                            }
-                        }
-                    }
-                }
-                Item::Pop { kind, level } => {
-                    if kind == NodeKind::Element {
-                        s.push('\n');
-
-                        for _ in 0..level {
-                            s.push_str("  ");
-                        }
-
-                        s.push_str("},");
-                    }
-                }
-            }
-        }
-        s
-    }
-
+    /// Insert a node into the tree, returning its key.
     pub fn insert(&mut self, node: impl Into<Node>) -> NodeKey {
-        let key = self.nodes.insert(node.into());
-        self.inner.changes.push(key);
+        let key = self.tree.insert(node.into());
+        self.changes.push(key);
         key
     }
 
@@ -155,49 +121,42 @@ impl Context {
         NodeRef::new(key, self)
     }
 
+    /// Compute the layout of the tree, starting at a root node key.
     pub fn layout(&mut self, root: NodeKey) {
-        if self.inner.changes.is_empty() {
+        if self.changes.is_empty() {
             return;
         }
 
-        for key in &self.inner.changes {
-            let child_layout_keys: Vec<_> = self.nodes[*key]
+        for key in &self.changes {
+            let child_layout_keys: Vec<_> = self.tree[*key]
                 .children
                 .iter()
                 .flatten()
-                .filter_map(|child| self.nodes[*child].layout_key)
+                .filter_map(|child| self.tree[*child].layout_key)
                 .collect();
 
-            let node = &mut self.nodes[*key];
-            node.layout(&mut self.inner.taffy);
+            let node = &mut self.tree[*key];
+            node.layout(&mut self.taffy);
 
             let layout_key = node.layout_key.unwrap();
-            let layout_children = self.inner.taffy.children(layout_key).unwrap();
+            let layout_children = self.taffy.children(layout_key).unwrap();
             for child_layout_key in child_layout_keys {
                 if !layout_children.contains(&child_layout_key) {
-                    self.inner
-                        .taffy
-                        .add_child(layout_key, child_layout_key)
-                        .unwrap();
+                    self.taffy.add_child(layout_key, child_layout_key).unwrap();
                 }
             }
         }
 
         // Compute the layout of the taffy tree.
-        let root_layout = self.nodes[root].layout_key.unwrap();
-        taffy::compute_layout(&mut self.inner.taffy, root_layout, Size::MAX_CONTENT).unwrap();
+        let root_layout = self.tree[root].layout_key.unwrap();
+        taffy::compute_layout(&mut self.taffy, root_layout, Size::MAX_CONTENT).unwrap();
 
         // Compute the absolute layout of each node.
         let mut stack: Vec<taffy::prelude::Layout> = Vec::new();
-        for item in self.nodes.iter_mut(root) {
+        for item in self.tree.iter_mut(root) {
             match item {
                 ItemMut::Node { node, level: _ } => {
-                    let mut layout = self
-                        .inner
-                        .taffy
-                        .layout(node.layout_key.unwrap())
-                        .unwrap()
-                        .clone();
+                    let mut layout = self.taffy.layout(node.layout_key.unwrap()).unwrap().clone();
                     if let Some(parent_layout) = stack.last() {
                         layout.location.x += parent_layout.location.x;
                         layout.location.y += parent_layout.location.y;
@@ -212,19 +171,20 @@ impl Context {
         }
     }
 
+    /// Compute the semantics tree update for the tree.
     pub fn semantics(&mut self) -> TreeUpdate {
         let mut tree_update = TreeUpdate::default();
-        for key in &self.inner.changes {
-            let node = &mut self.nodes[*key];
+        for key in &self.changes {
+            let node = &mut self.tree[*key];
 
             let semantics_builder = node.semantics();
             let semantics = semantics_builder.build(&mut NodeClassSet::lock_global());
 
-            let id = if let Some(id) = self.inner.unused_ids.pop() {
+            let id = if let Some(id) = self.unused_ids.pop() {
                 id
             } else {
-                let id = self.inner.next_id;
-                self.inner.next_id = self.inner.next_id.checked_add(1).unwrap();
+                let id = self.next_id;
+                self.next_id = self.next_id.checked_add(1).unwrap();
                 NodeId(id)
             };
 
@@ -235,11 +195,11 @@ impl Context {
 
     /// Paint the tree onto a skia canvas, clearing any changes that were made.
     pub fn paint(&mut self, root: NodeKey, canvas: &mut Canvas) {
-        for item in self.nodes.iter_mut(root) {
+        for item in self.tree.iter_mut(root) {
             if let ItemMut::Node { node, level: _ } = item {
                 node.paint(canvas);
             }
         }
-        self.inner.changes.clear();
+        self.changes.clear();
     }
 }

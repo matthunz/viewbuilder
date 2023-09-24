@@ -26,7 +26,7 @@ impl<'a> NodeRef<'a> {
 
     /// Get a reference the current node.
     pub fn node(&mut self) -> &mut Node {
-        &mut self.tree.nodes.nodes[self.key]
+        &mut self.tree.tree.nodes[self.key]
     }
 
     /// Get a reference the current element.
@@ -58,13 +58,13 @@ impl<'a> NodeRef<'a> {
     /// Update the background color of the element.
     pub fn set_background_color(&mut self, color: Color4f) {
         self.as_mut().background_color = Some(color);
-        self.tree.inner.changes.push(self.key);
+        self.tree.changes.push(self.key);
     }
 
     /// Update the size of the element.
     pub fn set_size(&mut self, size: Size<Dimension>) {
         self.as_mut().size = Some(size);
-        self.tree.inner.changes.push(self.key);
+        self.tree.changes.push(self.key);
     }
 }
 
