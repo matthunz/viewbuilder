@@ -14,7 +14,7 @@ pub enum AttributeKind {
     /// Flex direction attribute.
     FlexDirection,
 
-    /// Item alignment attribute..
+    /// Item alignment attribute.
     AlignItems,
 
     /// Content justification attribute.

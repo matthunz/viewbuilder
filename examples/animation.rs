@@ -17,7 +17,7 @@ async fn main() {
         .child(cx.insert("World"))
         .build(&mut cx);
 
-    let renderer = Renderer::new();
+    let renderer = Renderer::default();
     tokio::spawn(renderer.animation(animated, 0., 100., move |cx, size| {
         cx.node(animated)
             .set_size(Size::from_points(size as f32, size as f32))

@@ -4,6 +4,21 @@
 //!
 //! This crate provides an HTML-like render API for the backend of a UI.
 //! It supports layout, drawing, and accessability.
+//!
+//! ```
+//! fn app(cx: &mut Context) -> NodeKey {
+//!     Element::new()
+//!         .align_items(AlignItems::Center)
+//!         .justify_content(JustifyContent::Center)
+//!         .child(cx.insert("Hello World!"))
+//!         .build(cx)
+//! }
+//! 
+//! fn main() {
+//!     viewbuilder::run(app)
+//! }
+//! ```
+//!
 
 pub mod node;
 pub use node::Node;
@@ -32,7 +47,7 @@ slotmap::new_key_type! {
 /// This will create a new window and render the tree,
 /// propagating events and re-rendering as they occuring.
 pub fn run(f: impl FnOnce(&mut Context) -> NodeKey) {
-    let renderer = Renderer::new();
+    let renderer = Renderer::default();
 
     let mut cx = Context::default();
     let root = f(&mut cx);

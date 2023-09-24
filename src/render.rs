@@ -37,7 +37,8 @@ pub struct UserEvent(pub Box<dyn FnOnce(&mut Context) + Send>);
 // `DirectContext`.
 //
 // https://github.com/rust-skia/rust-skia/issues/476
-pub struct Renderer {
+pub struct Renderer<T = ()> {
+    state: T,
     surface: Surface,
     gl_surface: GlutinSurface<WindowSurface>,
     gr_context: skia_safe::gpu::DirectContext,
@@ -52,8 +53,14 @@ pub struct Renderer {
     pub notify: Arc<Notify>,
 }
 
-impl Renderer {
-    pub fn new() -> Self {
+impl Default for Renderer {
+    fn default() -> Self {
+        Self::new(())
+    }
+}
+
+impl<T> Renderer<T> {
+    pub fn new(state: T) -> Self {
         let el = EventLoopBuilder::with_user_event().build();
         let winit_window_builder = WindowBuilder::new().with_title("Viewbuilder");
 
@@ -163,6 +170,7 @@ impl Renderer {
         let (tx, rx) = mpsc::channel();
 
         Self {
+            state,
             surface,
             gl_surface,
             gl_context,
