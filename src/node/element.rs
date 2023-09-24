@@ -4,13 +4,15 @@ use skia_safe::Color4f;
 use slotmap::DefaultKey;
 use taffy::{
     prelude::Size,
-    style::{Dimension, FlexDirection, AlignItems, JustifyContent},
+    style::{AlignItems, Dimension, FlexDirection, JustifyContent},
 };
 
 #[derive(Default)]
 pub struct Builder {
     size: Option<Size<Dimension>>,
     flex_direction: Option<FlexDirection>,
+    align_items: Option<AlignItems>,
+    justify_content: Option<JustifyContent>,
     on_click: Option<Box<dyn FnMut(&mut Tree, event::Click)>>,
     pub on_mouse_in: Option<Box<dyn FnMut(&mut Tree, event::MouseIn)>>,
     pub on_mouse_out: Option<Box<dyn FnMut(&mut Tree, event::MouseOut)>>,
@@ -57,10 +59,12 @@ impl Builder {
     }
 
     pub fn align_items(&mut self, align_items: AlignItems) -> &mut Self {
+        self.align_items = Some(align_items);
         self
     }
 
     pub fn justify_content(&mut self, justify_content: JustifyContent) -> &mut Self {
+        self.justify_content = Some(justify_content);
         self
     }
 
@@ -77,6 +81,8 @@ impl Builder {
             on_mouse_in: self.on_mouse_in.take(),
             on_mouse_out: self.on_mouse_out.take(),
             background_color: self.background_color.take(),
+            align_items: self.align_items.take(),
+            justify_content: self.justify_content.take(),
         }));
         elem.children = self.children.take();
 
@@ -97,6 +103,8 @@ pub struct Element {
     pub on_mouse_out: Option<Box<dyn FnMut(&mut Tree, event::MouseOut)>>,
     pub background_color: Option<Color4f>,
     pub flex_direction: Option<FlexDirection>,
+    pub align_items: Option<AlignItems>,
+    pub justify_content: Option<JustifyContent>,
 }
 
 impl Element {

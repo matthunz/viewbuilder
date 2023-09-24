@@ -84,6 +84,9 @@ impl Node {
                 if let Some(flex_direction) = elem.flex_direction {
                     style.flex_direction = flex_direction;
                 }
+
+                style.align_items = elem.align_items;
+                style.justify_content = elem.justify_content;
             }
             _ => {}
         }
