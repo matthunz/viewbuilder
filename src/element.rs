@@ -9,14 +9,7 @@ use taffy::{
 /// Element of a user interface.
 #[derive(Default)]
 pub struct Element {
-    size: Option<Size<Dimension>>,
-    flex_direction: Option<FlexDirection>,
-    align_items: Option<AlignItems>,
-    justify_content: Option<JustifyContent>,
-    on_click: Option<Box<dyn FnMut(&mut Tree, event::Click)>>,
-    on_mouse_in: Option<Box<dyn FnMut(&mut Tree, event::MouseIn)>>,
-    on_mouse_out: Option<Box<dyn FnMut(&mut Tree, event::MouseOut)>>,
-    background_color: Option<Color4f>,
+    data: Option<ElementData>,
     children: Option<Vec<DefaultKey>>,
 }
 
@@ -38,13 +31,13 @@ impl Element {
 
     /// Set the click handler for this element.
     pub fn on_click(&mut self, handler: Box<dyn FnMut(&mut Tree, event::Click)>) -> &mut Self {
-        self.on_click = Some(handler);
+        self.data_mut().on_click = Some(handler);
         self
     }
 
     /// Set the mouse-in handler for this element.
     pub fn on_mouse_in(&mut self, handler: Box<dyn FnMut(&mut Tree, event::MouseIn)>) -> &mut Self {
-        self.on_mouse_in = Some(handler);
+        self.data_mut().on_mouse_in = Some(handler);
         self
     }
 
@@ -53,52 +46,47 @@ impl Element {
         &mut self,
         handler: Box<dyn FnMut(&mut Tree, event::MouseOut)>,
     ) -> &mut Self {
-        self.on_mouse_out = Some(handler);
+        self.data_mut().on_mouse_out = Some(handler);
         self
     }
 
     /// Set the size of this element.
     pub fn size(&mut self, size: Size<Dimension>) -> &mut Self {
-        self.size = Some(size);
+        self.data_mut().size = Some(size);
         self
     }
 
     /// Set the flex direction of this element.
     pub fn flex_direction(&mut self, flex_direction: FlexDirection) -> &mut Self {
-        self.flex_direction = Some(flex_direction);
+        self.data_mut().flex_direction = Some(flex_direction);
         self
     }
 
     /// Set the item alignment of this element.
     pub fn align_items(&mut self, align_items: AlignItems) -> &mut Self {
-        self.align_items = Some(align_items);
+        self.data_mut().align_items = Some(align_items);
         self
     }
 
     /// Set the content justification of this element.
     pub fn justify_content(&mut self, justify_content: JustifyContent) -> &mut Self {
-        self.justify_content = Some(justify_content);
+        self.data_mut().justify_content = Some(justify_content);
         self
     }
 
     /// Set the background color of this element.
     pub fn background_color(&mut self, color: Color4f) -> &mut Self {
-        self.background_color = Some(color);
+        self.data_mut().background_color = Some(color);
         self
+    }
+
+    pub fn data_mut(&mut self) -> &mut ElementData {
+        self.data.as_mut().unwrap()
     }
 
     /// Build the element and insert it into the tree.
     pub fn build(&mut self, tree: &mut Tree) -> DefaultKey {
-        let mut elem = Node::new(NodeData::Element(ElementData {
-            size: self.size.take(),
-            flex_direction: self.flex_direction.take(),
-            on_click: self.on_click.take(),
-            on_mouse_in: self.on_mouse_in.take(),
-            on_mouse_out: self.on_mouse_out.take(),
-            background_color: self.background_color.take(),
-            align_items: self.align_items.take(),
-            justify_content: self.justify_content.take(),
-        }));
+        let mut elem = Node::new(NodeData::Element(self.data.take().unwrap()));
         elem.children = self.children.take();
 
         let key = tree.insert(elem);
