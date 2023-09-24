@@ -1,6 +1,5 @@
-use crate::{event, node::NodeData, Node, Tree};
+use crate::{event, node::NodeData, Node, NodeKey, Tree};
 use skia_safe::Color4f;
-use slotmap::DefaultKey;
 use taffy::{
     prelude::Size,
     style::{AlignItems, Dimension, FlexDirection, JustifyContent},
@@ -9,7 +8,7 @@ use taffy::{
 /// Element of a user interface.
 pub struct Element {
     data: Option<ElementData>,
-    children: Option<Vec<DefaultKey>>,
+    children: Option<Vec<NodeKey>>,
 }
 
 impl Default for Element {
@@ -28,7 +27,7 @@ impl Element {
     }
 
     /// Add a child to the element.
-    pub fn child(&mut self, key: DefaultKey) -> &mut Self {
+    pub fn child(&mut self, key: NodeKey) -> &mut Self {
         if let Some(ref mut children) = self.children {
             children.push(key);
         } else {
@@ -93,7 +92,7 @@ impl Element {
     }
 
     /// Build the element and insert it into the tree.
-    pub fn build(&mut self, tree: &mut Tree) -> DefaultKey {
+    pub fn build(&mut self, tree: &mut Tree) -> NodeKey {
         let mut elem = Node::new(NodeData::Element(self.data.take().unwrap()));
         elem.children = self.children.take();
 

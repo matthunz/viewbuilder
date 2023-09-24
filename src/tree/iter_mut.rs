@@ -1,10 +1,9 @@
 use super::Nodes;
-use crate::{node::NodeKind, Node};
-use slotmap::DefaultKey;
+use crate::{node::NodeKind, Node, NodeKey};
 use std::marker::PhantomData;
 
 enum Operation {
-    Key(DefaultKey),
+    Key(NodeKey),
     Pop(NodeKind),
 }
 
@@ -21,7 +20,7 @@ pub struct IterMut<'a> {
 }
 
 impl<'a> IterMut<'a> {
-    pub(crate) fn new(tree: &'a mut Nodes, root: DefaultKey) -> Self {
+    pub(crate) fn new(tree: &'a mut Nodes, root: NodeKey) -> Self {
         IterMut {
             tree,
             stack: vec![Operation::Key(root)],

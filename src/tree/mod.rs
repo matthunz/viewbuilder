@@ -2,12 +2,12 @@ use crate::{
     element::ElementData,
     event,
     node::{NodeData, NodeKind},
-    Event, Node,
+    Event, Node, NodeKey,
 };
 use accesskit::{NodeClassSet, NodeId, TreeUpdate};
 use kurbo::Point;
 use skia_safe::Canvas;
-use slotmap::{DefaultKey, SlotMap};
+use slotmap::SlotMap;
 use std::{borrow::Cow, num::NonZeroU128};
 use taffy::{prelude::Size, style_helpers::TaffyMaxContent, Taffy};
 
@@ -21,7 +21,7 @@ mod node_ref;
 pub use self::node_ref::NodeRef;
 
 pub(crate) struct Inner {
-    pub(crate) changes: Vec<DefaultKey>,
+    pub(crate) changes: Vec<NodeKey>,
     next_id: NonZeroU128,
     unused_ids: Vec<NodeId>,
     taffy: Taffy,
@@ -57,7 +57,7 @@ pub struct Tree {
 }
 
 impl Tree {
-    pub fn send(&mut self, key: DefaultKey, event: Event) {
+    pub fn send(&mut self, key: NodeKey, event: Event) {
         let node = &mut self.nodes.nodes[key];
         let handler = if let NodeData::Element(ref mut elem) = node.data {
             match event {
@@ -102,7 +102,7 @@ impl Tree {
         }
     }
 
-    pub fn display(&self, root: DefaultKey) -> String {
+    pub fn display(&self, root: NodeKey) -> String {
         let mut s = String::new();
 
         for item in self.nodes.iter(root) {
@@ -149,17 +149,18 @@ impl Tree {
         s
     }
 
-    pub fn insert(&mut self, node: impl Into<Node>) -> DefaultKey {
+    pub fn insert(&mut self, node: impl Into<Node>) -> NodeKey {
         let key = self.nodes.nodes.insert(node.into());
         self.inner.changes.push(key);
         key
     }
 
-    pub fn element(&mut self, key: DefaultKey) -> NodeRef {
+    /// Get a reference to the node stored under the given key.
+    pub fn node(&mut self, key: NodeKey) -> NodeRef {
         NodeRef { key, tree: self }
     }
 
-    pub fn set_text(&mut self, key: DefaultKey, content: impl Into<Cow<'static, str>>) {
+    pub fn set_text(&mut self, key: NodeKey, content: impl Into<Cow<'static, str>>) {
         if let NodeData::Text(ref mut dst) = self.nodes.nodes[key].data {
             *dst = content.into();
         } else {
@@ -167,7 +168,7 @@ impl Tree {
         }
     }
 
-    pub fn layout(&mut self, root: DefaultKey) {
+    pub fn layout(&mut self, root: NodeKey) {
         if self.inner.changes.is_empty() {
             return;
         }
@@ -245,7 +246,7 @@ impl Tree {
         tree_update
     }
 
-    pub fn paint(&mut self, root: DefaultKey, canvas: &mut Canvas) {
+    pub fn paint(&mut self, root: NodeKey, canvas: &mut Canvas) {
         for item in self.nodes.iter_mut(root) {
             if let iter_mut::ItemMut::Node { node, level: _ } = item {
                 node.paint(canvas);
@@ -254,7 +255,7 @@ impl Tree {
         self.inner.changes.clear();
     }
 
-    pub fn target(&self, root: DefaultKey, point: Point) -> Option<DefaultKey> {
+    pub fn target(&self, root: NodeKey, point: Point) -> Option<NodeKey> {
         self.nodes
             .iter(root)
             .filter_map(|item| {
@@ -289,15 +290,15 @@ impl Tree {
 
 #[derive(Default)]
 pub struct Nodes {
-    pub nodes: SlotMap<DefaultKey, Node>,
+    pub nodes: SlotMap<NodeKey, Node>,
 }
 
 impl Nodes {
-    pub fn iter(&self, root: DefaultKey) -> Iter {
+    pub fn iter(&self, root: NodeKey) -> Iter {
         Iter::new(self, root)
     }
 
-    pub fn iter_mut(&mut self, root: DefaultKey) -> IterMut {
+    pub fn iter_mut(&mut self, root: NodeKey) -> IterMut {
         IterMut::new(self, root)
     }
 }

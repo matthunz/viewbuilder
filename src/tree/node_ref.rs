@@ -1,11 +1,10 @@
-use crate::{element::ElementData, node::NodeData, Node, Tree};
+use crate::{element::ElementData, node::NodeData, Node, NodeKey, Tree};
 use skia_safe::Color4f;
-use slotmap::DefaultKey;
 use taffy::{prelude::Size, style::Dimension};
 
 /// Reference to an element in a tree.
 pub struct NodeRef<'a> {
-    pub(crate) key: DefaultKey,
+    pub(crate) key: NodeKey,
     pub(crate) tree: &'a mut Tree,
 }
 

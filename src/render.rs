@@ -16,7 +16,7 @@ use skia_safe::{
     gpu::{self, gl::FramebufferInfo, BackendRenderTarget, SurfaceOrigin},
     Color, ColorType, Surface,
 };
-use slotmap::DefaultKey;
+
 use std::{
     ffi::CString,
     num::NonZeroU32,
@@ -30,7 +30,7 @@ use winit::{
     window::{Window, WindowBuilder},
 };
 
-use crate::{event, Tree};
+use crate::{event, NodeKey, Tree};
 
 pub struct UserEvent(pub Box<dyn FnOnce(&mut Tree) + Send>);
 
@@ -179,7 +179,7 @@ impl Renderer {
         }
     }
 
-    pub fn run(mut self, mut tree: Tree, root: DefaultKey) {
+    pub fn run(mut self, mut tree: Tree, root: NodeKey) {
         let mut previous_frame_start = Instant::now();
 
         let mut hover_target = None;

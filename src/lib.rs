@@ -5,8 +5,6 @@
 //! This crate provides an HTML-like render API for the backend of a UI.
 //! It supports layout, drawing, and accessability.
 
-use slotmap::DefaultKey;
-
 pub mod node;
 pub use node::Node;
 
@@ -22,13 +20,16 @@ pub use render::Renderer;
 pub mod event;
 pub use event::Event;
 
-pub type ElementKey = slotmap::DefaultKey;
+slotmap::new_key_type! {
+    /// Key to access a node in a tree.
+    pub struct NodeKey;
+}
 
 /// Run the user interface tree.
 ///
 /// This will create a new window and render the tree,
 /// propagating events and re-rendering as they occuring.
-pub fn run(tree: Tree, root: DefaultKey) {
+pub fn run(tree: Tree, root: NodeKey) {
     let renderer = Renderer::new();
     renderer.run(tree, root)
 }

@@ -28,7 +28,7 @@ async fn main() {
     tokio::spawn(async move {
         let mut start = Instant::now();
         loop {
-            let min = 0.;
+            let _min = 0.;
             let max = 500.;
 
             let elapsed = Instant::now() - start;
@@ -43,7 +43,7 @@ async fn main() {
             }
 
             tx.send(UserEvent(Box::new(move |tree| {
-                tree.element(root)
+                tree.node(root)
                     .set_size(Size::from_points(size as f32, size as f32))
             })))
             .unwrap();

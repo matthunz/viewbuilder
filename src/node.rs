@@ -1,4 +1,4 @@
-use crate::element::ElementData;
+use crate::{element::ElementData, NodeKey};
 use accesskit::NodeBuilder;
 use skia_safe::{Canvas, Color4f, Font, FontStyle, Paint, Rect, TextBlob, Typeface};
 use slotmap::DefaultKey;
@@ -33,10 +33,10 @@ pub struct Node {
     pub data: NodeData,
 
     /// Parent node id.
-    pub parent: Option<DefaultKey>,
+    pub parent: Option<NodeKey>,
 
     /// Child node ids.
-    pub children: Option<Vec<DefaultKey>>,
+    pub children: Option<Vec<NodeKey>>,
 
     /// Layout key for the taffy node.
     pub layout_key: Option<DefaultKey>,

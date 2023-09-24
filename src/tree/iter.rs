@@ -1,15 +1,14 @@
 use super::Nodes;
-use crate::{node::NodeKind, Node};
-use slotmap::DefaultKey;
+use crate::{node::NodeKind, Node, NodeKey};
 
 enum Operation {
-    Key(DefaultKey),
+    Key(NodeKey),
     Pop(NodeKind),
 }
 
 pub enum Item<'a> {
     Node {
-        key: DefaultKey,
+        key: NodeKey,
         node: &'a Node,
         level: usize,
     },
@@ -26,7 +25,7 @@ pub struct Iter<'a> {
 }
 
 impl<'a> Iter<'a> {
-    pub(crate) fn new(tree: &'a Nodes, root: DefaultKey) -> Self {
+    pub(crate) fn new(tree: &'a Nodes, root: NodeKey) -> Self {
         Iter {
             tree,
             stack: vec![Operation::Key(root)],

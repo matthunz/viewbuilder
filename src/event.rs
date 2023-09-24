@@ -1,4 +1,4 @@
-use slotmap::DefaultKey;
+use crate::NodeKey;
 
 pub enum Event {
     Click(Click),
@@ -7,13 +7,13 @@ pub enum Event {
 }
 
 pub struct Click {
-    pub target: DefaultKey,
+    pub target: NodeKey,
 }
 
 pub struct MouseIn {
-    pub target: DefaultKey,
+    pub target: NodeKey,
 }
 
 pub struct MouseOut {
-    pub target: DefaultKey,
+    pub target: NodeKey,
 }
