@@ -34,6 +34,9 @@ but you can bring your own state management tools or build your own framework us
 - Accessibility with [accesskit](https://github.com/AccessKit/accesskit)
 - High performance rendering with [rust-skia](https://github.com/rust-skia/rust-skia)
 
+## Examples
+
+### Hello World
 ```rust
 let mut tree = Tree::default();
 let root = Element::builder()
@@ -45,8 +48,9 @@ let root = Element::builder()
 viewbuilder::run(tree, root)
 ```
 
+### Button Component
 ```rust
-fn button(tree: &mut Tree, mut f: impl FnMut(&mut Tree) + 'static) -> DefaultKey {
+fn button(tree: &mut Tree, mut f: impl FnMut(&mut Tree) + 'static) -> ElementKey {
     Element::builder()
         .on_click(Box::new(move |tree, _event| f(tree)))
         .background_color(Color4f::new(1., 1., 0., 1.))
