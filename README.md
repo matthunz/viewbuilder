@@ -29,7 +29,7 @@ but you can bring your own state management tools or build your own framework us
 ## Features
 
 - Cross-platform with desktop and mobile support
-- HTML-like API
+- Event handling with an HTML-like API
 - CSS flexbox and grid layout with [taffy](https://github.com/DioxusLabs/taffy/)
 - Accessibility with [accesskit](https://github.com/AccessKit/accesskit)
 - High performance rendering with [rust-skia](https://github.com/rust-skia/rust-skia)
