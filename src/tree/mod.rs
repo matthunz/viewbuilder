@@ -8,7 +8,7 @@ use accesskit::{NodeClassSet, NodeId, TreeUpdate};
 use kurbo::Point;
 use skia_safe::Canvas;
 use slotmap::SlotMap;
-use std::{borrow::Cow, num::NonZeroU128};
+use std::{borrow::Cow, num::NonZeroU128, ops::{Index, IndexMut}};
 use taffy::{prelude::Size, style_helpers::TaffyMaxContent, Taffy};
 
 mod iter;
@@ -160,14 +160,7 @@ impl Tree {
         NodeRef { key, tree: self }
     }
 
-    pub fn set_text(&mut self, key: NodeKey, content: impl Into<Cow<'static, str>>) {
-        if let NodeData::Text(ref mut dst) = self.nodes.nodes[key].data {
-            *dst = content.into();
-        } else {
-            todo!()
-        }
-    }
-
+  
     pub fn layout(&mut self, root: NodeKey) {
         if self.inner.changes.is_empty() {
             return;
@@ -288,6 +281,7 @@ impl Tree {
     }
 }
 
+
 #[derive(Default)]
 pub struct Nodes {
     pub nodes: SlotMap<NodeKey, Node>,
@@ -300,5 +294,20 @@ impl Nodes {
 
     pub fn iter_mut(&mut self, root: NodeKey) -> IterMut {
         IterMut::new(self, root)
+    }
+}
+
+
+impl Index<NodeKey> for Nodes {
+    type Output = Node;
+
+    fn index(&self, index: NodeKey) -> &Self::Output {
+        &self.nodes[index]
+    }
+}
+
+impl IndexMut<NodeKey> for Nodes {
+    fn index_mut(&mut self, index: NodeKey) -> &mut Self::Output {
+        &mut self.nodes[index]
     }
 }

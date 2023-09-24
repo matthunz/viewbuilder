@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use crate::{element::ElementData, node::NodeData, Node, NodeKey, Tree};
 use skia_safe::Color4f;
 use taffy::{prelude::Size, style::Dimension};
@@ -29,6 +31,19 @@ impl<'a> NodeRef<'a> {
     pub fn element(&mut self) -> &mut ElementData {
         if let NodeData::Element(ref mut element) = self.node().data {
             element
+        } else {
+            todo!()
+        }
+    }
+
+    /// Update the text of a text node.
+    /// 
+    /// ## Panics
+    /// This function will panic if the current reference is to an element,
+    /// not to a text node. 
+    pub fn set_text(&mut self, content: impl Into<Cow<'static, str>>) {
+        if let NodeData::Text(ref mut dst) = self.node().data {
+            *dst = content.into();
         } else {
             todo!()
         }

@@ -32,11 +32,11 @@ fn main() {
                 .flex_direction(FlexDirection::Row)
                 .child(button(&mut tree, "More!", move |tree| {
                     inc_count.fetch_add(1, Ordering::SeqCst);
-                    tree.set_text(text, inc_count.load(Ordering::SeqCst).to_string())
+                    tree.node(text).set_text( inc_count.load(Ordering::SeqCst).to_string())
                 }))
                 .child(button(&mut tree, "Less!", move |tree| {
                     dec_count.fetch_sub(1, Ordering::SeqCst);
-                    tree.set_text(text, dec_count.load(Ordering::SeqCst).to_string())
+                    tree.node(text).set_text( dec_count.load(Ordering::SeqCst).to_string())
                 }))
                 .build(&mut tree),
         )
