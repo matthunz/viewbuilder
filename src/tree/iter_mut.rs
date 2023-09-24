@@ -8,7 +8,7 @@ enum Operation {
     Pop(NodeKind),
 }
 
-pub enum Item<'a> {
+pub enum ItemMut<'a> {
     Node { node: &'a mut Node, level: usize },
     Pop { kind: NodeKind, level: usize },
 }
@@ -32,7 +32,7 @@ impl<'a> IterMut<'a> {
 }
 
 impl<'a> Iterator for IterMut<'a> {
-    type Item = Item<'a>;
+    type Item = ItemMut<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.stack.pop().map(|item| match item {
@@ -48,14 +48,14 @@ impl<'a> Iterator for IterMut<'a> {
                 let count = self.count;
                 self.count += 1;
 
-                Item::Node {
+                ItemMut::Node {
                     node: elem,
                     level: count,
                 }
             }
             Operation::Pop(kind) => {
                 self.count -= 1;
-                Item::Pop {
+                ItemMut::Pop {
                     kind,
                     level: self.count,
                 }

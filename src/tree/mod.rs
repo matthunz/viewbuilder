@@ -12,11 +12,10 @@ use std::{borrow::Cow, num::NonZeroU128};
 use taffy::{prelude::Size, style_helpers::TaffyMaxContent, Taffy};
 
 mod iter;
-use self::iter::Item;
-pub use self::iter::Iter;
+pub use self::iter::{Item, Iter};
 
 mod iter_mut;
-pub use iter_mut::IterMut;
+pub use iter_mut::{ItemMut, IterMut};
 
 mod node_ref;
 pub use self::node_ref::NodeRef;
@@ -204,7 +203,7 @@ impl Tree {
         let mut stack: Vec<taffy::prelude::Layout> = Vec::new();
         for item in self.nodes.iter_mut(root) {
             match item {
-                iter_mut::Item::Node { node, level: _ } => {
+                iter_mut::ItemMut::Node { node, level: _ } => {
                     let mut layout = self
                         .inner
                         .taffy
@@ -218,7 +217,7 @@ impl Tree {
                     node.layout = Some(layout);
                     stack.push(layout);
                 }
-                iter_mut::Item::Pop { kind: _, level: _ } => {
+                iter_mut::ItemMut::Pop { kind: _, level: _ } => {
                     stack.pop();
                 }
             }
@@ -248,7 +247,7 @@ impl Tree {
 
     pub fn paint(&mut self, root: DefaultKey, canvas: &mut Canvas) {
         for item in self.nodes.iter_mut(root) {
-            if let iter_mut::Item::Node { node, level: _ } = item {
+            if let iter_mut::ItemMut::Node { node, level: _ } = item {
                 node.paint(canvas);
             }
         }
