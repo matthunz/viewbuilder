@@ -1,6 +1,24 @@
-# Viewbuilder
+<div align="center">
+<h1>Viewbuilder</h1>
+ <a href="https://crates.io/crates/viewbuilder">
+    <img src="https://img.shields.io/crates/v/viewbuilder?style=flat-square"
+    alt="Crates.io version" />
+  </a>
+  <a href="https://docs.rs/viewbuilder">
+    <img src="https://img.shields.io/badge/docs-latest-blue.svg?style=flat-square"
+      alt="docs.rs docs" />
+  </a>
+   <a href="https://github.com/concoct-rs/viewbuilder/actions">
+    <img src="https://github.com/concoct-rs/viewbuilder/actions/workflows/rust.yml/badge.svg"
+      alt="CI status" />
+  </a>
+</div>
 
-[Examples](https://github.com/matthunz/viewbuilder/tree/main/examples)
+<div align="center">
+ <a href="https://github.com/concoct-rs/viewbuilder/tree/main/examples">Examples</a>
+</div>
+
+
 
 
 
@@ -12,11 +30,12 @@ It's built for use as a backend for [concoct](https://github.com/concoct-rs/conc
 but you can bring your own state management tools or build your own framework using this as a backend.
 
 ## Features
- - Cross-platform with desktop and mobile support
- - HTML-like API
- - CSS flexbox and grid layout with [taffy](https://github.com/DioxusLabs/taffy/)
- - Accessibility with [accesskit](https://github.com/AccessKit/accesskit)
- - High performance rendering with [rust-skia](https://github.com/rust-skia/rust-skia)
+
+- Cross-platform with desktop and mobile support
+- HTML-like API
+- CSS flexbox and grid layout with [taffy](https://github.com/DioxusLabs/taffy/)
+- Accessibility with [accesskit](https://github.com/AccessKit/accesskit)
+- High performance rendering with [rust-skia](https://github.com/rust-skia/rust-skia)
 
 ```rust
 let mut tree = Tree::default();
