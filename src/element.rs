@@ -6,7 +6,7 @@ use taffy::{
     style::{AlignItems, Dimension, FlexDirection, JustifyContent},
 };
 
-/// Builder for an element.
+/// Element of a user interface.
 #[derive(Default)]
 pub struct Element {
     size: Option<Size<Dimension>>,
@@ -21,10 +21,12 @@ pub struct Element {
 }
 
 impl Element {
+    /// Create a new element.
     pub fn new() -> Self {
         Self::default()
     }
 
+    /// Add a child to the element.
     pub fn child(&mut self, key: DefaultKey) -> &mut Self {
         if let Some(ref mut children) = self.children {
             children.push(key);
@@ -34,16 +36,19 @@ impl Element {
         self
     }
 
+    /// Set the click handler for this element.
     pub fn on_click(&mut self, handler: Box<dyn FnMut(&mut Tree, event::Click)>) -> &mut Self {
         self.on_click = Some(handler);
         self
     }
 
+    /// Set the mouse-in handler for this element.
     pub fn on_mouse_in(&mut self, handler: Box<dyn FnMut(&mut Tree, event::MouseIn)>) -> &mut Self {
         self.on_mouse_in = Some(handler);
         self
     }
 
+    /// Set the mouse-out handler for this element.
     pub fn on_mouse_out(
         &mut self,
         handler: Box<dyn FnMut(&mut Tree, event::MouseOut)>,
@@ -52,32 +57,37 @@ impl Element {
         self
     }
 
+    /// Set the size of this element.
     pub fn size(&mut self, size: Size<Dimension>) -> &mut Self {
         self.size = Some(size);
         self
     }
 
+    /// Set the flex direction of this element.
     pub fn flex_direction(&mut self, flex_direction: FlexDirection) -> &mut Self {
         self.flex_direction = Some(flex_direction);
         self
     }
 
+    /// Set the item alignment of this element.
     pub fn align_items(&mut self, align_items: AlignItems) -> &mut Self {
         self.align_items = Some(align_items);
         self
     }
 
+    /// Set the content justification of this element.
     pub fn justify_content(&mut self, justify_content: JustifyContent) -> &mut Self {
         self.justify_content = Some(justify_content);
         self
     }
 
+    /// Set the background color of this element.
     pub fn background_color(&mut self, color: Color4f) -> &mut Self {
         self.background_color = Some(color);
         self
     }
 
-    /// Build an element and insert it into the tree.
+    /// Build the element and insert it into the tree.
     pub fn build(&mut self, tree: &mut Tree) -> DefaultKey {
         let mut elem = Node::new(NodeData::Element(ElementData {
             size: self.size.take(),
@@ -96,12 +106,11 @@ impl Element {
             let node = &mut tree.nodes.nodes[*child];
             node.parent = Some(key);
         }
-
         key
     }
 }
 
-/// Element of a user interface.
+/// Data of an element.
 #[derive(Default)]
 pub struct ElementData {
     pub(crate) size: Option<Size<Dimension>>,

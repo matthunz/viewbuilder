@@ -8,10 +8,10 @@ use viewbuilder::{Element, Tree};
 fn button(
     tree: &mut Tree,
     label: &'static str,
-    mut f: impl FnMut(&mut Tree) + 'static,
+    mut handler: impl FnMut(&mut Tree) + 'static,
 ) -> ElementKey {
     Element::new()
-        .on_click(Box::new(move |tree, _event| f(tree)))
+        .on_click(Box::new(move |tree, _event| handler(tree)))
         .background_color(Color4f::new(1., 1., 0., 1.))
         .child(tree.insert(label))
         .build(tree)

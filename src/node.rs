@@ -46,6 +46,7 @@ pub struct Node {
 }
 
 impl Node {
+    /// Create a new node from its data.
     pub fn new(data: NodeData) -> Self {
         Self {
             data,
@@ -56,10 +57,12 @@ impl Node {
         }
     }
 
+    /// Create a new text node.
     pub fn text(content: impl Into<Cow<'static, str>>) -> Self {
         Self::new(NodeData::Text(content.into()))
     }
 
+    /// Get the node kind.
     pub fn kind(&self) -> NodeKind {
         match self.data {
             NodeData::Element { .. } => NodeKind::Element,
@@ -67,10 +70,12 @@ impl Node {
         }
     }
 
+    /// Build a semantics node.
     pub fn semantics(&self) -> NodeBuilder {
         NodeBuilder::default()
     }
 
+    /// Setup the layout node.
     pub fn layout(&mut self, taffy: &mut Taffy) {
         let mut style = Style::default();
         match self.data {
@@ -117,6 +122,7 @@ impl Node {
         }
     }
 
+    /// Paint the node to a skia canvas.
     pub fn paint(&mut self, canvas: &mut Canvas) {
         let layout = self.layout.as_ref().unwrap();
         match &self.data {
