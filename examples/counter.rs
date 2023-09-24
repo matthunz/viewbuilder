@@ -1,11 +1,11 @@
 use skia_safe::Color4f;
-use slotmap::DefaultKey;
+use viewbuilder::ElementKey;
 use std::rc::Rc;
 use std::sync::atomic::{AtomicI64, Ordering};
 use taffy::style::FlexDirection;
 use viewbuilder::{node::Element, Tree};
 
-fn button(tree: &mut Tree, mut f: impl FnMut(&mut Tree) + 'static) -> DefaultKey {
+fn button(tree: &mut Tree, mut f: impl FnMut(&mut Tree) + 'static) -> ElementKey {
     Element::builder()
         .on_click(Box::new(move |tree, _event| f(tree)))
         .background_color(Color4f::new(1., 1., 0., 1.))

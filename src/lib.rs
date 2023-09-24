@@ -12,6 +12,8 @@ pub use render::Renderer;
 pub mod event;
 pub use event::Event;
 
+pub type ElementKey = slotmap::DefaultKey;
+
 pub fn run(tree: Tree, root: DefaultKey) {
     let renderer = Renderer::new();
     renderer.run(tree, root)
