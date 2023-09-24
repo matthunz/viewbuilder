@@ -1,4 +1,4 @@
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 use skia_safe::Color4f;
 use taffy::{
@@ -23,15 +23,28 @@ async fn main() {
     let tx = renderer.tx.clone();
     let notify = renderer.notify.clone();
 
+    let mut is_forward = true;
+
     tokio::spawn(async move {
-        let start = Instant::now();
+        let mut start = Instant::now();
         loop {
-            let t = (Instant::now() - start).as_millis() as f32;
-            let s: f32 = interpolation::lerp(&0., &100., &(t / 1000.));
+            let min = 0.;
+            let max = 500.;
+
+            let elapsed = Instant::now() - start;
+            let millis = elapsed.as_millis() as f32;
+            let (begin, end) = if is_forward { (0., max) } else { (max, 0.) };
+            let interpolated: f32 = interpolation::lerp(&begin, &end, &(millis / 500.));
+            let size = interpolated.min(max).max(0.);
+
+            if elapsed >= Duration::from_secs(1) {
+                start = Instant::now();
+                is_forward = !is_forward;
+            }
 
             tx.send(UserEvent(Box::new(move |tree| {
                 tree.element(root)
-                    .set_size(Size::from_points(s as f32, s as f32))
+                    .set_size(Size::from_points(size as f32, size as f32))
             })))
             .unwrap();
 
