@@ -1,10 +1,13 @@
+use slotmap::DefaultKey;
+
 pub mod node;
 pub use node::Node;
 
 pub mod tree;
+pub use tree::{NodeRef, Tree};
 
-use slotmap::DefaultKey;
-pub use tree::Tree;
+pub mod element;
+pub use element::Element;
 
 mod render;
 pub use render::Renderer;

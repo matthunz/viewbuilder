@@ -1,5 +1,4 @@
-use super::NodeData;
-use crate::{event, Node, Tree};
+use crate::{event, node::NodeData, Node, Tree};
 use skia_safe::Color4f;
 use slotmap::DefaultKey;
 use taffy::{
@@ -7,20 +6,25 @@ use taffy::{
     style::{AlignItems, Dimension, FlexDirection, JustifyContent},
 };
 
+/// Builder for an element.
 #[derive(Default)]
-pub struct Builder {
+pub struct Element {
     size: Option<Size<Dimension>>,
     flex_direction: Option<FlexDirection>,
     align_items: Option<AlignItems>,
     justify_content: Option<JustifyContent>,
     on_click: Option<Box<dyn FnMut(&mut Tree, event::Click)>>,
-    pub on_mouse_in: Option<Box<dyn FnMut(&mut Tree, event::MouseIn)>>,
-    pub on_mouse_out: Option<Box<dyn FnMut(&mut Tree, event::MouseOut)>>,
+    on_mouse_in: Option<Box<dyn FnMut(&mut Tree, event::MouseIn)>>,
+    on_mouse_out: Option<Box<dyn FnMut(&mut Tree, event::MouseOut)>>,
     background_color: Option<Color4f>,
-    pub children: Option<Vec<DefaultKey>>,
+    children: Option<Vec<DefaultKey>>,
 }
 
-impl Builder {
+impl Element {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
     pub fn child(&mut self, key: DefaultKey) -> &mut Self {
         if let Some(ref mut children) = self.children {
             children.push(key);
@@ -73,8 +77,9 @@ impl Builder {
         self
     }
 
+    /// Build an element and insert it into the tree.
     pub fn build(&mut self, tree: &mut Tree) -> DefaultKey {
-        let mut elem = Node::new(NodeData::Element(Element {
+        let mut elem = Node::new(NodeData::Element(ElementData {
             size: self.size.take(),
             flex_direction: self.flex_direction.take(),
             on_click: self.on_click.take(),
@@ -96,19 +101,15 @@ impl Builder {
     }
 }
 
-pub struct Element {
-    pub size: Option<Size<Dimension>>,
-    pub on_click: Option<Box<dyn FnMut(&mut Tree, event::Click)>>,
-    pub on_mouse_in: Option<Box<dyn FnMut(&mut Tree, event::MouseIn)>>,
-    pub on_mouse_out: Option<Box<dyn FnMut(&mut Tree, event::MouseOut)>>,
-    pub background_color: Option<Color4f>,
-    pub flex_direction: Option<FlexDirection>,
-    pub align_items: Option<AlignItems>,
-    pub justify_content: Option<JustifyContent>,
-}
-
-impl Element {
-    pub fn builder() -> Builder {
-        Builder::default()
-    }
+/// Element of a user interface.
+#[derive(Default)]
+pub struct ElementData {
+    pub(crate) size: Option<Size<Dimension>>,
+    pub(crate) on_click: Option<Box<dyn FnMut(&mut Tree, event::Click)>>,
+    pub(crate) on_mouse_in: Option<Box<dyn FnMut(&mut Tree, event::MouseIn)>>,
+    pub(crate) on_mouse_out: Option<Box<dyn FnMut(&mut Tree, event::MouseOut)>>,
+    pub(crate) background_color: Option<Color4f>,
+    pub(crate) flex_direction: Option<FlexDirection>,
+    pub(crate) align_items: Option<AlignItems>,
+    pub(crate) justify_content: Option<JustifyContent>,
 }

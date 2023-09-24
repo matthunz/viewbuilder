@@ -1,14 +1,15 @@
 use crate::{
+    element::ElementData,
     event,
-    node::{Element, NodeData, NodeKind},
+    node::{NodeData, NodeKind},
     Event, Node,
 };
 use accesskit::{NodeClassSet, NodeId, TreeUpdate};
 use kurbo::Point;
-use skia_safe::{Canvas, Color4f};
+use skia_safe::Canvas;
 use slotmap::{DefaultKey, SlotMap};
 use std::{borrow::Cow, num::NonZeroU128};
-use taffy::{prelude::Size, style::Dimension, style_helpers::TaffyMaxContent, Taffy};
+use taffy::{prelude::Size, style_helpers::TaffyMaxContent, Taffy};
 
 mod iter;
 use self::iter::Item;
@@ -17,7 +18,10 @@ pub use self::iter::Iter;
 mod iter_mut;
 pub use iter_mut::IterMut;
 
-struct Inner {
+mod node_ref;
+pub use self::node_ref::NodeRef;
+
+pub(crate) struct Inner {
     pub(crate) changes: Vec<DefaultKey>,
     next_id: NonZeroU128,
     unused_ids: Vec<NodeId>,
@@ -50,7 +54,7 @@ enum HandlerFn {
 #[derive(Default)]
 pub struct Tree {
     pub nodes: Nodes,
-    inner: Inner,
+    pub(crate) inner: Inner,
 }
 
 impl Tree {
@@ -115,7 +119,7 @@ impl Tree {
 
                     match &element.data {
                         NodeData::Text(content) => s.push_str(&format!("\"{}\",", content)),
-                        NodeData::Element(Element { size, .. }) => {
+                        NodeData::Element(ElementData { size, .. }) => {
                             s.push_str("{\n");
                             if let Some(size) = size {
                                 for _ in 0..level + 1 {
@@ -152,16 +156,8 @@ impl Tree {
         key
     }
 
-    pub fn element(&mut self, key: DefaultKey) -> ElementRef {
-        if let NodeData::Element(ref mut element) = self.nodes.nodes[key].data {
-            ElementRef {
-                key,
-                element,
-                inner: &mut self.inner,
-            }
-        } else {
-            todo!()
-        }
+    pub fn element(&mut self, key: DefaultKey) -> NodeRef {
+        NodeRef { key, tree: self }
     }
 
     pub fn set_text(&mut self, key: DefaultKey, content: impl Into<Cow<'static, str>>) {
@@ -304,23 +300,5 @@ impl Nodes {
 
     pub fn iter_mut(&mut self, root: DefaultKey) -> IterMut {
         IterMut::new(self, root)
-    }
-}
-
-pub struct ElementRef<'a> {
-    key: DefaultKey,
-    element: &'a mut Element,
-    inner: &'a mut Inner,
-}
-
-impl<'a> ElementRef<'a> {
-    pub fn set_size(&mut self, size: Size<Dimension>) {
-        self.element.size = Some(size);
-        self.inner.changes.push(self.key);
-    }
-
-    pub fn set_background_color(&mut self, color: Color4f) {
-        self.element.background_color = Some(color);
-        self.inner.changes.push(self.key);
     }
 }

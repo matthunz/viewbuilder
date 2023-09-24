@@ -1,3 +1,4 @@
+use crate::element::ElementData;
 use accesskit::NodeBuilder;
 use skia_safe::{Canvas, Color4f, Font, FontStyle, Paint, Rect, TextBlob, Typeface};
 use slotmap::DefaultKey;
@@ -7,9 +8,6 @@ use taffy::{
     style::Style,
     Taffy,
 };
-
-pub mod element;
-pub use self::element::Element;
 
 /// Kind of data type of a node.
 #[derive(Debug, PartialEq, Eq)]
@@ -24,7 +22,7 @@ pub enum NodeKind {
 /// Data type of a node.
 pub enum NodeData {
     /// Element node.
-    Element(Element),
+    Element(ElementData),
 
     /// Text node.
     Text(Cow<'static, str>),

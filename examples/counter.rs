@@ -3,14 +3,14 @@ use std::rc::Rc;
 use std::sync::atomic::{AtomicI64, Ordering};
 use taffy::style::FlexDirection;
 use viewbuilder::ElementKey;
-use viewbuilder::{node::Element, Tree};
+use viewbuilder::{Element, Tree};
 
 fn button(
     tree: &mut Tree,
     label: &'static str,
     mut f: impl FnMut(&mut Tree) + 'static,
 ) -> ElementKey {
-    Element::builder()
+    Element::new()
         .on_click(Box::new(move |tree, _event| f(tree)))
         .background_color(Color4f::new(1., 1., 0., 1.))
         .child(tree.insert(label))
@@ -24,11 +24,11 @@ fn main() {
     let dec_count = inc_count.clone();
 
     let text = tree.insert("0");
-    let root = Element::builder()
+    let root = Element::new()
         .flex_direction(FlexDirection::Column)
-        .child(Element::builder().child(text).build(&mut tree))
+        .child(Element::new().child(text).build(&mut tree))
         .child(
-            Element::builder()
+            Element::new()
                 .flex_direction(FlexDirection::Row)
                 .child(button(&mut tree, "More!", move |tree| {
                     inc_count.fetch_add(1, Ordering::SeqCst);
