@@ -5,7 +5,8 @@
 Cross-platform user interface framework for Rust.
 
 This crate provides an HTML-like render API for the backend of a UI.
-You can either use [concoct](https://github.com/concoct-rs/concoct), bring your own state management tools, or build your own framework using this as a backend.
+It's built for use as a backend for [concoct](https://github.com/concoct-rs/concoct),
+but you can bring your own state management tools or build your own framework using this as a backend.
 
 ## Features
  - Cross-platform with desktop and mobile support
