@@ -1,15 +1,19 @@
 use skia_safe::Color4f;
-use viewbuilder::ElementKey;
 use std::rc::Rc;
 use std::sync::atomic::{AtomicI64, Ordering};
 use taffy::style::FlexDirection;
+use viewbuilder::ElementKey;
 use viewbuilder::{node::Element, Tree};
 
-fn button(tree: &mut Tree, mut f: impl FnMut(&mut Tree) + 'static) -> ElementKey {
+fn button(
+    tree: &mut Tree,
+    label: &'static str,
+    mut f: impl FnMut(&mut Tree) + 'static,
+) -> ElementKey {
     Element::builder()
         .on_click(Box::new(move |tree, _event| f(tree)))
         .background_color(Color4f::new(1., 1., 0., 1.))
-        .child(tree.insert("More!"))
+        .child(tree.insert(label))
         .build(tree)
 }
 
@@ -26,11 +30,11 @@ fn main() {
         .child(
             Element::builder()
                 .flex_direction(FlexDirection::Row)
-                .child(button(&mut tree, move |tree| {
+                .child(button(&mut tree, "More!", move |tree| {
                     inc_count.fetch_add(1, Ordering::SeqCst);
                     tree.set_text(text, inc_count.load(Ordering::SeqCst).to_string())
                 }))
-                .child(button(&mut tree, move |tree| {
+                .child(button(&mut tree, "Less!", move |tree| {
                     dec_count.fetch_sub(1, Ordering::SeqCst);
                     tree.set_text(text, dec_count.load(Ordering::SeqCst).to_string())
                 }))

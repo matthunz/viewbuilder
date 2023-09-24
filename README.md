@@ -50,11 +50,15 @@ viewbuilder::run(tree, root)
 
 ### Button Component
 ```rust
-fn button(tree: &mut Tree, mut f: impl FnMut(&mut Tree) + 'static) -> ElementKey {
+fn button(
+    tree: &mut Tree,
+    label: &'static str,
+    mut f: impl FnMut(&mut Tree) + 'static,
+) -> ElementKey {
     Element::builder()
         .on_click(Box::new(move |tree, _event| f(tree)))
         .background_color(Color4f::new(1., 1., 0., 1.))
-        .child(tree.insert("More!"))
+        .child(tree.insert(label))
         .build(tree)
 }
 ```
