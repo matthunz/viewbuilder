@@ -9,7 +9,7 @@
       alt="docs.rs docs" />
   </a>
    <a href="https://github.com/concoct-rs/viewbuilder/actions">
-    <img src="https://github.com/concoct-rs/viewbuilder/actions/workflows/rust.yml/badge.svg"
+    <img src="https://github.com/concoct-rs/viewbuilder/actions/workflows/ci.yml/badge.svg"
       alt="CI status" />
   </a>
 </div>
@@ -18,10 +18,7 @@
  <a href="https://github.com/concoct-rs/viewbuilder/tree/main/examples">Examples</a>
 </div>
 
-
-
-
-
+<br>
 
 Cross-platform user interface framework for Rust.
 
