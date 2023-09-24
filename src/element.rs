@@ -7,10 +7,18 @@ use taffy::{
 };
 
 /// Element of a user interface.
-#[derive(Default)]
 pub struct Element {
     data: Option<ElementData>,
     children: Option<Vec<DefaultKey>>,
+}
+
+impl Default for Element {
+    fn default() -> Self {
+        Self {
+            data: Some(ElementData::default()),
+            children: Default::default(),
+        }
+    }
 }
 
 impl Element {
