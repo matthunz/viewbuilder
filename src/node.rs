@@ -71,13 +71,18 @@ impl Node {
         }
     }
 
+    /// Get the absolute layout of the node, relative to the window.
+    pub fn layout(&self) -> Option<Layout> {
+        self.layout
+    }
+
     /// Build a semantics node.
-    pub fn semantics(&self) -> NodeBuilder {
+    pub fn build_semantics(&self) -> NodeBuilder {
         NodeBuilder::default()
     }
 
     /// Setup the layout node.
-    pub fn layout(&mut self, taffy: &mut Taffy) {
+    pub fn build_layout(&mut self, taffy: &mut Taffy) {
         let mut style = Style::default();
         if let NodeData::Element(ref mut elem) = self.data {
             if let Some(size) = elem.size() {

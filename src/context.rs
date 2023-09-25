@@ -136,7 +136,7 @@ impl Context {
                 .collect();
 
             let node = &mut self.tree[*key];
-            node.layout(&mut self.taffy);
+            node.build_layout(&mut self.taffy);
 
             let layout_key = node.layout_key.unwrap();
             let layout_children = self.taffy.children(layout_key).unwrap();
@@ -177,7 +177,7 @@ impl Context {
         for key in &self.changes {
             let node = &mut self.tree[*key];
 
-            let semantics_builder = node.semantics();
+            let semantics_builder = node.build_semantics();
             let semantics = semantics_builder.build(&mut NodeClassSet::lock_global());
 
             let id = if let Some(id) = self.unused_ids.pop() {
