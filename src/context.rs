@@ -169,8 +169,13 @@ impl Context {
     /// Paint the tree onto a skia canvas, clearing any changes that were made.
     pub fn paint(&mut self, root: NodeKey, canvas: &mut Canvas) {
         for item in self.tree.iter_mut(root) {
-            if let ItemMut::Node { node, level: _ } = item {
-                node.paint(canvas);
+            match item {
+                ItemMut::Node { node, level: _ } => {
+                    node.paint(canvas);
+                }
+                ItemMut::Pop { kind: _, level: _ } => {
+                    canvas.restore();
+                }
             }
         }
         self.changes.clear();

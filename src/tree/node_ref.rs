@@ -1,4 +1,8 @@
-use crate::{element::ElementData, node::{NodeData, Overflow}, Context, Node, NodeKey};
+use crate::{
+    element::ElementData,
+    node::{NodeData, Overflow},
+    Context, Node, NodeKey,
+};
 use std::borrow::Cow;
 use taffy::{prelude::Size, style::Dimension};
 
@@ -60,16 +64,20 @@ impl<'a> NodeRef<'a> {
         self.tree.changes.push(self.key);
     }
 
+    pub fn translation(&mut self) -> kurbo::Size {
+        self.node().translation
+    }
+
     pub fn set_translation(&mut self, size: kurbo::Size) {
         self.node().translation = size;
         self.tree.changes.push(self.key);
     }
 
-    pub fn overflow_x(&mut self) -> Overflow{
+    pub fn overflow_x(&mut self) -> Overflow {
         self.node().overflow_x
     }
 
-    pub fn overflow_y(&mut self) -> Overflow{
+    pub fn overflow_y(&mut self) -> Overflow {
         self.node().overflow_y
     }
 
@@ -81,6 +89,10 @@ impl<'a> NodeRef<'a> {
     pub fn set_overflow_y(&mut self, overflow: Overflow) {
         self.node().overflow_y = overflow;
         self.tree.changes.push(self.key);
+    }
+
+    pub fn layout(&mut self) -> Option<taffy::prelude::Layout> {
+        self.node().layout
     }
 }
 

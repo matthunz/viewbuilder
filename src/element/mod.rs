@@ -1,4 +1,8 @@
-use crate::{event, node::{NodeData, Overflow}, Context, Node, NodeKey};
+use crate::{
+    event,
+    node::{NodeData, Overflow},
+    Context, Node, NodeKey,
+};
 use skia_safe::Color4f;
 use taffy::{
     prelude::Size,
@@ -16,7 +20,7 @@ pub struct Element {
     data: Option<ElementData>,
     children: Option<Vec<NodeKey>>,
     overflow_x: Overflow,
-    overflow_y: Overflow
+    overflow_y: Overflow,
 }
 
 impl Default for Element {
@@ -25,7 +29,7 @@ impl Default for Element {
             data: Some(ElementData::default()),
             children: Default::default(),
             overflow_x: Overflow::Hidden,
-            overflow_y: Overflow::Hidden
+            overflow_y: Overflow::Hidden,
         }
     }
 }

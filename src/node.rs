@@ -55,7 +55,6 @@ pub struct Node {
 
     pub(crate) overflow_x: Overflow,
     pub(crate) overflow_y: Overflow,
-    
 }
 
 impl Node {
@@ -69,7 +68,7 @@ impl Node {
             layout: None,
             translation: kurbo::Size::ZERO,
             overflow_x: Overflow::Hidden,
-            overflow_y: Overflow::Hidden
+            overflow_y: Overflow::Hidden,
         }
     }
 
@@ -142,14 +141,13 @@ impl Node {
 
     /// Paint the node to a skia canvas.
     pub fn paint(&mut self, canvas: &mut Canvas) {
-        let layout = self.layout.as_ref().unwrap();
-
         canvas.save();
         canvas.translate(skia_safe::Point::new(
             self.translation.width as _,
             self.translation.height as _,
         ));
 
+        let layout = self.layout.as_ref().unwrap();
         match &self.data {
             NodeData::Element(elem) => {
                 if let Some(background_color) = elem.background_color() {

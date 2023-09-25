@@ -429,15 +429,22 @@ impl<T> Renderer<T> {
                                         match (node.overflow_x(), node.overflow_y()) {
                                             (Overflow::Scroll, Overflow::Scroll) => {
                                                 node.set_translation(Size::new(
-                                                    px_delta.x, px_delta.y,
+                                                    px_delta.x.max(0.),
+                                                    px_delta.y.max(0.),
                                                 ));
                                             }
                                             (Overflow::Scroll, Overflow::Hidden) => {
                                                 node.set_translation(Size::new(px_delta.x, 0.));
                                             }
                                             (Overflow::Hidden, Overflow::Scroll) => {
-                                           
-                                                node.set_translation(Size::new(0., px_delta.y));
+                                                let y = node.translation().height + px_delta.y;
+                                                let height =
+                                                    node.layout().unwrap().size.height as _;
+
+                                                node.set_translation(Size::new(
+                                                    0.,
+                                                    y.min(0.).min(height),
+                                                ));
                                             }
                                             (Overflow::Hidden, Overflow::Hidden) => {}
                                         }
