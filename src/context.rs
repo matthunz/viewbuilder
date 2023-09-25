@@ -7,7 +7,7 @@ use crate::{
 use accesskit::{NodeClassSet, NodeId, TreeUpdate};
 use skia_safe::Canvas;
 use std::num::NonZeroU128;
-use taffy::{prelude::Size, style_helpers::TaffyMaxContent, Taffy};
+use taffy::{prelude::Size, style::Style, style_helpers::TaffyMaxContent, Taffy};
 
 /// Render context for a UI tree.
 ///
@@ -58,8 +58,7 @@ impl Context {
                 Event::MouseIn(mouse_in) => (elem.on_mouse_in().take(), mouse_in),
                 Event::MouseOut(mouse_out) => (elem.on_mouse_out().take(), mouse_out),
             };
-            handler_cell
-                .map(|handler| (handler, mouse_event))
+            handler_cell.map(|handler| (handler, mouse_event))
         } else {
             None
         };
@@ -91,7 +90,7 @@ impl Context {
     }
 
     /// Compute the layout of the tree, starting at a root node key.
-    pub fn layout(&mut self, root: NodeKey) {
+    pub fn layout(&mut self, root: NodeKey, size: kurbo::Size) {
         if self.changes.is_empty() {
             return;
         }
@@ -116,9 +115,14 @@ impl Context {
             }
         }
 
-        // Compute the layout of the taffy tree.
+        // Create the window layout
         let root_layout = self.tree[root].layout_key.unwrap();
-        taffy::compute_layout(&mut self.taffy, root_layout, Size::MAX_CONTENT).unwrap();
+        let mut style = Style::default();
+        style.size = Size::from_points(size.width as _, size.height as _);
+        let window = self.taffy.new_with_children(style, &[root_layout]).unwrap();
+
+        // Compute the layout of the taffy tree.
+        taffy::compute_layout(&mut self.taffy, window, Size::MAX_CONTENT).unwrap();
 
         // Compute the absolute layout of each node.
         let mut stack: Vec<taffy::prelude::Layout> = Vec::new();

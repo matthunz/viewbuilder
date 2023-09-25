@@ -11,7 +11,7 @@ use glutin::{
     surface::{Surface as GlutinSurface, SurfaceAttributesBuilder, WindowSurface},
 };
 use glutin_winit::DisplayBuilder;
-use kurbo::Point;
+use kurbo::{Point, Size};
 use raw_window_handle::HasRawWindowHandle;
 use skia_safe::{
     gpu::{self, gl::FramebufferInfo, BackendRenderTarget, SurfaceOrigin},
@@ -438,7 +438,11 @@ impl<T> Renderer<T> {
                 canvas.clear(Color::WHITE);
 
                 // PAINT
-                tree.layout(root);
+                let window_size = self.window.inner_size();
+                tree.layout(
+                    root,
+                    Size::new(window_size.width as _, window_size.height as _),
+                );
                 tree.paint(root, canvas);
 
                 self.gr_context.flush_and_submit();
