@@ -28,6 +28,12 @@ pub enum NodeData {
     Text(Cow<'static, str>),
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Overflow {
+    Hidden,
+    Scroll,
+}
+
 /// Node of a tree.
 pub struct Node {
     /// Data type of the node.
@@ -44,6 +50,12 @@ pub struct Node {
 
     /// Absolute layout of the node, relative to the window.
     pub(crate) layout: Option<Layout>,
+
+    pub(crate) translation: kurbo::Size,
+
+    pub(crate) overflow_x: Overflow,
+    pub(crate) overflow_y: Overflow,
+    
 }
 
 impl Node {
@@ -55,6 +67,9 @@ impl Node {
             children: None,
             layout_key: None,
             layout: None,
+            translation: kurbo::Size::ZERO,
+            overflow_x: Overflow::Hidden,
+            overflow_y: Overflow::Hidden
         }
     }
 
@@ -128,6 +143,13 @@ impl Node {
     /// Paint the node to a skia canvas.
     pub fn paint(&mut self, canvas: &mut Canvas) {
         let layout = self.layout.as_ref().unwrap();
+
+        canvas.save();
+        canvas.translate(skia_safe::Point::new(
+            self.translation.width as _,
+            self.translation.height as _,
+        ));
+
         match &self.data {
             NodeData::Element(elem) => {
                 if let Some(background_color) = elem.background_color() {

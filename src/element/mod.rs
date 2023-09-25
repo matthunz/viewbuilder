@@ -1,4 +1,4 @@
-use crate::{event, node::NodeData, Context, Node, NodeKey};
+use crate::{event, node::{NodeData, Overflow}, Context, Node, NodeKey};
 use skia_safe::Color4f;
 use taffy::{
     prelude::Size,
@@ -15,6 +15,8 @@ pub use self::attribute::{Attribute, AttributeKind, AttributeValue};
 pub struct Element {
     data: Option<ElementData>,
     children: Option<Vec<NodeKey>>,
+    overflow_x: Overflow,
+    overflow_y: Overflow
 }
 
 impl Default for Element {
@@ -22,6 +24,8 @@ impl Default for Element {
         Self {
             data: Some(ElementData::default()),
             children: Default::default(),
+            overflow_x: Overflow::Hidden,
+            overflow_y: Overflow::Hidden
         }
     }
 }
@@ -81,19 +85,31 @@ impl Element {
         Color4f
     );
 
+    pub fn overflow_x(&mut self, overflow: Overflow) -> &mut Self {
+        self.overflow_x = overflow;
+        self
+    }
+
+    pub fn overflow_y(&mut self, overflow: Overflow) -> &mut Self {
+        self.overflow_y = overflow;
+        self
+    }
+
     pub fn data_mut(&mut self) -> &mut ElementData {
         self.data.as_mut().unwrap()
     }
 
     /// Build the element and insert it into the tree.
     pub fn build(&mut self, cx: &mut Context) -> NodeKey {
-        let mut elem = Node::new(NodeData::Element(self.data.take().unwrap()));
-        elem.children = self.children.take();
+        let mut node = Node::new(NodeData::Element(self.data.take().unwrap()));
+        node.children = self.children.take();
+        node.overflow_x = self.overflow_x;
+        node.overflow_y = self.overflow_y;
 
-        let key = cx.insert(elem);
-        for child in self.children.iter().flatten() {
-            let node = &mut cx.tree[*child];
-            node.parent = Some(key);
+        let key = cx.insert(node);
+        for child_key in self.children.iter().flatten() {
+            let child = &mut cx.tree[*child_key];
+            child.parent = Some(key);
         }
         key
     }

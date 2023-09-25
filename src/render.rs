@@ -1,4 +1,4 @@
-use crate::{event, Context, NodeKey};
+use crate::{event, node::Overflow, Context, NodeKey};
 use gl::types::*;
 use glutin::{
     config::{ConfigTemplateBuilder, GlConfig},
@@ -26,7 +26,7 @@ use std::{
 };
 use tokio::sync::Notify;
 use winit::{
-    event::{ElementState, Event, KeyboardInput, VirtualKeyCode, WindowEvent},
+    event::{ElementState, Event, KeyboardInput, MouseScrollDelta, VirtualKeyCode, WindowEvent},
     event_loop::{ControlFlow, EventLoop, EventLoopBuilder},
     window::{Window, WindowBuilder},
 };
@@ -414,6 +414,39 @@ impl<T> Renderer<T> {
                             }
                         }
                     },
+                    WindowEvent::MouseWheel {
+                        device_id,
+                        delta,
+                        phase,
+                        modifiers,
+                    } => {
+                        if let Some(pos) = cursor_pos {
+                            match delta {
+                                MouseScrollDelta::PixelDelta(px_delta) => {
+                                    let pos = Point::new(pos.x, pos.y);
+                                    if let Some(target) = tree.tree.target(root, pos) {
+                                        let mut node = tree.node(target);
+                                        match (node.overflow_x(), node.overflow_y()) {
+                                            (Overflow::Scroll, Overflow::Scroll) => {
+                                                node.set_translation(Size::new(
+                                                    px_delta.x, px_delta.y,
+                                                ));
+                                            }
+                                            (Overflow::Scroll, Overflow::Hidden) => {
+                                                node.set_translation(Size::new(px_delta.x, 0.));
+                                            }
+                                            (Overflow::Hidden, Overflow::Scroll) => {
+                                           
+                                                node.set_translation(Size::new(0., px_delta.y));
+                                            }
+                                            (Overflow::Hidden, Overflow::Hidden) => {}
+                                        }
+                                    }
+                                }
+                                _ => {}
+                            }
+                        }
+                    }
                     _ => (),
                 },
                 Event::RedrawRequested(_) => {

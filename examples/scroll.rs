@@ -1,5 +1,5 @@
 use taffy::style::FlexDirection;
-use viewbuilder::{Context, Element, NodeKey};
+use viewbuilder::{node::Overflow, Context, Element, NodeKey};
 
 fn app(cx: &mut Context) -> NodeKey {
     let mut count = 0;
@@ -11,7 +11,9 @@ fn app(cx: &mut Context) -> NodeKey {
     .take(100);
 
     let mut elem = Element::new();
-    elem.flex_direction(FlexDirection::Column).extend(children);
+    elem.overflow_y(Overflow::Scroll)
+        .flex_direction(FlexDirection::Column)
+        .extend(children);
     elem.build(cx)
 }
 

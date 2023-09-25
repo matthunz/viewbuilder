@@ -1,4 +1,4 @@
-use crate::{element::ElementData, node::NodeData, Context, Node, NodeKey};
+use crate::{element::ElementData, node::{NodeData, Overflow}, Context, Node, NodeKey};
 use std::borrow::Cow;
 use taffy::{prelude::Size, style::Dimension};
 
@@ -57,6 +57,29 @@ impl<'a> NodeRef<'a> {
     /// Update the size of the element.
     pub fn set_size(&mut self, size: Size<Dimension>) {
         self.as_mut().set_size(size);
+        self.tree.changes.push(self.key);
+    }
+
+    pub fn set_translation(&mut self, size: kurbo::Size) {
+        self.node().translation = size;
+        self.tree.changes.push(self.key);
+    }
+
+    pub fn overflow_x(&mut self) -> Overflow{
+        self.node().overflow_x
+    }
+
+    pub fn overflow_y(&mut self) -> Overflow{
+        self.node().overflow_y
+    }
+
+    pub fn set_overflow_x(&mut self, overflow: Overflow) {
+        self.node().overflow_x = overflow;
+        self.tree.changes.push(self.key);
+    }
+
+    pub fn set_overflow_y(&mut self, overflow: Overflow) {
+        self.node().overflow_y = overflow;
         self.tree.changes.push(self.key);
     }
 }
