@@ -31,7 +31,43 @@ use winit::{
     window::{Window, WindowBuilder},
 };
 
-pub struct UserEvent(pub Box<dyn FnOnce(&mut Context) + Send>);
+pub struct Updater {
+    tx: mpsc::Sender<UserEvent>,
+}
+
+impl Updater {
+    /// Send an update to the UI tree.
+    pub fn update(&self, f: Box<dyn FnOnce(&mut Context) + Send>) -> Result<(), ()> {
+        self.tx.send(UserEvent::Update(f)).map_err(|_| ())
+    }
+}
+
+pub struct Scope {
+    updater: Updater,
+    notify: Arc<Notify>,
+}
+
+impl Scope {
+    /// Request an animation frame from the renderer.
+    pub async fn request_frame(&self) -> Result<(), ()> {
+        self.updater
+            .tx
+            .send(UserEvent::FrameRequest)
+            .map_err(|_| ())?;
+        self.notify.notified().await;
+        Ok(())
+    }
+
+    /// Send an update to the UI tree.
+    pub fn update(&self, f: Box<dyn FnOnce(&mut Context) + Send>) -> Result<(), ()> {
+        self.updater.update(f)
+    }
+}
+
+enum UserEvent {
+    Update(Box<dyn FnOnce(&mut Context) + Send>),
+    FrameRequest,
+}
 
 // Guarantee the drop order inside the FnMut closure. `Window` _must_ be dropped after
 // `DirectContext`.
@@ -48,9 +84,9 @@ pub struct Renderer<T = ()> {
     num_samples: usize,
     stencil_size: usize,
     fb_info: FramebufferInfo,
-    pub tx: mpsc::Sender<UserEvent>,
+    tx: mpsc::Sender<UserEvent>,
     rx: mpsc::Receiver<UserEvent>,
-    pub notify: Arc<Notify>,
+    notify: Arc<Notify>,
 }
 
 impl Default for Renderer {
@@ -186,6 +222,21 @@ impl<T> Renderer<T> {
         }
     }
 
+    /// Create an updater handle to the renderer.
+    pub fn updater(&self) -> Updater {
+        Updater {
+            tx: self.tx.clone(),
+        }
+    }
+
+    /// Create a scope handle to the renderer.
+    pub fn scope(&self) -> Scope {
+        Scope {
+            updater: self.updater(),
+            notify: self.notify.clone(),
+        }
+    }
+
     pub fn animation(
         &self,
         _key: NodeKey,
@@ -193,8 +244,7 @@ impl<T> Renderer<T> {
         max: f32,
         f: impl Fn(&mut Context, f32) + Send + Sync + 'static,
     ) -> impl Future<Output = ()> {
-        let tx = self.tx.clone();
-        let notify = self.notify.clone();
+        let scope = self.scope();
 
         let mut is_forward = true;
         let mut start = Instant::now();
@@ -215,10 +265,9 @@ impl<T> Renderer<T> {
                 }
 
                 let f2 = f.clone();
-                tx.send(UserEvent(Box::new(move |cx| f2(cx, size))))
-                    .unwrap();
+                scope.update(Box::new(move |cx| f2(cx, size))).unwrap();
 
-                notify.notified().await;
+                scope.request_frame().await.unwrap();
             }
         }
     }
@@ -362,7 +411,10 @@ impl<T> Renderer<T> {
                 Event::RedrawRequested(_) => {
                     draw_frame = true;
                 }
-                Event::UserEvent(UserEvent(update)) => update(&mut tree),
+                Event::UserEvent(UserEvent::Update(update)) => update(&mut tree),
+                Event::UserEvent(UserEvent::FrameRequest) => {
+                    draw_frame = true;
+                }
                 _ => (),
             }
 

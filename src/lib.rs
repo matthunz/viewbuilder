@@ -8,7 +8,7 @@
 //! ```
 //! use viewbuilder::{Context, Element, NodeKey};
 //! use taffy::prelude::{AlignItems, JustifyContent};
-//! 
+//!
 //! fn app(cx: &mut Context) -> NodeKey {
 //!     Element::new()
 //!         .align_items(AlignItems::Center)
