@@ -10,18 +10,18 @@ use std::num::NonZeroU128;
 use taffy::{prelude::Size, style_helpers::TaffyMaxContent, Taffy};
 
 enum Handler {
-    Click(Box<dyn FnMut(&mut Context, event::Click)>, event::Click),
-    MouseIn(Box<dyn FnMut(&mut Context, event::MouseIn)>, event::MouseIn),
+    Click(Box<dyn FnMut(&mut Context, event::MouseEvent)>, event::MouseEvent),
+    MouseIn(Box<dyn FnMut(&mut Context, event::MouseEvent)>, event::MouseEvent),
     MouseOut(
-        Box<dyn FnMut(&mut Context, event::MouseOut)>,
-        event::MouseOut,
+        Box<dyn FnMut(&mut Context, event::MouseEvent)>,
+        event::MouseEvent,
     ),
 }
 
 enum HandlerFn {
-    Click(Box<dyn FnMut(&mut Context, event::Click)>),
-    MouseIn(Box<dyn FnMut(&mut Context, event::MouseIn)>),
-    MouseOut(Box<dyn FnMut(&mut Context, event::MouseOut)>),
+    Click(Box<dyn FnMut(&mut Context, event::MouseEvent)>),
+    MouseIn(Box<dyn FnMut(&mut Context, event::MouseEvent)>),
+    MouseOut(Box<dyn FnMut(&mut Context, event::MouseEvent)>),
 }
 
 /// Render context for a UI tree.

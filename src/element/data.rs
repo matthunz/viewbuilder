@@ -122,7 +122,7 @@ impl ElementData {
         Color
     );
 
-    make_handler_fn!(on_click, set_on_click, Click, OnClick);
-    make_handler_fn!(on_mouse_in, set_on_mouse_in, MouseIn, OnMouseIn);
-    make_handler_fn!(on_mouse_out, set_on_mouse_out, MouseOut, OnMouseOut);
+    make_handler_fn!(on_click, set_on_click, MouseEvent, OnClick);
+    make_handler_fn!(on_mouse_in, set_on_mouse_in, MouseEvent, OnMouseIn);
+    make_handler_fn!(on_mouse_out, set_on_mouse_out, MouseEvent, OnMouseOut);
 }

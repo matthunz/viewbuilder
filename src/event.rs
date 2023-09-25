@@ -1,19 +1,15 @@
+use kurbo::Point;
+
 use crate::NodeKey;
 
 pub enum Event {
-    Click(Click),
-    MouseIn(MouseIn),
-    MouseOut(MouseOut),
+    Click(MouseEvent),
+    MouseIn(MouseEvent),
+    MouseOut(MouseEvent),
 }
 
-pub struct Click {
-    pub target: NodeKey,
-}
 
-pub struct MouseIn {
+pub struct MouseEvent {
     pub target: NodeKey,
-}
-
-pub struct MouseOut {
-    pub target: NodeKey,
+    pub location: Point,
 }

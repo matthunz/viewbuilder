@@ -337,37 +337,47 @@ impl<T> Renderer<T> {
                         modifiers: _,
                     } => {
                         cursor_pos = Some(position);
+                        let pos = Point::new(position.x, position.y);
 
-                        if let Some(target) =
-                            tree.tree.target(root, Point::new(position.x, position.y))
-                        {
+                        if let Some(target) = tree.tree.target(root, pos) {
                             if let Some(last_target) = hover_target {
                                 if target != last_target {
                                     hover_target = Some(target);
 
                                     tree.send(
                                         last_target,
-                                        crate::Event::MouseOut(event::MouseOut {
+                                        crate::Event::MouseOut(event::MouseEvent {
                                             target: last_target,
+                                            location: pos,
                                         }),
                                     );
 
                                     tree.send(
                                         target,
-                                        crate::Event::MouseIn(event::MouseIn { target }),
+                                        crate::Event::MouseIn(event::MouseEvent {
+                                            target,
+                                            location: pos,
+                                        }),
                                     );
                                 }
                             } else {
                                 hover_target = Some(target);
-                                tree.send(target, crate::Event::MouseIn(event::MouseIn { target }));
+                                tree.send(
+                                    target,
+                                    crate::Event::MouseIn(event::MouseEvent {
+                                        target,
+                                        location: pos,
+                                    }),
+                                );
                             }
                         } else if let Some(last_target) = hover_target {
                             hover_target = None;
 
                             tree.send(
                                 last_target,
-                                crate::Event::MouseOut(event::MouseOut {
+                                crate::Event::MouseOut(event::MouseEvent {
                                     target: last_target,
+                                    location: pos,
                                 }),
                             );
                         }
@@ -388,19 +398,17 @@ impl<T> Renderer<T> {
                             }
                         }
                         ElementState::Released => {
-                            if let Some(pos) = cursor_pos {
-                                if let Some(clicked) = clicked.take() {
-                                    if let Some(target) =
-                                        tree.tree.target(root, Point::new(pos.x, pos.y))
-                                    {
-                                        if target == clicked {
-                                            tree.send(
-                                                clicked,
-                                                crate::Event::Click(event::Click {
-                                                    target: clicked,
-                                                }),
-                                            )
-                                        }
+                            if let (Some(pos), Some(clicked)) = (cursor_pos, clicked.take()) {
+                                let pos = Point::new(pos.x, pos.y);
+                                if let Some(target) = tree.tree.target(root, pos) {
+                                    if target == clicked {
+                                        tree.send(
+                                            clicked,
+                                            crate::Event::Click(event::MouseEvent {
+                                                target: clicked,
+                                                location: pos,
+                                            }),
+                                        )
                                     }
                                 }
                             }

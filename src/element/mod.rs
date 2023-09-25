@@ -71,7 +71,7 @@ impl Element {
         "click handler",
         on_click,
         set_on_click,
-        Box<dyn FnMut(&mut Context, event::Click)>
+        Box<dyn FnMut(&mut Context, event::MouseEvent)>
     );
 
     make_builder_fn!(

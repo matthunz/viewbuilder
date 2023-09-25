@@ -48,13 +48,13 @@ pub enum AttributeValue {
     JustifyContent(JustifyContent),
 
     /// Click handler attribute value.
-    OnClick(Box<dyn FnMut(&mut Context, event::Click)>),
+    OnClick(Box<dyn FnMut(&mut Context, event::MouseEvent)>),
 
     /// Mouse in handler attribute value.
-    OnMouseIn(Box<dyn FnMut(&mut Context, event::MouseIn)>),
+    OnMouseIn(Box<dyn FnMut(&mut Context, event::MouseEvent)>),
 
     // Mouse out handler attribute value.
-    OnMouseOut(Box<dyn FnMut(&mut Context, event::MouseOut)>),
+    OnMouseOut(Box<dyn FnMut(&mut Context, event::MouseEvent)>),
 
     /// Color attribute value.
     Color(Color4f),
