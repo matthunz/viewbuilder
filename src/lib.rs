@@ -23,6 +23,7 @@ pub mod node;
 pub use node::Node;
 
 pub mod tree;
+pub use tree::{NodeRef, Tree};
 
 mod context;
 pub use context::Context;

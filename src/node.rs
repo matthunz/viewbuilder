@@ -164,3 +164,9 @@ impl From<&'static str> for Node {
         Self::text(value)
     }
 }
+
+impl From<String> for Node {
+    fn from(value: String) -> Self {
+        Self::text(value)
+    }
+}

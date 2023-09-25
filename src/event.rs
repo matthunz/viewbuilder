@@ -1,5 +1,5 @@
-use kurbo::Point;
 use crate::NodeKey;
+use kurbo::Point;
 
 pub enum EventKind {
     Click,
@@ -22,7 +22,6 @@ impl Event {
         }
     }
 }
-
 
 pub struct MouseEvent {
     pub target: NodeKey,

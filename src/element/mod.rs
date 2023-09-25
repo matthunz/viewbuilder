@@ -98,3 +98,11 @@ impl Element {
         key
     }
 }
+
+impl Extend<NodeKey> for Element {
+    fn extend<T: IntoIterator<Item = NodeKey>>(&mut self, iter: T) {
+        for key in iter {
+            self.child(key);
+        }
+    }
+}

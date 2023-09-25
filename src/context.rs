@@ -1,5 +1,5 @@
 use crate::{
-    event::{self, EventKind},
+    event::EventKind,
     node::NodeData,
     tree::{ItemMut, NodeRef, Tree},
     Event, Node, NodeKey,
