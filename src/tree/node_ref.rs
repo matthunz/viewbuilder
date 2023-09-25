@@ -51,7 +51,11 @@ impl<'a> NodeRef<'a> {
     /// This function will panic if the current reference is to an element,
     /// not to a text node.
     pub fn set_text(&mut self, content: impl Into<Cow<'static, str>>) {
-        if let NodeData::Text(ref mut dst) = self.node().data {
+        if let NodeData::Text {
+            content: ref mut dst,
+            ..
+        } = self.node().data
+        {
             *dst = content.into();
         } else {
             todo!()
@@ -93,6 +97,25 @@ impl<'a> NodeRef<'a> {
 
     pub fn layout(&mut self) -> Option<taffy::prelude::Layout> {
         self.node().layout
+    }
+
+    pub fn scroll(&mut self, delta: kurbo::Size) {
+        match (self.overflow_x(), self.overflow_y()) {
+            (Overflow::Scroll, Overflow::Scroll) => {
+                let x = self.translation().height + delta.width;
+                let y = self.translation().height + delta.height;
+                self.set_translation(kurbo::Size::new(x, y));
+            }
+            (Overflow::Scroll, Overflow::Hidden) => {
+                let x = self.translation().height + delta.width;
+                self.set_translation(kurbo::Size::new(x, 0.));
+            }
+            (Overflow::Hidden, Overflow::Scroll) => {
+                let y = self.translation().height + delta.height;
+                self.set_translation(kurbo::Size::new(0., y));
+            }
+            (Overflow::Hidden, Overflow::Hidden) => {}
+        }
     }
 }
 

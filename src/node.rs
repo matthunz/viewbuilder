@@ -19,13 +19,20 @@ pub enum NodeKind {
     Text,
 }
 
+pub struct TextData {
+    text_blob: TextBlob,
+}
+
 /// Data type of a node.
 pub enum NodeData {
     /// Element node.
     Element(ElementData),
 
     /// Text node.
-    Text(Cow<'static, str>),
+    Text {
+        content: Cow<'static, str>,
+        data: Option<TextData>,
+    },
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -74,14 +81,17 @@ impl Node {
 
     /// Create a new text node.
     pub fn text(content: impl Into<Cow<'static, str>>) -> Self {
-        Self::new(NodeData::Text(content.into()))
+        Self::new(NodeData::Text {
+            content: content.into(),
+            data: None,
+        })
     }
 
     /// Get the node kind.
     pub fn kind(&self) -> NodeKind {
         match self.data {
             NodeData::Element { .. } => NodeKind::Element,
-            NodeData::Text(_) => NodeKind::Text,
+            NodeData::Text { .. } => NodeKind::Text,
         }
     }
 
@@ -118,10 +128,21 @@ impl Node {
             self.layout_key = Some(layout_key);
         }
 
-        if let NodeData::Text(ref content) = self.data {
-            let typeface = Typeface::new("Arial", FontStyle::default()).unwrap();
-            let font = Font::new(typeface, 100.);
-            let text_blob = TextBlob::new(content, &font).unwrap();
+        if let NodeData::Text {
+            ref content,
+            ref mut data,
+        } = self.data
+        {
+            let text_blob = if let Some(ref mut data) = data {
+                &data.text_blob
+            } else {
+                let typeface = Typeface::new("Arial", FontStyle::default()).unwrap();
+                let font = Font::new(typeface, 100.);
+                *data = Some(TextData {
+                    text_blob: TextBlob::new(content, &font).unwrap(),
+                });
+                &data.as_ref().unwrap().text_blob
+            };
             let bounds = text_blob.bounds().clone();
 
             // TODO this is a measure func for paragraphs
@@ -163,10 +184,8 @@ impl Node {
                     );
                 }
             }
-            NodeData::Text(content) => {
-                let typeface = Typeface::new("Arial", FontStyle::default()).unwrap();
-                let font = Font::new(typeface, 100.);
-                let text_blob = TextBlob::new(content, &font).unwrap();
+            NodeData::Text { ref data, .. } => {
+                let text_blob = &data.as_ref().unwrap().text_blob;
                 let paint = Paint::new(Color4f::new(0., 0., 0., 1.), None);
                 let height = text_blob.bounds().height();
                 canvas.draw_text_blob(

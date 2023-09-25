@@ -87,7 +87,7 @@ impl Tree {
                     }
 
                     match &element.data {
-                        NodeData::Text(content) => s.push_str(&format!("\"{}\",", content)),
+                        NodeData::Text { content, .. } => s.push_str(&format!("\"{}\",", content)),
                         NodeData::Element(data) => {
                             s.push_str("{\n");
                             if let Some(size) = data.size() {
