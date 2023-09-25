@@ -1,5 +1,5 @@
 use crate::{
-    event,
+    event::{self, EventKind},
     node::NodeData,
     tree::{ItemMut, NodeRef, Tree},
     Event, Node, NodeKey,
@@ -8,21 +8,6 @@ use accesskit::{NodeClassSet, NodeId, TreeUpdate};
 use skia_safe::Canvas;
 use std::num::NonZeroU128;
 use taffy::{prelude::Size, style_helpers::TaffyMaxContent, Taffy};
-
-enum Handler {
-    Click(Box<dyn FnMut(&mut Context, event::MouseEvent)>, event::MouseEvent),
-    MouseIn(Box<dyn FnMut(&mut Context, event::MouseEvent)>, event::MouseEvent),
-    MouseOut(
-        Box<dyn FnMut(&mut Context, event::MouseEvent)>,
-        event::MouseEvent,
-    ),
-}
-
-enum HandlerFn {
-    Click(Box<dyn FnMut(&mut Context, event::MouseEvent)>),
-    MouseIn(Box<dyn FnMut(&mut Context, event::MouseEvent)>),
-    MouseOut(Box<dyn FnMut(&mut Context, event::MouseEvent)>),
-}
 
 /// Render context for a UI tree.
 ///
@@ -66,44 +51,28 @@ impl Context {
     /// Send an event to an element in the tree.
     pub fn send(&mut self, key: NodeKey, event: Event) {
         let node = &mut self.tree[key];
-        let handler = if let NodeData::Element(ref mut elem) = node.data {
-            match event {
-                Event::Click(click) => elem.on_click().take().map(|f| Handler::Click(f, click)),
-                Event::MouseIn(mouse_in) => elem
-                    .on_mouse_in()
-                    .take()
-                    .map(|f| Handler::MouseIn(f, mouse_in)),
-                Event::MouseOut(mouse_out) => elem
-                    .on_mouse_out()
-                    .take()
-                    .map(|f| Handler::MouseOut(f, mouse_out)),
-            }
+        let kind = event.kind();
+        let cell = if let NodeData::Element(ref mut elem) = node.data {
+            let (handler_cell, mouse_event) = match event {
+                Event::Click(click) => (elem.on_click().take(), click),
+                Event::MouseIn(mouse_in) => (elem.on_mouse_in().take(), mouse_in),
+                Event::MouseOut(mouse_out) => (elem.on_mouse_out().take(), mouse_out),
+            };
+            handler_cell
+                .map(|handler| (handler, mouse_event))
         } else {
             None
         };
 
-        let handler_fn = handler.map(|handler| match handler {
-            Handler::Click(mut f, click) => {
-                f(self, click);
-                HandlerFn::Click(f)
-            }
-            Handler::MouseIn(mut f, hover) => {
-                f(self, hover);
-                HandlerFn::MouseIn(f)
-            }
-            Handler::MouseOut(mut f, mouse_out) => {
-                f(self, mouse_out);
-                HandlerFn::MouseOut(f)
-            }
-        });
+        if let Some((mut handler, mouse_event)) = cell {
+            handler(self, mouse_event);
 
-        let node = &mut self.tree[key];
-        if let Some(handler_fn) = handler_fn {
+            let node = &mut self.tree[key];
             if let NodeData::Element(ref mut elem) = node.data {
-                match handler_fn {
-                    HandlerFn::Click(f) => elem.set_on_click(f),
-                    HandlerFn::MouseIn(f) => elem.set_on_mouse_in(f),
-                    HandlerFn::MouseOut(f) => elem.set_on_mouse_out(f),
+                match kind {
+                    EventKind::Click => elem.set_on_click(handler),
+                    EventKind::MouseIn => elem.set_on_mouse_in(handler),
+                    EventKind::MouseOut => elem.set_on_mouse_out(handler),
                 }
             }
         }
