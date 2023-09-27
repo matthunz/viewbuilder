@@ -1,4 +1,4 @@
-use crate::{event, node::Overflow, Context, NodeKey};
+use crate::{event, Context, NodeKey};
 use gl::types::*;
 use glutin::{
     config::{ConfigTemplateBuilder, GlConfig},
@@ -415,10 +415,10 @@ impl<T> Renderer<T> {
                         }
                     },
                     WindowEvent::MouseWheel {
-                        device_id,
+                        device_id: _,
                         delta,
-                        phase,
-                        modifiers,
+                        phase: _,
+                        modifiers: _,
                     } => {
                         if let Some(pos) = cursor_pos {
                             match delta {

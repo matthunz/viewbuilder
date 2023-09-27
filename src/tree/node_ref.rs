@@ -60,6 +60,7 @@ impl<'a> NodeRef<'a> {
         } else {
             todo!()
         }
+        self.tree.changes.push(self.key);
     }
 
     /// Update the size of the element.

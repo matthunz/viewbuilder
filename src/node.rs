@@ -2,7 +2,7 @@ use crate::{element::ElementData, NodeKey};
 use accesskit::NodeBuilder;
 use skia_safe::{Canvas, Color4f, Font, FontStyle, Paint, Rect, TextBlob, Typeface};
 use slotmap::DefaultKey;
-use std::{borrow::Cow, cell::RefCell, rc::Rc};
+use std::borrow::Cow;
 use taffy::{
     prelude::{Layout, Size},
     style::Style,
@@ -22,6 +22,7 @@ pub enum NodeKind {
 pub struct TextData {
     text_blob: TextBlob,
     font: Font,
+    content: Cow<'static, str>,
 }
 
 /// Data type of a node.
@@ -135,12 +136,24 @@ impl Node {
         } = self.data
         {
             let text_blob = if let Some(ref mut data) = data {
-                &data.text_blob
+                if &data.content == content {
+                    &data.text_blob
+                } else {
+                    let text_blob = TextBlob::new(content, &data.font).unwrap();
+                    data.text_blob = text_blob;
+                    data.content = content.clone();
+
+                    &data.text_blob
+                }
             } else {
                 let typeface = Typeface::new("Arial", FontStyle::default()).unwrap();
                 let font = Font::new(typeface, 100.);
                 let text_blob = TextBlob::new(content, &font).unwrap();
-                *data = Some(TextData { text_blob, font });
+                *data = Some(TextData {
+                    text_blob,
+                    font,
+                    content: content.clone(),
+                });
                 &data.as_ref().unwrap().text_blob
             };
             let bounds = text_blob.bounds().clone();
