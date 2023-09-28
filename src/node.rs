@@ -61,9 +61,6 @@ pub struct Node<T> {
     pub(crate) layout: Option<Layout>,
 
     pub(crate) translation: kurbo::Size,
-
-    pub(crate) overflow_x: Overflow,
-    pub(crate) overflow_y: Overflow,
 }
 
 impl<T> Node<T> {
@@ -76,8 +73,6 @@ impl<T> Node<T> {
             layout_key: None,
             layout: None,
             translation: kurbo::Size::ZERO,
-            overflow_x: Overflow::Hidden,
-            overflow_y: Overflow::Hidden,
         }
     }
 

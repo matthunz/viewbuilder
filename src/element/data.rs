@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
 use super::{Attribute, AttributeKind, AttributeValue};
-use crate::{event, Context};
+use crate::{event, node::Overflow, Context};
 use skia_safe::Color4f;
 use taffy::{
     prelude::{Rect, Size},
@@ -133,6 +133,10 @@ impl<T> ElementData<T> {
         BackgroundColor,
         Color
     );
+
+    make_style_fn!(overflow_x, set_overflow_x, Overflow, OverflowX, Overflow);
+
+    make_style_fn!(overflow_y, set_overflow_y, Overflow, OverflowY, Overflow);
 
     make_handler_fn!(on_click, set_on_click, MouseEvent, OnClick);
     make_handler_fn!(on_mouse_in, set_on_mouse_in, MouseEvent, OnMouseIn);

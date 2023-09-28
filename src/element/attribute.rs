@@ -1,4 +1,4 @@
-use crate::{event, Context};
+use crate::{event, node::Overflow, Context};
 use skia_safe::Color4f;
 use taffy::{
     prelude::{Rect, Size},
@@ -34,6 +34,9 @@ pub enum AttributeKind {
 
     /// Background color attribute.
     BackgroundColor,
+
+    OverflowX,
+    OverflowY,
 }
 
 /// Element attribute value.
@@ -63,6 +66,7 @@ pub enum AttributeValue<T> {
 
     /// Color attribute value.
     Color(Color4f),
+    Overflow(Overflow),
 }
 
 /// Element attribute.

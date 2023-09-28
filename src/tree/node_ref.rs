@@ -79,20 +79,20 @@ impl<'a, T> NodeRef<'a, T> {
     }
 
     pub fn overflow_x(&mut self) -> Overflow {
-        self.node().overflow_x
+        self.element().overflow_x().unwrap_or(Overflow::Hidden)
     }
 
     pub fn overflow_y(&mut self) -> Overflow {
-        self.node().overflow_y
+        self.element().overflow_y().unwrap_or(Overflow::Hidden)
     }
 
     pub fn set_overflow_x(&mut self, overflow: Overflow) {
-        self.node().overflow_x = overflow;
+        self.element().set_overflow_x(overflow);
         self.tree.changes.push(self.key);
     }
 
     pub fn set_overflow_y(&mut self, overflow: Overflow) {
-        self.node().overflow_y = overflow;
+        self.element().set_overflow_y(overflow);
         self.tree.changes.push(self.key);
     }
 

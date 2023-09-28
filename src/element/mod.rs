@@ -21,8 +21,6 @@ pub use self::attribute::{Attribute, AttributeKind, AttributeValue};
 pub struct Element<T> {
     data: Option<ElementData<T>>,
     children: Option<Vec<NodeKey>>,
-    overflow_x: Overflow,
-    overflow_y: Overflow,
     _marker: PhantomData<T>,
 }
 
@@ -31,8 +29,7 @@ impl<T> Default for Element<T> {
         Self {
             data: Some(ElementData::default()),
             children: Default::default(),
-            overflow_x: Overflow::Hidden,
-            overflow_y: Overflow::Hidden,
+
             _marker: PhantomData,
         }
     }
@@ -95,15 +92,9 @@ impl<T> Element<T> {
         Color4f
     );
 
-    pub fn overflow_x(&mut self, overflow: Overflow) -> &mut Self {
-        self.overflow_x = overflow;
-        self
-    }
+    make_builder_fn!("x overflow", overflow_x, set_overflow_x, Overflow);
 
-    pub fn overflow_y(&mut self, overflow: Overflow) -> &mut Self {
-        self.overflow_y = overflow;
-        self
-    }
+    make_builder_fn!("y overflow", overflow_y, set_overflow_y, Overflow);
 
     pub fn data_mut(&mut self) -> &mut ElementData<T> {
         self.data.as_mut().unwrap()
@@ -113,8 +104,6 @@ impl<T> Element<T> {
     pub fn build(&mut self, cx: &mut Context<T>) -> NodeKey {
         let mut node = Node::new(NodeData::Element(self.data.take().unwrap()));
         node.children = self.children.take();
-        node.overflow_x = self.overflow_x;
-        node.overflow_y = self.overflow_y;
 
         let key = cx.insert(node);
         for child_key in self.children.iter().flatten() {

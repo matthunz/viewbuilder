@@ -1,4 +1,8 @@
-use crate::{event, node::Overflow, Context, NodeKey};
+use crate::{
+    event,
+    node::{NodeData, Overflow},
+    Context, NodeKey,
+};
 use gl::types::*;
 use glutin::{
     config::{ConfigTemplateBuilder, GlConfig},
@@ -425,7 +429,13 @@ impl<T> Renderer<T> {
                                     if let Some(target) = tree.tree.target_with_filter(
                                         root,
                                         Point::new(pos.x, pos.y),
-                                        |node| node.overflow_y == Overflow::Scroll,
+                                        |node| {
+                                            if let NodeData::Element(ref elem) = node.data {
+                                                elem.overflow_y() == Some(Overflow::Scroll)
+                                            } else {
+                                                false
+                                            }
+                                        },
                                     ) {
                                         let mut node = tree.node(target);
                                         node.scroll(Size::new(px_delta.x, px_delta.y));
