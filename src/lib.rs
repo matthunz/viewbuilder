@@ -75,7 +75,7 @@ pub fn run<T: 'static>(state: T, f: impl FnOnce(&mut Context<T>) -> NodeKey) -> 
     let mut cx = Context::new(state);
     let root = f(&mut cx);
 
-    let cx_key = renderer.context(cx);
+    let cx_key = renderer.insert_context(cx);
 
     let window = Window::builder().build(&renderer, root)?;
     renderer.insert_window(window, cx_key);

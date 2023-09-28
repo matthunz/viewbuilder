@@ -20,7 +20,7 @@ fn main() -> Result<(), Error> {
         .title("Window 2")
         .build(&mut renderer, app(&mut cx))?;
 
-    let cx_key = renderer.context(cx);
+    let cx_key = renderer.insert_context(cx);
     renderer.insert_window(a, cx_key);
     renderer.insert_window(b, cx_key);
     renderer.run()

@@ -43,6 +43,7 @@ pub struct Window {
 }
 
 impl Window {
+    /// Create a new window builder.
     pub fn builder() -> Builder {
         Builder::default()
     }

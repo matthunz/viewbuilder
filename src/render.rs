@@ -1,6 +1,5 @@
-use crate::{Context, NodeKey, Window};
+use crate::{Context, Window};
 use slotmap::{DefaultKey, SlotMap};
-
 use std::{
     collections::HashMap,
     future::Future,
@@ -14,11 +13,13 @@ use winit::{
     window::WindowId,
 };
 
+/// Error returned from a failed update.
 #[derive(Clone, Copy, Debug)]
 pub struct UpdateError;
 
 type Update<T> = Box<dyn FnOnce(&mut Context<T>) + Send>;
 
+/// Update context for a renderer.
 pub struct Updater<T> {
     tx: mpsc::Sender<UserEvent<T>>,
 }
@@ -30,6 +31,9 @@ impl<T> Updater<T> {
     }
 }
 
+/// Scope context for a renderer.
+///
+/// This provides a way to request animation frames and send updates.
 pub struct Scope<T> {
     updater: Updater<T>,
     notify: Arc<Notify>,
@@ -62,6 +66,7 @@ struct RendererWindow {
     context_key: DefaultKey,
 }
 
+/// Application renderer.
 pub struct Renderer<T: 'static = ()> {
     windows: HashMap<WindowId, RendererWindow>,
     contexts: SlotMap<DefaultKey, Context<T>>,
@@ -78,6 +83,7 @@ impl<T> Default for Renderer<T> {
 }
 
 impl<T> Renderer<T> {
+    /// Create a new renderer.
     pub fn new() -> Self {
         let event_loop = EventLoopBuilder::with_user_event().build();
         let (tx, rx) = mpsc::channel();
@@ -92,7 +98,10 @@ impl<T> Renderer<T> {
         }
     }
 
-    pub fn insert_window(&mut self, window: Window, context_key: DefaultKey) {
+    /// Insert a window into the renderer with its context key, returning its ID.
+    ///
+    /// This will bind a window to context for re-rendering.
+    pub fn insert_window(&mut self, window: Window, context_key: DefaultKey) -> WindowId {
         let id = window.window.id();
         self.windows.insert(
             id,
@@ -101,9 +110,11 @@ impl<T> Renderer<T> {
                 context_key,
             },
         );
+        id
     }
 
-    pub fn context(&mut self, cx: Context<T>) -> DefaultKey {
+    /// Insert a context into the renderer, returning its key.
+    pub fn insert_context(&mut self, cx: Context<T>) -> DefaultKey {
         self.contexts.insert(cx)
     }
 
@@ -122,9 +133,9 @@ impl<T> Renderer<T> {
         }
     }
 
+    /// Request a transition animation.
     pub fn animation(
         &self,
-        _key: NodeKey,
         min: f32,
         max: f32,
         f: impl Fn(&mut Context<T>, f32) + Send + Sync + 'static,
@@ -151,12 +162,12 @@ impl<T> Renderer<T> {
 
                 let f2 = f.clone();
                 scope.update(Box::new(move |cx| f2(cx, size))).unwrap();
-
                 scope.request_frame().await.unwrap();
             }
         }
     }
 
+    /// Run the renderer.
     pub fn run(mut self) -> ! {
         let mut previous_frame_start = Instant::now();
         let proxy = self.event_loop.create_proxy();
@@ -190,7 +201,6 @@ impl<T> Renderer<T> {
                     draw_frame = true;
                 }
                 Event::UserEvent(UserEvent::Update(_update)) => {
-
                     // update(cx)
                 }
                 Event::UserEvent(UserEvent::FrameRequest) => {

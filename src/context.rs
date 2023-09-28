@@ -34,10 +34,12 @@ pub struct Context<T = ()> {
     /// Taffy layout tree.
     taffy: Taffy,
 
+    /// Generic application state
     pub state: T,
 }
 
 impl<T> Context<T> {
+    /// Create a new context from its state.
     pub fn new(state: T) -> Self {
         Self {
             tree: Tree::default(),

@@ -18,11 +18,11 @@ async fn main() -> Result<(), Error> {
         .build(&mut cx);
 
     let mut renderer = Renderer::default();
-    let cx_key = renderer.context(cx);
+    let cx_key = renderer.insert_context(cx);
     let window = Window::builder().build(&renderer, root).unwrap();
     renderer.insert_window(window, cx_key);
 
-    tokio::spawn(renderer.animation(animated, 0., 100., move |cx, size| {
+    tokio::spawn(renderer.animation(0., 100., move |cx, size| {
         cx.node(animated)
             .set_size(Size::from_points(size as f32, size as f32))
     }));
