@@ -1,4 +1,4 @@
-use super::create_surface;
+use super::{create_surface, Error};
 use crate::{NodeKey, Renderer, Window};
 use gl::types::GLint;
 use glutin::{
@@ -12,9 +12,11 @@ use glutin_winit::DisplayBuilder;
 use kurbo::Size;
 use raw_window_handle::HasRawWindowHandle;
 use skia_safe::gpu::gl::FramebufferInfo;
+
 use std::{borrow::Cow, ffi::CString, num::NonZeroU32};
 use winit::window::WindowBuilder;
 
+/// Builder for a window.
 pub struct Builder {
     size: Size,
     title: Cow<'static, str>,
@@ -30,19 +32,21 @@ impl Default for Builder {
 }
 
 impl Builder {
+    /// Set the size of the window.
     pub fn size(&mut self, size: Size) -> &mut Self {
         self.size = size;
         self
     }
 
+    /// Set the title of the window.
     pub fn title(&mut self, title: impl Into<Cow<'static, str>>) -> &mut Self {
         self.title = title.into();
         self
     }
 
-    pub fn build<T>(&self, renderer: &Renderer<T>, root: NodeKey) -> Window {
+    /// Build the window with a renderer.
+    pub fn build<T>(&self, renderer: &Renderer<T>, root: NodeKey) -> Result<Window, Error> {
         let winit_window_builder = WindowBuilder::new().with_title(self.title.as_ref());
-
         let template = ConfigTemplateBuilder::new()
             .with_alpha_size(8)
             .with_transparency(true);
@@ -64,7 +68,7 @@ impl Builder {
                     .unwrap()
             })
             .unwrap();
-        let window = window.expect("Could not create window with OpenGL context");
+        let window = window.ok_or(Error::Window)?;
         let raw_window_handle = window.raw_window_handle();
 
         // The context creation part. It can be created before surface and that's how
@@ -90,7 +94,6 @@ impl Builder {
         };
 
         let (width, height): (u32, u32) = window.inner_size().into();
-
         let attrs = SurfaceAttributesBuilder::<WindowSurface>::new().build(
             raw_window_handle,
             NonZeroU32::new(width).unwrap(),
@@ -100,13 +103,10 @@ impl Builder {
         let gl_surface = unsafe {
             gl_config
                 .display()
-                .create_window_surface(&gl_config, &attrs)
-                .expect("Could not create gl window surface")
+                .create_window_surface(&gl_config, &attrs)?
         };
 
-        let gl_context = not_current_gl_context
-            .make_current(&gl_surface)
-            .expect("Could not make GL context current when setting up skia renderer");
+        let gl_context = not_current_gl_context.make_current(&gl_surface)?;
 
         gl::load_with(|s| {
             gl_config
@@ -121,10 +121,10 @@ impl Builder {
                 .display()
                 .get_proc_address(CString::new(name).unwrap().as_c_str())
         })
-        .expect("Could not create interface");
+        .ok_or(Error::Skia)?;
 
-        let mut gr_context = skia_safe::gpu::DirectContext::new_gl(Some(interface), None)
-            .expect("Could not create direct context");
+        let mut gr_context =
+            skia_safe::gpu::DirectContext::new_gl(Some(interface), None).ok_or(Error::Skia)?;
 
         let fb_info = {
             let mut fboid: GLint = 0;
@@ -147,7 +147,7 @@ impl Builder {
 
         let surface = create_surface(&window, fb_info, &mut gr_context, num_samples, stencil_size);
 
-        Window {
+        Ok(Window {
             surface,
             gl_surface,
             gr_context,
@@ -160,6 +160,6 @@ impl Builder {
             cursor_pos: None,
             hover_target: None,
             clicked: None,
-        }
+        })
     }
 }

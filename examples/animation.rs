@@ -19,7 +19,7 @@ async fn main() {
 
     let mut renderer = Renderer::default();
     let cx_key = renderer.context(cx);
-    let window = Window::builder().build(&renderer, root);
+    let window = Window::builder().build(&renderer, root).unwrap();
     renderer.insert_window(window, cx_key);
 
     tokio::spawn(renderer.animation(animated, 0., 100., move |cx, size| {

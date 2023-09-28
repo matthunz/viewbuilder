@@ -1,5 +1,5 @@
 use taffy::style::{AlignItems, JustifyContent};
-use viewbuilder::{Context, Element, NodeKey};
+use viewbuilder::{window::Error, Context, Element, NodeKey};
 
 fn app(cx: &mut Context) -> NodeKey {
     Element::new()
@@ -9,6 +9,6 @@ fn app(cx: &mut Context) -> NodeKey {
         .build(cx)
 }
 
-fn main() {
+fn main() -> Result<(), Error> {
     viewbuilder::run((), app)
 }

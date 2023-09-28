@@ -1,6 +1,7 @@
 use skia_safe::Color4f;
 use taffy::prelude::Rect;
 use taffy::style::{FlexDirection, LengthPercentage};
+use viewbuilder::window::Error;
 use viewbuilder::NodeKey;
 use viewbuilder::{Context, Element};
 
@@ -43,6 +44,6 @@ fn app(cx: &mut Context<i32>) -> NodeKey {
         .build(cx)
 }
 
-fn main() {
+fn main() -> Result<(), Error> {
     viewbuilder::run(0, app)
 }

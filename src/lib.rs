@@ -37,7 +37,8 @@ pub use render::Renderer;
 pub mod event;
 pub use event::Event;
 
-mod window;
+pub mod window;
+use window::Error;
 pub use window::Window;
 
 slotmap::new_key_type! {
@@ -49,14 +50,15 @@ slotmap::new_key_type! {
 ///
 /// This will create a new window and render the tree,
 /// propagating events and re-rendering as they occuring.
-pub fn run<T: 'static>(state: T, f: impl FnOnce(&mut Context<T>) -> NodeKey) {
+pub fn run<T: 'static>(state: T, f: impl FnOnce(&mut Context<T>) -> NodeKey) -> Result<(), Error> {
     let mut renderer = Renderer::new();
     let mut cx = Context::new(state);
     let root = f(&mut cx);
 
     let cx_key = renderer.context(cx);
 
-    let window = Window::builder().build(&renderer, root);
+    let window = Window::builder().build(&renderer, root)?;
     renderer.insert_window(window, cx_key);
     renderer.run();
+    Ok(())
 }

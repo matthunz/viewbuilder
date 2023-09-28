@@ -30,4 +30,5 @@ skia-safe = { version = "0.66.2", features = ["gl"], optional = true }
 winit = { version = "0.28.7", optional = true }
 interpolation = "0.3.0"
 tokio = { version = "1.32.0", features = ["full"] }
+thiserror = "1.0.49"
 

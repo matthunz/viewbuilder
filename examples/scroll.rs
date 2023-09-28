@@ -2,7 +2,7 @@ use taffy::{
     prelude::Rect,
     style::{FlexDirection, LengthPercentage},
 };
-use viewbuilder::{node::Overflow, Context, Element, NodeKey};
+use viewbuilder::{node::Overflow, window::Error, Context, Element, NodeKey};
 
 fn app(cx: &mut Context) -> NodeKey {
     let mut elem = Element::new();
@@ -22,6 +22,6 @@ fn app(cx: &mut Context) -> NodeKey {
     elem.build(cx)
 }
 
-fn main() {
+fn main() -> Result<(), Error> {
     viewbuilder::run((), app)
 }

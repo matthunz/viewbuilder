@@ -14,6 +14,7 @@ use skia_safe::{
     Color, ColorType, Surface,
 };
 use std::num::NonZeroU32;
+use thiserror::Error;
 use winit::{
     event::{ElementState, KeyboardInput, MouseScrollDelta, VirtualKeyCode, WindowEvent},
     event_loop::ControlFlow,
@@ -21,6 +22,16 @@ use winit::{
 
 mod builder;
 use self::builder::Builder;
+
+#[derive(Error, Debug)]
+pub enum Error {
+    #[error("GL")]
+    Gl(#[from] glutin::error::Error),
+    #[error("Skia")]
+    Skia,
+    #[error("Window")]
+    Window,
+}
 
 // Guarantee the drop order inside the FnMut closure. `Window` _must_ be dropped after
 // `DirectContext`.
