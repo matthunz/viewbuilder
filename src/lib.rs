@@ -37,6 +37,9 @@ pub use render::Renderer;
 pub mod event;
 pub use event::Event;
 
+mod window;
+pub use window::Window;
+
 slotmap::new_key_type! {
     /// Key to access a node in a tree.
     pub struct NodeKey;
@@ -46,11 +49,6 @@ slotmap::new_key_type! {
 ///
 /// This will create a new window and render the tree,
 /// propagating events and re-rendering as they occuring.
-pub fn run<T: 'static>(state: T, f: impl FnOnce(&mut Context<T>) -> NodeKey) {
-    let renderer = Renderer::default();
-
-    let mut cx = Context::new(state);
-    let root = f(&mut cx);
-
-    renderer.run(cx, root)
+pub fn run<T: 'static>(_state: T, _f: impl FnOnce(&mut Context<T>) -> NodeKey) {
+    todo!()
 }

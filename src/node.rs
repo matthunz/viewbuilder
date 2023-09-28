@@ -20,7 +20,7 @@ pub enum NodeKind {
 }
 
 pub struct TextData {
-    pub (crate) text_blob: Option<TextBlob>,
+    pub(crate) text_blob: Option<TextBlob>,
     font: Font,
 }
 

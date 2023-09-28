@@ -17,11 +17,15 @@ async fn main() {
         .child(cx.insert("World"))
         .build(&mut cx);
 
-    let renderer = Renderer::default();
+    let mut renderer = Renderer::default();
+    let cx_key = renderer.context(cx);
+    let window = renderer.window(root);
+    renderer.insert_window(window, cx_key);
+
     tokio::spawn(renderer.animation(animated, 0., 100., move |cx, size| {
         cx.node(animated)
             .set_size(Size::from_points(size as f32, size as f32))
     }));
 
-    renderer.run(cx, root)
+    renderer.run()
 }
