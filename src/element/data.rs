@@ -2,8 +2,8 @@ use super::{Attribute, AttributeKind, AttributeValue};
 use crate::{event, Context};
 use skia_safe::Color4f;
 use taffy::{
-    prelude::Size,
-    style::{AlignItems, Dimension, FlexDirection, JustifyContent},
+    prelude::{Rect, Size},
+    style::{AlignItems, Dimension, FlexDirection, JustifyContent, LengthPercentage},
 };
 
 macro_rules! make_style_fn {
@@ -97,6 +97,7 @@ impl ElementData {
     }
 
     make_style_fn!(size, set_size, Size<Dimension>, Size, Size);
+    make_style_fn!(padding, set_padding, Rect<LengthPercentage>, Padding, Rect);
 
     make_style_fn!(
         flex_direction,

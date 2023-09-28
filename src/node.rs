@@ -115,6 +115,10 @@ impl Node {
                 style.size = size;
             }
 
+            if let Some(padding) = elem.padding() {
+                style.padding = padding;
+            }
+
             if let Some(flex_direction) = elem.flex_direction() {
                 style.flex_direction = flex_direction;
             }

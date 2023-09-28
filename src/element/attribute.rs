@@ -1,8 +1,8 @@
 use crate::{event, Context};
 use skia_safe::Color4f;
 use taffy::{
-    prelude::Size,
-    style::{AlignItems, Dimension, FlexDirection, JustifyContent},
+    prelude::{Rect, Size},
+    style::{AlignItems, Dimension, FlexDirection, JustifyContent, LengthPercentage},
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -10,6 +10,9 @@ use taffy::{
 pub enum AttributeKind {
     /// Size attribute.
     Size,
+
+    /// Padding attribute.
+    Padding,
 
     /// Flex direction attribute.
     FlexDirection,
@@ -37,6 +40,8 @@ pub enum AttributeKind {
 pub enum AttributeValue {
     /// Size attribute value.
     Size(Size<Dimension>),
+
+    Rect(Rect<LengthPercentage>),
 
     /// Flex direction attribute value.
     FlexDirection(FlexDirection),

@@ -5,8 +5,8 @@ use crate::{
 };
 use skia_safe::Color4f;
 use taffy::{
-    prelude::Size,
-    style::{AlignItems, Dimension, FlexDirection, JustifyContent},
+    prelude::{Rect, Size},
+    style::{AlignItems, Dimension, FlexDirection, JustifyContent, LengthPercentage},
 };
 
 mod data;
@@ -61,6 +61,8 @@ impl Element {
     }
 
     make_builder_fn!("size", size, set_size, Size<Dimension>);
+    make_builder_fn!("padding", padding, set_padding, Rect<LengthPercentage>);
+
     make_builder_fn!(
         "flex direction",
         flex_direction,

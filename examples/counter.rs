@@ -1,7 +1,8 @@
 use skia_safe::Color4f;
 use std::rc::Rc;
 use std::sync::atomic::{AtomicI64, Ordering};
-use taffy::style::FlexDirection;
+use taffy::prelude::Rect;
+use taffy::style::{FlexDirection, LengthPercentage};
 use viewbuilder::NodeKey;
 use viewbuilder::{Context, Element};
 
@@ -12,6 +13,12 @@ fn button(
 ) -> NodeKey {
     Element::new()
         .on_click(Box::new(move |cx, _event| handler(cx)))
+        .padding(Rect {
+            left: LengthPercentage::Points(100.),
+            right: LengthPercentage::Points(100.),
+            top: LengthPercentage::Points(50.),
+            bottom: LengthPercentage::Points(50.),
+        })
         .background_color(Color4f::new(1., 1., 0., 1.))
         .child(cx.insert(label))
         .build(cx)
