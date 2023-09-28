@@ -34,6 +34,13 @@ but you can bring your own state management tools or build your own framework us
 - Accessibility with [accesskit](https://github.com/AccessKit/accesskit)
 - High performance rendering with [rust-skia](https://github.com/rust-skia/rust-skia)
 
+## Getting started
+Instatllation is simple with:
+```sh
+cargo add viewbuilder
+```
+If you encounter errors, please check the instructions for building [rust-skia](https://github.com/rust-skia/rust-skia).
+
 ## Examples
 
 ### Hello World
