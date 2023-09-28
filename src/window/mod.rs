@@ -5,6 +5,7 @@ use crate::{
 };
 use glutin::{
     context::PossiblyCurrentContext,
+    prelude::PossiblyCurrentContextGlSurfaceAccessor,
     surface::{GlSurface, WindowSurface},
 };
 use kurbo::{Point, Size};
@@ -48,6 +49,8 @@ impl Window {
 
     /// Paint the user interface on to the window.
     pub fn paint<T>(&mut self, cx: &mut Context<T>) {
+        self.gl_context.make_current(&self.gl_surface).unwrap();
+
         let canvas = self.surface.canvas();
         canvas.clear(Color::WHITE);
 
