@@ -62,13 +62,13 @@ impl<'a, T> NodeRef<'a, T> {
         } else {
             todo!()
         }
-        self.tree.changes.push(self.key);
+        self.tree.changes.insert(self.key);
     }
 
     /// Update the size of the element.
     pub fn set_size(&mut self, size: Size<Dimension>) {
         self.as_mut().set_size(size);
-        self.tree.changes.push(self.key);
+        self.tree.changes.insert(self.key);
     }
 
     pub fn translation(&mut self) -> kurbo::Size {
@@ -77,7 +77,7 @@ impl<'a, T> NodeRef<'a, T> {
 
     pub fn set_translation(&mut self, size: kurbo::Size) {
         self.node().translation = size;
-        self.tree.changes.push(self.key);
+        self.tree.changes.insert(self.key);
     }
 
     pub fn overflow_x(&mut self) -> Overflow {
@@ -90,12 +90,12 @@ impl<'a, T> NodeRef<'a, T> {
 
     pub fn set_overflow_x(&mut self, overflow: Overflow) {
         self.element().set_overflow_x(overflow);
-        self.tree.changes.push(self.key);
+        self.tree.changes.insert(self.key);
     }
 
     pub fn set_overflow_y(&mut self, overflow: Overflow) {
         self.element().set_overflow_y(overflow);
-        self.tree.changes.push(self.key);
+        self.tree.changes.insert(self.key);
     }
 
     pub fn layout(&mut self) -> Option<taffy::prelude::Layout> {

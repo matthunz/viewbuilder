@@ -6,7 +6,7 @@ use crate::{
 };
 use accesskit::{NodeClassSet, NodeId, TreeUpdate};
 use skia_safe::Canvas;
-use std::num::NonZeroU128;
+use std::{collections::HashSet, num::NonZeroU128};
 use taffy::{prelude::Size, style::Style, style_helpers::TaffyMaxContent, Taffy};
 
 /// Render context for a UI tree.
@@ -23,7 +23,7 @@ pub struct Context<T = ()> {
     pub tree: Tree<T>,
 
     /// Changes to be rendered in the next paint cycle.
-    pub(crate) changes: Vec<NodeKey>,
+    pub(crate) changes: HashSet<NodeKey>,
 
     /// Next semantics node ID.
     next_id: NonZeroU128,
@@ -81,7 +81,7 @@ impl<T> Context<T> {
     /// Insert a node into the tree, returning its key.
     pub fn insert(&mut self, node: impl Into<Node<T>>) -> NodeKey {
         let key = self.tree.insert(node.into());
-        self.changes.push(key);
+        self.changes.insert(key);
         key
     }
 
