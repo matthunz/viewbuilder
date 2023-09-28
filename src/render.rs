@@ -46,7 +46,7 @@ impl<T> Scope<T> {
     }
 }
 
-enum UserEvent<T> {
+pub(crate) enum UserEvent<T> {
     Update(Box<dyn FnOnce(&mut Context<T>) + Send>),
     FrameRequest,
 }
@@ -59,7 +59,7 @@ struct RendererWindow {
 pub struct Renderer<T: 'static = ()> {
     windows: HashMap<WindowId, RendererWindow>,
     contexts: SlotMap<DefaultKey, Context<T>>,
-    event_loop: EventLoop<UserEvent<T>>,
+    pub(crate) event_loop: EventLoop<UserEvent<T>>,
     tx: mpsc::Sender<UserEvent<T>>,
     rx: mpsc::Receiver<UserEvent<T>>,
     notify: Arc<Notify>,
@@ -84,10 +84,6 @@ impl<T> Renderer<T> {
             rx,
             notify: Arc::new(Notify::default()),
         }
-    }
-
-    pub fn window(&self, root: NodeKey) -> Window {
-        Window::new(&self.event_loop, root)
     }
 
     pub fn insert_window(&mut self, window: Window, context_key: DefaultKey) {
@@ -198,7 +194,7 @@ impl<T> Renderer<T> {
                 self.notify.notify_waiters();
                 for window_cx in self.windows.values_mut() {
                     let cx = &mut self.contexts[window_cx.context_key];
-                    window_cx.window.paint(cx, window_cx.window.root);
+                    window_cx.window.paint(cx);
                 }
             }
 

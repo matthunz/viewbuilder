@@ -179,6 +179,7 @@ impl<T> Context<T> {
                 }
             }
         }
-        self.changes.clear();
+        // TODO
+        // self.changes.clear();
     }
 }
