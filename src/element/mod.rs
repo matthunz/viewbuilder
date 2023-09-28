@@ -1,8 +1,4 @@
-use crate::{
-    event,
-    node::{NodeData, Overflow},
-    Context, Node, NodeKey,
-};
+use crate::{event, node::NodeData, Context, Node, NodeKey};
 use skia_safe::Color4f;
 use std::marker::PhantomData;
 use taffy::{
@@ -14,7 +10,7 @@ mod data;
 pub use self::data::ElementData;
 
 mod attribute;
-pub use self::attribute::{Attribute, AttributeKind, AttributeValue};
+pub use self::attribute::{Attribute, AttributeKind, AttributeValue, Overflow};
 
 /// Element of a user interface.
 pub struct Element<T> {

@@ -1,4 +1,4 @@
-use crate::{event, node::Overflow, Context};
+use crate::{event, Context};
 use skia_safe::Color4f;
 use taffy::{
     prelude::{Rect, Size},
@@ -6,6 +6,12 @@ use taffy::{
 };
 
 type Handler<T> = Box<dyn FnMut(&mut Context<T>, event::MouseEvent)>;
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Overflow {
+    Hidden,
+    Scroll,
+}
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 /// Element attribute kind.

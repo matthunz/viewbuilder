@@ -1,14 +1,27 @@
 use crate::{
-    element::ElementData,
-    node::{NodeData, Overflow},
+    element::{ElementData, Overflow},
+    node::NodeData,
     Context, Node, NodeKey,
 };
 use std::borrow::Cow;
 use taffy::{prelude::Size, style::Dimension};
 
+macro_rules! make_methods {
+    ($fn_ident:ident, $set_fn_ident:ident) => {
+        pub fn $fn_ident(&mut self) -> Overflow {
+            self.element().$fn_ident().unwrap_or(Overflow::Hidden)
+        }
+
+        pub fn $set_fn_ident(&mut self, overflow: Overflow) {
+            self.element().$set_fn_ident(overflow);
+            self.update();
+        }
+    };
+}
+
 /// Reference to an element in a tree.
 ///
-/// This struct is created with [`Tree::node`].
+/// This struct is created with [`Context::node`].
 pub struct NodeRef<'a, T> {
     key: NodeKey,
     tree: &'a mut Context<T>,
@@ -45,6 +58,10 @@ impl<'a, T> NodeRef<'a, T> {
         }
     }
 
+    pub fn update(&mut self) {
+        self.tree.changes.insert(self.key);
+    }
+
     /// Update the text of a node.
     ///
     /// ## Panics
@@ -62,46 +79,35 @@ impl<'a, T> NodeRef<'a, T> {
         } else {
             todo!()
         }
-        self.tree.changes.insert(self.key);
+        self.update();
     }
 
     /// Update the size of the element.
     pub fn set_size(&mut self, size: Size<Dimension>) {
         self.as_mut().set_size(size);
-        self.tree.changes.insert(self.key);
+        self.update();
     }
 
+    /// Get the current scroll translation.
     pub fn translation(&mut self) -> kurbo::Size {
         self.node().translation
     }
 
+    /// Set the current scroll translation.
     pub fn set_translation(&mut self, size: kurbo::Size) {
         self.node().translation = size;
-        self.tree.changes.insert(self.key);
+        self.update();
     }
 
-    pub fn overflow_x(&mut self) -> Overflow {
-        self.element().overflow_x().unwrap_or(Overflow::Hidden)
-    }
+    make_methods!(overflow_x, set_overflow_x);
+    make_methods!(overflow_y, set_overflow_y);
 
-    pub fn overflow_y(&mut self) -> Overflow {
-        self.element().overflow_y().unwrap_or(Overflow::Hidden)
-    }
-
-    pub fn set_overflow_x(&mut self, overflow: Overflow) {
-        self.element().set_overflow_x(overflow);
-        self.tree.changes.insert(self.key);
-    }
-
-    pub fn set_overflow_y(&mut self, overflow: Overflow) {
-        self.element().set_overflow_y(overflow);
-        self.tree.changes.insert(self.key);
-    }
-
+    /// Get the absolute layout of the node, relative to the window.
     pub fn layout(&mut self) -> Option<taffy::prelude::Layout> {
         self.node().layout
     }
 
+    /// Scroll the node by a delta in 2D.
     pub fn scroll(&mut self, delta: kurbo::Size) {
         match (self.overflow_x(), self.overflow_y()) {
             (Overflow::Scroll, Overflow::Scroll) => {

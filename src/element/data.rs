@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
-use super::{Attribute, AttributeKind, AttributeValue};
-use crate::{event, node::Overflow, Context};
+use super::{attribute::Overflow, Attribute, AttributeKind, AttributeValue};
+use crate::{event, Context};
 use skia_safe::Color4f;
 use taffy::{
     prelude::{Rect, Size},

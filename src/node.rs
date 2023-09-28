@@ -19,6 +19,7 @@ pub enum NodeKind {
     Text,
 }
 
+/// Text node data.
 pub struct TextData {
     pub(crate) text_blob: Option<TextBlob>,
     font: Font,
@@ -34,12 +35,6 @@ pub enum NodeData<T> {
         content: Cow<'static, str>,
         data: Option<TextData>,
     },
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Overflow {
-    Hidden,
-    Scroll,
 }
 
 /// Node of a tree.

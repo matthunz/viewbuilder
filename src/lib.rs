@@ -3,7 +3,7 @@
 //! Cross-platform user interface framework for Rust.
 //!
 //! This crate provides an HTML-like render API for the backend of a UI.
-//! It supports layout, drawing, and accessability.
+//! It supports layout, drawing, and accessibility.
 //!
 //! ```
 //! use viewbuilder::{Context, Element, NodeKey};
