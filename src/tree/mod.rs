@@ -47,6 +47,15 @@ impl<T> Tree<T> {
     /// This function will return `Some` with a key to the node at `point`
     /// with the highest layout order. Otherwise `None` is returned.
     pub fn target(&self, root: NodeKey, point: Point) -> Option<NodeKey> {
+        self.target_with_filter(root, point, |_| true)
+    }
+
+    pub fn target_with_filter(
+        &self,
+        root: NodeKey,
+        point: Point,
+        mut filter: impl FnMut(&Node<T>) -> bool,
+    ) -> Option<NodeKey> {
         self.iter(root)
             .filter_map(|item| {
                 if let Item::Node {
@@ -55,6 +64,10 @@ impl<T> Tree<T> {
                     level: _,
                 } = item
                 {
+                    if !filter(node) {
+                        return None;
+                    }
+
                     // Ignore text nodes
                     if node.kind() == NodeKind::Text {
                         return None;

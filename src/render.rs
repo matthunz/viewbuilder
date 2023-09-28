@@ -1,4 +1,4 @@
-use crate::{event, Context, NodeKey};
+use crate::{event, node::Overflow, Context, NodeKey};
 use gl::types::*;
 use glutin::{
     config::{ConfigTemplateBuilder, GlConfig},
@@ -422,7 +422,11 @@ impl<T> Renderer<T> {
                             match delta {
                                 MouseScrollDelta::PixelDelta(px_delta) => {
                                     let pos = Point::new(pos.x, pos.y);
-                                    if let Some(target) = tree.tree.target(root, pos) {
+                                    if let Some(target) = tree.tree.target_with_filter(
+                                        root,
+                                        Point::new(pos.x, pos.y),
+                                        |node| node.overflow_y == Overflow::Scroll,
+                                    ) {
                                         let mut node = tree.node(target);
                                         node.scroll(Size::new(px_delta.x, px_delta.y));
                                     }
