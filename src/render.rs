@@ -151,7 +151,7 @@ impl<T> Renderer<T> {
         }
     }
 
-    pub fn run(mut self) {
+    pub fn run(mut self) -> ! {
         let mut previous_frame_start = Instant::now();
         let proxy = self.event_loop.create_proxy();
 
@@ -168,8 +168,16 @@ impl<T> Renderer<T> {
                 Event::WindowEvent { window_id, event } => {
                     let window_cx = self.windows.get_mut(&window_id).unwrap();
                     let cx = &mut self.contexts[window_cx.context_key];
-                    if let Some(cf) = window_cx.window.handle(cx, window_cx.window.root, event) {
-                        *control_flow = cf;
+
+                    match window_cx.window.handle(cx, window_cx.window.root, event) {
+                        Ok(cell) => {
+                            if let Some(cf) = cell {
+                                *control_flow = cf;
+                            }
+                        }
+                        Err(_error) => {
+                            *control_flow = ControlFlow::Exit;
+                        }
                     }
                 }
                 Event::RedrawRequested(_) => {
@@ -199,6 +207,6 @@ impl<T> Renderer<T> {
             }
 
             *control_flow = ControlFlow::WaitUntil(previous_frame_start + frame_duration)
-        });
+        })
     }
 }

@@ -19,11 +19,7 @@
 //! ```
 //!
 
-pub mod node;
-pub use node::Node;
-
-pub mod tree;
-pub use tree::{NodeRef, Tree};
+use thiserror::Error;
 
 mod context;
 pub use context::Context;
@@ -31,19 +27,43 @@ pub use context::Context;
 pub mod element;
 pub use element::Element;
 
-pub mod render;
-pub use render::Renderer;
-
 pub mod event;
 pub use event::Event;
 
+pub mod node;
+pub use node::Node;
+
+pub mod render;
+pub use render::Renderer;
+
+pub mod tree;
+pub use tree::{NodeRef, Tree};
+
 pub mod window;
-use window::Error;
 pub use window::Window;
 
 slotmap::new_key_type! {
     /// Key to access a node in a tree.
     pub struct NodeKey;
+}
+
+#[derive(Error, Debug)]
+pub enum Error {
+    /// OpenGL error.
+    #[error("GL")]
+    Gl(#[from] glutin::error::Error),
+
+    /// OpenGL display error.
+    #[error("Display")]
+    Display(Box<dyn std::error::Error>),
+
+    /// Skia surface rendering error.
+    #[error("Surface")]
+    Surface,
+
+    /// Windowing error.
+    #[error("Window")]
+    Window,
 }
 
 /// Run the user interface tree.
@@ -59,6 +79,5 @@ pub fn run<T: 'static>(state: T, f: impl FnOnce(&mut Context<T>) -> NodeKey) -> 
 
     let window = Window::builder().build(&renderer, root)?;
     renderer.insert_window(window, cx_key);
-    renderer.run();
-    Ok(())
+    renderer.run()
 }

@@ -12,7 +12,6 @@ use glutin_winit::DisplayBuilder;
 use kurbo::Size;
 use raw_window_handle::HasRawWindowHandle;
 use skia_safe::gpu::gl::FramebufferInfo;
-
 use std::{borrow::Cow, ffi::CString, num::NonZeroU32};
 use winit::window::WindowBuilder;
 
@@ -67,7 +66,7 @@ impl Builder {
                     })
                     .unwrap()
             })
-            .unwrap();
+            .map_err(|error| Error::Display(error))?;
         let window = window.ok_or(Error::Window)?;
         let raw_window_handle = window.raw_window_handle();
 
@@ -81,16 +80,16 @@ impl Builder {
         let fallback_context_attributes = ContextAttributesBuilder::new()
             .with_context_api(ContextApi::Gles(None))
             .build(Some(raw_window_handle));
+
         let not_current_gl_context = unsafe {
             gl_config
                 .display()
                 .create_context(&gl_config, &context_attributes)
-                .unwrap_or_else(|_| {
+                .or_else(|_| {
                     gl_config
                         .display()
                         .create_context(&gl_config, &fallback_context_attributes)
-                        .expect("failed to create context")
-                })
+                })?
         };
 
         let (width, height): (u32, u32) = window.inner_size().into();
@@ -105,7 +104,6 @@ impl Builder {
                 .display()
                 .create_window_surface(&gl_config, &attrs)?
         };
-
         let gl_context = not_current_gl_context.make_current(&gl_surface)?;
 
         gl::load_with(|s| {
@@ -121,10 +119,10 @@ impl Builder {
                 .display()
                 .get_proc_address(CString::new(name).unwrap().as_c_str())
         })
-        .ok_or(Error::Skia)?;
+        .ok_or(Error::Surface)?;
 
         let mut gr_context =
-            skia_safe::gpu::DirectContext::new_gl(Some(interface), None).ok_or(Error::Skia)?;
+            skia_safe::gpu::DirectContext::new_gl(Some(interface), None).ok_or(Error::Surface)?;
 
         let fb_info = {
             let mut fboid: GLint = 0;
@@ -144,8 +142,7 @@ impl Builder {
 
         let num_samples = gl_config.num_samples() as usize;
         let stencil_size = gl_config.stencil_size() as usize;
-
-        let surface = create_surface(&window, fb_info, &mut gr_context, num_samples, stencil_size);
+        let surface = create_surface(&window, fb_info, &mut gr_context, num_samples, stencil_size)?;
 
         Ok(Window {
             surface,

@@ -1,9 +1,9 @@
 use skia_safe::Color4f;
 use taffy::prelude::Size;
-use viewbuilder::{Context, Element, Renderer, Window};
+use viewbuilder::{Context, Element, Error, Renderer, Window};
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<(), Error> {
     let mut cx = Context::new(());
     let animated = Element::new()
         .size(Size::from_points(100., 100.))

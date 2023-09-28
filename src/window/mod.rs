@@ -1,7 +1,7 @@
 use crate::{
     event::{self},
     node::{NodeData, Overflow},
-    Context, NodeKey,
+    Context, Error, NodeKey,
 };
 use glutin::{
     context::PossiblyCurrentContext,
@@ -14,7 +14,6 @@ use skia_safe::{
     Color, ColorType, Surface,
 };
 use std::num::NonZeroU32;
-use thiserror::Error;
 use winit::{
     event::{ElementState, KeyboardInput, MouseScrollDelta, VirtualKeyCode, WindowEvent},
     event_loop::ControlFlow,
@@ -22,16 +21,6 @@ use winit::{
 
 mod builder;
 use self::builder::Builder;
-
-#[derive(Error, Debug)]
-pub enum Error {
-    #[error("GL")]
-    Gl(#[from] glutin::error::Error),
-    #[error("Skia")]
-    Skia,
-    #[error("Window")]
-    Window,
-}
 
 // Guarantee the drop order inside the FnMut closure. `Window` _must_ be dropped after
 // `DirectContext`.
@@ -83,10 +72,10 @@ impl Window {
         tree: &mut Context<T>,
         root: NodeKey,
         event: WindowEvent,
-    ) -> Option<ControlFlow> {
+    ) -> Result<Option<ControlFlow>, Error> {
         match event {
             WindowEvent::CloseRequested => {
-                return Some(ControlFlow::Exit);
+                return Ok(Some(ControlFlow::Exit));
             }
             WindowEvent::Resized(physical_size) => {
                 // Create a new render surface
@@ -96,7 +85,7 @@ impl Window {
                     &mut self.gr_context,
                     self.num_samples,
                     self.stencil_size,
-                );
+                )?;
 
                 // Resize the gl surface
                 let (width, height): (u32, u32) = physical_size.into();
@@ -117,7 +106,7 @@ impl Window {
             } => {
                 if modifiers.logo() {
                     if let Some(VirtualKeyCode::Q) = virtual_keycode {
-                        return Some(ControlFlow::Exit);
+                        return Ok(Some(ControlFlow::Exit));
                     }
                 }
 
@@ -236,7 +225,7 @@ impl Window {
             _ => (),
         }
 
-        None
+        Ok(None)
     }
 }
 
@@ -246,11 +235,11 @@ fn create_surface(
     gr_context: &mut skia_safe::gpu::DirectContext,
     num_samples: usize,
     stencil_size: usize,
-) -> Surface {
+) -> Result<Surface, Error> {
     let size = window.inner_size();
     let size = (
-        size.width.try_into().expect("Could not convert width"),
-        size.height.try_into().expect("Could not convert height"),
+        size.width.try_into().unwrap(),
+        size.height.try_into().unwrap(),
     );
     let backend_render_target =
         BackendRenderTarget::new_gl(size, num_samples, stencil_size, fb_info);
@@ -263,5 +252,5 @@ fn create_surface(
         None,
         None,
     )
-    .expect("Could not create skia surface")
+    .ok_or_else(|| Error::Surface)
 }
