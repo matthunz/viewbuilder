@@ -3,15 +3,11 @@ use crate::{
     node::{NodeData, Overflow},
     Context, NodeKey,
 };
-
 use glutin::{
     context::PossiblyCurrentContext,
-    prelude::GlConfig,
     surface::{GlSurface, WindowSurface},
 };
-
 use kurbo::{Point, Size};
-
 use skia_safe::{
     gpu::{self, gl::FramebufferInfo, BackendRenderTarget, SurfaceOrigin},
     Color, ColorType, Surface,
@@ -22,9 +18,8 @@ use winit::{
     event_loop::ControlFlow,
 };
 
-use self::builder::Builder;
-
 mod builder;
+use self::builder::Builder;
 
 // Guarantee the drop order inside the FnMut closure. `Window` _must_ be dropped after
 // `DirectContext`.

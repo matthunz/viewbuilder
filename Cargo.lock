@@ -113,9 +113,9 @@ checksum = "9ba43ea6f343b788c8764558649e08df62f86c6ef251fdaeb1ffd010a9ae50a2"
 
 [[package]]
 name = "bindgen"
-version = "0.66.1"
+version = "0.68.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f2b84e06fc203107bfbad243f4aba2af864eb7db3b1cf46ea0a023b0b433d2a7"
+checksum = "726e4313eb6ec35d2730258ad4e15b547ee75d6afaa1361a922e78e59b7d8078"
 dependencies = [
  "bitflags 2.4.0",
  "cexpr",
@@ -1232,9 +1232,9 @@ checksum = "d66dc143e6b11c1eddc06d5c423cfc97062865baf299914ab64caa38182078fe"
 
 [[package]]
 name = "skia-bindings"
-version = "0.64.0"
+version = "0.66.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d7a30c13184ca65af3a989ea2efe8803335d011800c0c738ef89e003b69e08e6"
+checksum = "9b2843da5e67fe22e2d747b90b0aca81e3f3332e899a363d36175a65436dd962"
 dependencies = [
  "bindgen",
  "cc",
@@ -1250,9 +1250,9 @@ dependencies = [
 
 [[package]]
 name = "skia-safe"
-version = "0.64.0"
+version = "0.66.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ace543b27749a9cade9fe57d0aadddd2fe1a99563f2976401966bda84b47284f"
+checksum = "6bc4f0febbf36f5959203c632fd6e93ecbe726824fd35c44c5ae942910b6fa37"
 dependencies = [
  "bitflags 2.4.0",
  "lazy_static",
@@ -1906,9 +1906,9 @@ checksum = "ed94fce61571a4006852b7389a063ab983c02eb1bb37b47f8272ce92d06d9538"
 
 [[package]]
 name = "winit"
-version = "0.28.6"
+version = "0.28.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "866db3f712fffba75d31bf0cdecf357c8aeafd158c5b7ab51dba2a2b2d47f196"
+checksum = "9596d90b45384f5281384ab204224876e8e8bf7d58366d9b795ad99aa9894b94"
 dependencies = [
  "android-activity",
  "bitflags 1.3.2",

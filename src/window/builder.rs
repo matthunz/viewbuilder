@@ -1,3 +1,4 @@
+use super::create_surface;
 use crate::{NodeKey, Renderer, Window};
 use gl::types::GLint;
 use glutin::{
@@ -5,14 +6,12 @@ use glutin::{
     context::{ContextApi, ContextAttributesBuilder},
     display::GetGlDisplay,
     prelude::{GlConfig, GlDisplay, NotCurrentGlContextSurfaceAccessor},
-    surface::{GlSurface, SurfaceAttributesBuilder, WindowSurface},
+    surface::{SurfaceAttributesBuilder, WindowSurface},
 };
 use glutin_winit::DisplayBuilder;
 use kurbo::Size;
 use raw_window_handle::HasRawWindowHandle;
 use skia_safe::gpu::gl::FramebufferInfo;
-
-use super::create_surface;
 use std::{borrow::Cow, ffi::CString, num::NonZeroU32};
 use winit::window::WindowBuilder;
 
