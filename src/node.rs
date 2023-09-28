@@ -20,9 +20,8 @@ pub enum NodeKind {
 }
 
 pub struct TextData {
-    text_blob: TextBlob,
+    pub (crate) text_blob: Option<TextBlob>,
     font: Font,
-    content: Cow<'static, str>,
 }
 
 /// Data type of a node.
@@ -135,25 +134,19 @@ impl<T> Node<T> {
         } = self.data
         {
             let text_blob = if let Some(ref mut data) = data {
-                if &data.content == content {
-                    &data.text_blob
+                if let Some(ref text_blob) = data.text_blob {
+                    text_blob
                 } else {
                     let text_blob = TextBlob::new(content, &data.font).unwrap();
-                    data.text_blob = text_blob;
-                    data.content = content.clone();
-
-                    &data.text_blob
+                    data.text_blob = Some(text_blob);
+                    data.text_blob.as_ref().unwrap()
                 }
             } else {
                 let typeface = Typeface::new("Arial", FontStyle::default()).unwrap();
                 let font = Font::new(typeface, 100.);
-                let text_blob = TextBlob::new(content, &font).unwrap();
-                *data = Some(TextData {
-                    text_blob,
-                    font,
-                    content: content.clone(),
-                });
-                &data.as_ref().unwrap().text_blob
+                let text_blob = Some(TextBlob::new(content, &font).unwrap());
+                *data = Some(TextData { text_blob, font });
+                data.as_ref().unwrap().text_blob.as_ref().unwrap()
             };
             let bounds = text_blob.bounds().clone();
 
@@ -199,9 +192,9 @@ impl<T> Node<T> {
             NodeData::Text { ref data, .. } => {
                 let text_blob = &data.as_ref().unwrap().text_blob;
                 let paint = Paint::new(Color4f::new(0., 0., 0., 1.), None);
-                let height = text_blob.bounds().height();
+                let height = text_blob.as_ref().unwrap().bounds().height();
                 canvas.draw_text_blob(
-                    text_blob,
+                    text_blob.as_ref().unwrap(),
                     (layout.location.x, layout.location.y + height / 2.),
                     &paint,
                 );

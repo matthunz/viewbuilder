@@ -53,10 +53,12 @@ impl<'a, T> NodeRef<'a, T> {
     pub fn set_text(&mut self, content: impl Into<Cow<'static, str>>) {
         if let NodeData::Text {
             content: ref mut dst,
+            ref mut data,
             ..
         } = self.node().data
         {
             *dst = content.into();
+            data.as_mut().unwrap().text_blob.take();
         } else {
             todo!()
         }
