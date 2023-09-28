@@ -26,9 +26,9 @@ pub struct TextData {
 }
 
 /// Data type of a node.
-pub enum NodeData {
+pub enum NodeData<T> {
     /// Element node.
-    Element(ElementData),
+    Element(ElementData<T>),
 
     /// Text node.
     Text {
@@ -44,9 +44,9 @@ pub enum Overflow {
 }
 
 /// Node of a tree.
-pub struct Node {
+pub struct Node<T> {
     /// Data type of the node.
-    pub(crate) data: NodeData,
+    pub(crate) data: NodeData<T>,
 
     /// Parent node id.
     pub(crate) parent: Option<NodeKey>,
@@ -66,9 +66,9 @@ pub struct Node {
     pub(crate) overflow_y: Overflow,
 }
 
-impl Node {
+impl<T> Node<T> {
     /// Create a new node from its data.
-    pub fn new(data: NodeData) -> Self {
+    pub fn new(data: NodeData<T>) -> Self {
         Self {
             data,
             parent: None,
@@ -215,13 +215,13 @@ impl Node {
     }
 }
 
-impl From<&'static str> for Node {
+impl<T> From<&'static str> for Node<T> {
     fn from(value: &'static str) -> Self {
         Self::text(value)
     }
 }
 
-impl From<String> for Node {
+impl<T> From<String> for Node<T> {
     fn from(value: String) -> Self {
         Self::text(value)
     }

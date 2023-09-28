@@ -4,7 +4,7 @@ use viewbuilder::{Context, Element, Renderer};
 
 #[tokio::main]
 async fn main() {
-    let mut cx = Context::default();
+    let mut cx = Context::new(());
     let animated = Element::new()
         .size(Size::from_points(100., 100.))
         .background_color(Color4f::new(0., 0., 1., 1.))

@@ -1,3 +1,5 @@
+use std::marker::PhantomData;
+
 use super::{Attribute, AttributeKind, AttributeValue};
 use crate::{event, Context};
 use skia_safe::Color4f;
@@ -41,7 +43,7 @@ macro_rules! make_style_fn {
 
 macro_rules! make_handler_fn {
     ($fn_name:ident, $set_fn_name:ident, $ty:ident, $kind_ty:ident) => {
-        pub fn $fn_name(&mut self) -> Option<Box<dyn FnMut(&mut Context, event::$ty)>> {
+        pub fn $fn_name(&mut self) -> Option<Box<dyn FnMut(&mut Context<T>, event::$ty)>> {
             if let Some(attr) = self.remove(AttributeKind::$kind_ty) {
                 match attr.value {
                     AttributeValue::$kind_ty(f) => Some(f),
@@ -52,7 +54,7 @@ macro_rules! make_handler_fn {
             }
         }
 
-        pub fn $set_fn_name(&mut self, handler: Box<dyn FnMut(&mut Context, event::$ty)>) {
+        pub fn $set_fn_name(&mut self, handler: Box<dyn FnMut(&mut Context<T>, event::$ty)>) {
             if let Some(attr_val) =
                 self.attr_mut(AttributeKind::$kind_ty)
                     .map(|attr| match attr.value {
@@ -72,24 +74,33 @@ macro_rules! make_handler_fn {
 }
 
 /// Data of an element.
-#[derive(Default)]
-pub struct ElementData {
-    attributes: Vec<Attribute>,
+pub struct ElementData<T> {
+    attributes: Vec<Attribute<T>>,
+    _marker: PhantomData<T>,
 }
 
-impl ElementData {
+impl<T> Default for ElementData<T> {
+    fn default() -> Self {
+        Self {
+            attributes: Default::default(),
+            _marker: Default::default(),
+        }
+    }
+}
+
+impl<T> ElementData<T> {
     /// Get a reference to the attribute of this kind if present.
-    pub fn attr(&self, kind: AttributeKind) -> Option<&Attribute> {
+    pub fn attr(&self, kind: AttributeKind) -> Option<&Attribute<T>> {
         self.attributes.iter().find(|attr| attr.kind() == kind)
     }
 
     /// Get a mutable reference to the attribute of this kind if present.
-    pub fn attr_mut(&mut self, kind: AttributeKind) -> Option<&mut Attribute> {
+    pub fn attr_mut(&mut self, kind: AttributeKind) -> Option<&mut Attribute<T>> {
         self.attributes.iter_mut().find(|attr| attr.kind() == kind)
     }
 
     /// Remove an attribute by kind from this element.
-    pub fn remove(&mut self, kind: AttributeKind) -> Option<Attribute> {
+    pub fn remove(&mut self, kind: AttributeKind) -> Option<Attribute<T>> {
         self.attributes
             .iter()
             .position(|attr| attr.kind() == kind)

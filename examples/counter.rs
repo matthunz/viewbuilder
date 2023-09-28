@@ -1,18 +1,21 @@
 use skia_safe::Color4f;
-use std::rc::Rc;
-use std::sync::atomic::{AtomicI64, Ordering};
 use taffy::prelude::Rect;
 use taffy::style::{FlexDirection, LengthPercentage};
 use viewbuilder::NodeKey;
 use viewbuilder::{Context, Element};
 
 fn button(
-    cx: &mut Context,
+    cx: &mut Context<i32>,
     label: &'static str,
-    mut handler: impl FnMut(&mut Context) + 'static,
+    text_key: NodeKey,
+    mut handler: impl FnMut(&mut i32) + 'static,
 ) -> NodeKey {
     Element::new()
-        .on_click(Box::new(move |cx, _event| handler(cx)))
+        .on_click(Box::new(move |cx, _event| {
+            handler(&mut cx.state);
+            let content = cx.state.to_string();
+            cx.node(text_key).set_text(content);
+        }))
         .padding(Rect {
             left: LengthPercentage::Points(100.),
             right: LengthPercentage::Points(100.),
@@ -24,10 +27,7 @@ fn button(
         .build(cx)
 }
 
-fn app(cx: &mut Context) -> NodeKey {
-    let inc_count = Rc::new(AtomicI64::new(0));
-    let dec_count = inc_count.clone();
-
+fn app(cx: &mut Context<i32>) -> NodeKey {
     let text = cx.insert("0");
 
     Element::new()
@@ -36,21 +36,13 @@ fn app(cx: &mut Context) -> NodeKey {
         .child(
             Element::new()
                 .flex_direction(FlexDirection::Row)
-                .child(button(cx, "More!", move |cx| {
-                    inc_count.fetch_add(1, Ordering::SeqCst);
-                    cx.node(text)
-                        .set_text(inc_count.load(Ordering::SeqCst).to_string())
-                }))
-                .child(button(cx, "Less!", move |cx| {
-                    dec_count.fetch_sub(1, Ordering::SeqCst);
-                    cx.node(text)
-                        .set_text(dec_count.load(Ordering::SeqCst).to_string())
-                }))
+                .child(button(cx, "More!", text, move |count| *count += 1))
+                .child(button(cx, "Less!", text, move |count| *count -= 1))
                 .build(cx),
         )
         .build(cx)
 }
 
 fn main() {
-    viewbuilder::run(app)
+    viewbuilder::run(0, app)
 }

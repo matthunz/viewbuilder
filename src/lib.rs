@@ -46,10 +46,10 @@ slotmap::new_key_type! {
 ///
 /// This will create a new window and render the tree,
 /// propagating events and re-rendering as they occuring.
-pub fn run(f: impl FnOnce(&mut Context) -> NodeKey) {
+pub fn run<T: 'static>(state: T, f: impl FnOnce(&mut Context<T>) -> NodeKey) {
     let renderer = Renderer::default();
 
-    let mut cx = Context::default();
+    let mut cx = Context::new(state);
     let root = f(&mut cx);
 
     renderer.run(cx, root)

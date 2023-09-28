@@ -16,21 +16,29 @@ mod node_ref;
 pub use self::node_ref::NodeRef;
 
 /// Tree of user interface nodes.
-#[derive(Default)]
-pub struct Tree {
-    nodes: SlotMap<NodeKey, Node>,
+
+pub struct Tree<T> {
+    nodes: SlotMap<NodeKey, Node<T>>,
 }
 
-impl Tree {
-    pub fn iter(&self, root: NodeKey) -> Iter {
+impl<T> Default for Tree<T> {
+    fn default() -> Self {
+        Self {
+            nodes: Default::default(),
+        }
+    }
+}
+
+impl<T> Tree<T> {
+    pub fn iter(&self, root: NodeKey) -> Iter<T> {
         Iter::new(self, root)
     }
 
-    pub fn iter_mut(&mut self, root: NodeKey) -> IterMut {
+    pub fn iter_mut(&mut self, root: NodeKey) -> IterMut<T> {
         IterMut::new(self, root)
     }
 
-    pub(crate) fn insert(&mut self, node: Node) -> NodeKey {
+    pub(crate) fn insert(&mut self, node: Node<T>) -> NodeKey {
         self.nodes.insert(node)
     }
 
@@ -120,15 +128,15 @@ impl Tree {
     }
 }
 
-impl Index<NodeKey> for Tree {
-    type Output = Node;
+impl<T> Index<NodeKey> for Tree<T> {
+    type Output = Node<T>;
 
     fn index(&self, index: NodeKey) -> &Self::Output {
         &self.nodes[index]
     }
 }
 
-impl IndexMut<NodeKey> for Tree {
+impl<T> IndexMut<NodeKey> for Tree<T> {
     fn index_mut(&mut self, index: NodeKey) -> &mut Self::Output {
         &mut self.nodes[index]
     }

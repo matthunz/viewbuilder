@@ -1,3 +1,5 @@
+use std::marker::PhantomData;
+
 use crate::{
     event,
     node::{NodeData, Overflow},
@@ -16,20 +18,22 @@ mod attribute;
 pub use self::attribute::{Attribute, AttributeKind, AttributeValue};
 
 /// Element of a user interface.
-pub struct Element {
-    data: Option<ElementData>,
+pub struct Element<T> {
+    data: Option<ElementData<T>>,
     children: Option<Vec<NodeKey>>,
     overflow_x: Overflow,
     overflow_y: Overflow,
+    _marker: PhantomData<T>,
 }
 
-impl Default for Element {
+impl<T> Default for Element<T> {
     fn default() -> Self {
         Self {
             data: Some(ElementData::default()),
             children: Default::default(),
             overflow_x: Overflow::Hidden,
             overflow_y: Overflow::Hidden,
+            _marker: PhantomData,
         }
     }
 }
@@ -44,7 +48,7 @@ macro_rules! make_builder_fn {
     };
 }
 
-impl Element {
+impl<T> Element<T> {
     /// Create a new element.
     pub fn new() -> Self {
         Self::default()
@@ -81,7 +85,7 @@ impl Element {
         "click handler",
         on_click,
         set_on_click,
-        Box<dyn FnMut(&mut Context, event::MouseEvent)>
+        Box<dyn FnMut(&mut Context<T>, event::MouseEvent)>
     );
 
     make_builder_fn!(
@@ -101,12 +105,12 @@ impl Element {
         self
     }
 
-    pub fn data_mut(&mut self) -> &mut ElementData {
+    pub fn data_mut(&mut self) -> &mut ElementData<T> {
         self.data.as_mut().unwrap()
     }
 
     /// Build the element and insert it into the tree.
-    pub fn build(&mut self, cx: &mut Context) -> NodeKey {
+    pub fn build(&mut self, cx: &mut Context<T>) -> NodeKey {
         let mut node = Node::new(NodeData::Element(self.data.take().unwrap()));
         node.children = self.children.take();
         node.overflow_x = self.overflow_x;
@@ -121,8 +125,8 @@ impl Element {
     }
 }
 
-impl Extend<NodeKey> for Element {
-    fn extend<T: IntoIterator<Item = NodeKey>>(&mut self, iter: T) {
+impl<T> Extend<NodeKey> for Element<T> {
+    fn extend<I: IntoIterator<Item = NodeKey>>(&mut self, iter: I) {
         for key in iter {
             self.child(key);
         }

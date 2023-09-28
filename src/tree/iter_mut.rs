@@ -7,20 +7,20 @@ enum Operation {
     Pop(NodeKind),
 }
 
-pub enum ItemMut<'a> {
-    Node { node: &'a mut Node, level: usize },
+pub enum ItemMut<'a, T> {
+    Node { node: &'a mut Node<T>, level: usize },
     Pop { kind: NodeKind, level: usize },
 }
 
-pub struct IterMut<'a> {
-    tree: *mut Tree,
+pub struct IterMut<'a, T> {
+    tree: *mut Tree<T>,
     stack: Vec<Operation>,
     count: usize,
-    _marker: PhantomData<&'a mut Tree>,
+    _marker: PhantomData<&'a mut Tree<T>>,
 }
 
-impl<'a> IterMut<'a> {
-    pub(crate) fn new(tree: &'a mut Tree, root: NodeKey) -> Self {
+impl<'a, T> IterMut<'a, T> {
+    pub(crate) fn new(tree: &'a mut Tree<T>, root: NodeKey) -> Self {
         IterMut {
             tree,
             stack: vec![Operation::Key(root)],
@@ -30,8 +30,8 @@ impl<'a> IterMut<'a> {
     }
 }
 
-impl<'a> Iterator for IterMut<'a> {
-    type Item = ItemMut<'a>;
+impl<'a, T> Iterator for IterMut<'a, T> {
+    type Item = ItemMut<'a, T>;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.stack.pop().map(|item| match item {

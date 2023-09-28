@@ -10,5 +10,5 @@ fn app(cx: &mut Context) -> NodeKey {
 }
 
 fn main() {
-    viewbuilder::run(app)
+    viewbuilder::run((), app)
 }

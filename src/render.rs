@@ -31,23 +31,23 @@ use winit::{
     window::{Window, WindowBuilder},
 };
 
-pub struct Updater {
-    tx: mpsc::Sender<UserEvent>,
+pub struct Updater<T> {
+    tx: mpsc::Sender<UserEvent<T>>,
 }
 
-impl Updater {
+impl<T> Updater<T> {
     /// Send an update to the UI tree.
-    pub fn update(&self, f: Box<dyn FnOnce(&mut Context) + Send>) -> Result<(), ()> {
+    pub fn update(&self, f: Box<dyn FnOnce(&mut Context<T>) + Send>) -> Result<(), ()> {
         self.tx.send(UserEvent::Update(f)).map_err(|_| ())
     }
 }
 
-pub struct Scope {
-    updater: Updater,
+pub struct Scope<T> {
+    updater: Updater<T>,
     notify: Arc<Notify>,
 }
 
-impl Scope {
+impl<T> Scope<T> {
     /// Request an animation frame from the renderer.
     pub async fn request_frame(&self) -> Result<(), ()> {
         self.updater
@@ -59,13 +59,13 @@ impl Scope {
     }
 
     /// Send an update to the UI tree.
-    pub fn update(&self, f: Box<dyn FnOnce(&mut Context) + Send>) -> Result<(), ()> {
+    pub fn update(&self, f: Box<dyn FnOnce(&mut Context<T>) + Send>) -> Result<(), ()> {
         self.updater.update(f)
     }
 }
 
-enum UserEvent {
-    Update(Box<dyn FnOnce(&mut Context) + Send>),
+enum UserEvent<T> {
+    Update(Box<dyn FnOnce(&mut Context<T>) + Send>),
     FrameRequest,
 }
 
@@ -73,30 +73,29 @@ enum UserEvent {
 // `DirectContext`.
 //
 // https://github.com/rust-skia/rust-skia/issues/476
-pub struct Renderer<T = ()> {
-    state: T,
+pub struct Renderer<T: 'static = ()> {
     surface: Surface,
     gl_surface: GlutinSurface<WindowSurface>,
     gr_context: skia_safe::gpu::DirectContext,
     gl_context: PossiblyCurrentContext,
     window: Window,
-    event_loop: EventLoop<UserEvent>,
+    event_loop: EventLoop<UserEvent<T>>,
     num_samples: usize,
     stencil_size: usize,
     fb_info: FramebufferInfo,
-    tx: mpsc::Sender<UserEvent>,
-    rx: mpsc::Receiver<UserEvent>,
+    tx: mpsc::Sender<UserEvent<T>>,
+    rx: mpsc::Receiver<UserEvent<T>>,
     notify: Arc<Notify>,
 }
 
-impl Default for Renderer {
+impl<T> Default for Renderer<T> {
     fn default() -> Self {
-        Self::new(())
+        Self::new()
     }
 }
 
 impl<T> Renderer<T> {
-    pub fn new(state: T) -> Self {
+    pub fn new() -> Self {
         let el = EventLoopBuilder::with_user_event().build();
         let winit_window_builder = WindowBuilder::new().with_title("Viewbuilder");
 
@@ -206,7 +205,6 @@ impl<T> Renderer<T> {
         let (tx, rx) = mpsc::channel();
 
         Self {
-            state,
             surface,
             gl_surface,
             gl_context,
@@ -223,14 +221,14 @@ impl<T> Renderer<T> {
     }
 
     /// Create an updater handle to the renderer.
-    pub fn updater(&self) -> Updater {
+    pub fn updater(&self) -> Updater<T> {
         Updater {
             tx: self.tx.clone(),
         }
     }
 
     /// Create a scope handle to the renderer.
-    pub fn scope(&self) -> Scope {
+    pub fn scope(&self) -> Scope<T> {
         Scope {
             updater: self.updater(),
             notify: self.notify.clone(),
@@ -242,7 +240,7 @@ impl<T> Renderer<T> {
         _key: NodeKey,
         min: f32,
         max: f32,
-        f: impl Fn(&mut Context, f32) + Send + Sync + 'static,
+        f: impl Fn(&mut Context<T>, f32) + Send + Sync + 'static,
     ) -> impl Future<Output = ()> {
         let scope = self.scope();
 
@@ -272,7 +270,7 @@ impl<T> Renderer<T> {
         }
     }
 
-    pub fn run(mut self, mut tree: Context, root: NodeKey) {
+    pub fn run(mut self, mut tree: Context<T>, root: NodeKey) {
         let mut previous_frame_start = Instant::now();
 
         let mut hover_target = None;

@@ -18,9 +18,9 @@ use taffy::{prelude::Size, style::Style, style_helpers::TaffyMaxContent, Taffy};
 /// 2. [`Context::semantics`] computes the semantics tree update, also based on changes made.
 ///
 /// 2. [`Context::paint`] will paint the tree top-down and clear any changes.
-pub struct Context {
+pub struct Context<T = ()> {
     /// Node tree.
-    pub tree: Tree,
+    pub tree: Tree<T>,
 
     /// Changes to be rendered in the next paint cycle.
     pub(crate) changes: Vec<NodeKey>,
@@ -33,21 +33,22 @@ pub struct Context {
 
     /// Taffy layout tree.
     taffy: Taffy,
+
+    pub state: T,
 }
 
-impl Default for Context {
-    fn default() -> Self {
+impl<T> Context<T> {
+    pub fn new(state: T) -> Self {
         Self {
             tree: Tree::default(),
             changes: Default::default(),
             next_id: NonZeroU128::MIN,
             unused_ids: Default::default(),
             taffy: Taffy::default(),
+            state,
         }
     }
-}
 
-impl Context {
     /// Send an event to an element in the tree.
     pub fn send(&mut self, key: NodeKey, event: Event) {
         let node = &mut self.tree[key];
@@ -78,14 +79,14 @@ impl Context {
     }
 
     /// Insert a node into the tree, returning its key.
-    pub fn insert(&mut self, node: impl Into<Node>) -> NodeKey {
+    pub fn insert(&mut self, node: impl Into<Node<T>>) -> NodeKey {
         let key = self.tree.insert(node.into());
         self.changes.push(key);
         key
     }
 
     /// Get a reference to the node stored under the given key.
-    pub fn node(&mut self, key: NodeKey) -> NodeRef {
+    pub fn node(&mut self, key: NodeKey) -> NodeRef<T> {
         NodeRef::new(key, self)
     }
 

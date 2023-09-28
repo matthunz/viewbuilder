@@ -9,14 +9,14 @@ use taffy::{prelude::Size, style::Dimension};
 /// Reference to an element in a tree.
 ///
 /// This struct is created with [`Tree::node`].
-pub struct NodeRef<'a> {
+pub struct NodeRef<'a, T> {
     key: NodeKey,
-    tree: &'a mut Context,
+    tree: &'a mut Context<T>,
 }
 
-impl<'a> NodeRef<'a> {
+impl<'a, T> NodeRef<'a, T> {
     /// Create a new node reference.
-    pub(crate) fn new(key: NodeKey, tree: &'a mut Context) -> Self {
+    pub(crate) fn new(key: NodeKey, tree: &'a mut Context<T>) -> Self {
         Self { key, tree }
     }
 
@@ -28,7 +28,7 @@ impl<'a> NodeRef<'a> {
     }
 
     /// Get a reference the current node.
-    pub fn node(&mut self) -> &mut Node {
+    pub fn node(&mut self) -> &mut Node<T> {
         &mut self.tree.tree.nodes[self.key]
     }
 
@@ -37,7 +37,7 @@ impl<'a> NodeRef<'a> {
     /// ## Panics
     /// This function will panic if the current reference is to a text node,
     /// not to an element.
-    pub fn element(&mut self) -> &mut ElementData {
+    pub fn element(&mut self) -> &mut ElementData<T> {
         if let NodeData::Element(ref mut element) = self.node().data {
             element
         } else {
@@ -120,8 +120,8 @@ impl<'a> NodeRef<'a> {
     }
 }
 
-impl<'a> AsMut<ElementData> for NodeRef<'a> {
-    fn as_mut(&mut self) -> &mut ElementData {
+impl<'a, T> AsMut<ElementData<T>> for NodeRef<'a, T> {
+    fn as_mut(&mut self) -> &mut ElementData<T> {
         self.element()
     }
 }

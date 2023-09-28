@@ -37,7 +37,7 @@ pub enum AttributeKind {
 }
 
 /// Element attribute value.
-pub enum AttributeValue {
+pub enum AttributeValue<T> {
     /// Size attribute value.
     Size(Size<Dimension>),
 
@@ -53,35 +53,35 @@ pub enum AttributeValue {
     JustifyContent(JustifyContent),
 
     /// Click handler attribute value.
-    OnClick(Box<dyn FnMut(&mut Context, event::MouseEvent)>),
+    OnClick(Box<dyn FnMut(&mut Context<T>, event::MouseEvent)>),
 
     /// Mouse in handler attribute value.
-    OnMouseIn(Box<dyn FnMut(&mut Context, event::MouseEvent)>),
+    OnMouseIn(Box<dyn FnMut(&mut Context<T>, event::MouseEvent)>),
 
     // Mouse out handler attribute value.
-    OnMouseOut(Box<dyn FnMut(&mut Context, event::MouseEvent)>),
+    OnMouseOut(Box<dyn FnMut(&mut Context<T>, event::MouseEvent)>),
 
     /// Color attribute value.
     Color(Color4f),
 }
 
 /// Element attribute.
-pub struct Attribute {
+pub struct Attribute<T> {
     /// Attribute kind.
     pub(super) kind: AttributeKind,
 
     /// Attribute value.
-    pub(super) value: AttributeValue,
+    pub(super) value: AttributeValue<T>,
 }
 
-impl Attribute {
+impl<T> Attribute<T> {
     /// Get the kind of this attribute.
     pub fn kind(&self) -> AttributeKind {
         self.kind
     }
 
     /// Get the value of this attribute.
-    pub fn value(&self) -> &AttributeValue {
+    pub fn value(&self) -> &AttributeValue<T> {
         &self.value
     }
 }
