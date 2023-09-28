@@ -40,7 +40,7 @@ impl Builder {
         self
     }
 
-    pub fn build(&self, renderer: &Renderer, root: NodeKey) -> Window {
+    pub fn build<T>(&self, renderer: &Renderer<T>, root: NodeKey) -> Window {
         let winit_window_builder = WindowBuilder::new().with_title(self.title.as_ref());
 
         let template = ConfigTemplateBuilder::new()
