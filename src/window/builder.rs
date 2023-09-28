@@ -66,7 +66,7 @@ impl Builder {
                     })
                     .unwrap()
             })
-            .map_err(|error| Error::Display(error))?;
+            .map_err(Error::Display)?;
         let window = window.ok_or(Error::Window)?;
         let raw_window_handle = window.raw_window_handle();
 

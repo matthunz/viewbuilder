@@ -1,5 +1,6 @@
 use crate::{Context, NodeKey, Window};
 use slotmap::{DefaultKey, SlotMap};
+
 use std::{
     collections::HashMap,
     future::Future,
@@ -13,14 +14,19 @@ use winit::{
     window::WindowId,
 };
 
+#[derive(Clone, Copy, Debug)]
+pub struct UpdateError;
+
+type Update<T> = Box<dyn FnOnce(&mut Context<T>) + Send>;
+
 pub struct Updater<T> {
     tx: mpsc::Sender<UserEvent<T>>,
 }
 
 impl<T> Updater<T> {
     /// Send an update to the UI tree.
-    pub fn update(&self, f: Box<dyn FnOnce(&mut Context<T>) + Send>) -> Result<(), ()> {
-        self.tx.send(UserEvent::Update(f)).map_err(|_| ())
+    pub fn update(&self, f: Update<T>) -> Result<(), UpdateError> {
+        self.tx.send(UserEvent::Update(f)).map_err(|_| UpdateError)
     }
 }
 
@@ -41,13 +47,13 @@ impl<T> Scope<T> {
     }
 
     /// Send an update to the UI tree.
-    pub fn update(&self, f: Box<dyn FnOnce(&mut Context<T>) + Send>) -> Result<(), ()> {
+    pub fn update(&self, f: Update<T>) -> Result<(), UpdateError> {
         self.updater.update(f)
     }
 }
 
 pub(crate) enum UserEvent<T> {
-    Update(Box<dyn FnOnce(&mut Context<T>) + Send>),
+    Update(Update<T>),
     FrameRequest,
 }
 

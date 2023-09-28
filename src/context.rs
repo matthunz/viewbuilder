@@ -118,8 +118,11 @@ impl<T> Context<T> {
 
         // Create the window layout
         let root_layout = self.tree[root].layout_key.unwrap();
-        let mut style = Style::default();
-        style.size = Size::from_points(size.width as _, size.height as _);
+        let style = Style {
+            size: Size::from_points(size.width as _, size.height as _),
+            ..Default::default()
+        };
+
         let window = self.taffy.new_with_children(style, &[root_layout]).unwrap();
 
         // Compute the layout of the taffy tree.
@@ -130,7 +133,7 @@ impl<T> Context<T> {
         for item in self.tree.iter_mut(root) {
             match item {
                 ItemMut::Node { node, level: _ } => {
-                    let mut layout = self.taffy.layout(node.layout_key.unwrap()).unwrap().clone();
+                    let mut layout = *self.taffy.layout(node.layout_key.unwrap()).unwrap();
                     if let Some(parent_layout) = stack.last() {
                         layout.location.x += parent_layout.location.x;
                         layout.location.y += parent_layout.location.y;

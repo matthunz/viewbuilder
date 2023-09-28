@@ -148,7 +148,7 @@ impl<T> Node<T> {
                 *data = Some(TextData { text_blob, font });
                 data.as_ref().unwrap().text_blob.as_ref().unwrap()
             };
-            let bounds = text_blob.bounds().clone();
+            let bounds = *text_blob.bounds();
 
             // TODO this is a measure func for paragraphs
             taffy

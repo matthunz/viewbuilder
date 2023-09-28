@@ -5,6 +5,8 @@ use taffy::{
     style::{AlignItems, Dimension, FlexDirection, JustifyContent, LengthPercentage},
 };
 
+type Handler<T> = Box<dyn FnMut(&mut Context<T>, event::MouseEvent)>;
+
 #[derive(Clone, Copy, PartialEq, Eq)]
 /// Element attribute kind.
 pub enum AttributeKind {
@@ -56,13 +58,13 @@ pub enum AttributeValue<T> {
     JustifyContent(JustifyContent),
 
     /// Click handler attribute value.
-    OnClick(Box<dyn FnMut(&mut Context<T>, event::MouseEvent)>),
+    OnClick(Handler<T>),
 
     /// Mouse in handler attribute value.
-    OnMouseIn(Box<dyn FnMut(&mut Context<T>, event::MouseEvent)>),
+    OnMouseIn(Handler<T>),
 
     // Mouse out handler attribute value.
-    OnMouseOut(Box<dyn FnMut(&mut Context<T>, event::MouseEvent)>),
+    OnMouseOut(Handler<T>),
 
     /// Color attribute value.
     Color(Color4f),

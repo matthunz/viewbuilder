@@ -73,6 +73,8 @@ impl Window {
         root: NodeKey,
         event: WindowEvent,
     ) -> Result<Option<ControlFlow>, Error> {
+        // TODO
+        #[allow(deprecated)]
         match event {
             WindowEvent::CloseRequested => {
                 return Ok(Some(ControlFlow::Exit));
@@ -200,25 +202,21 @@ impl Window {
                 ..
             } => {
                 if let Some(pos) = self.cursor_pos {
-                    match delta {
-                        MouseScrollDelta::PixelDelta(px_delta) => {
-                            let pos = Point::new(pos.x, pos.y);
-                            if let Some(target) = tree.tree.target_with_filter(
-                                root,
-                                Point::new(pos.x, pos.y),
-                                |node| {
+                    if let MouseScrollDelta::PixelDelta(px_delta) = delta {
+                        let pos = Point::new(pos.x, pos.y);
+                        if let Some(target) =
+                            tree.tree
+                                .target_with_filter(root, Point::new(pos.x, pos.y), |node| {
                                     if let NodeData::Element(ref elem) = node.data {
                                         elem.overflow_y() == Some(Overflow::Scroll)
                                     } else {
                                         false
                                     }
-                                },
-                            ) {
-                                let mut node = tree.node(target);
-                                node.scroll(Size::new(px_delta.x, px_delta.y));
-                            }
+                                })
+                        {
+                            let mut node = tree.node(target);
+                            node.scroll(Size::new(px_delta.x, px_delta.y));
                         }
-                        _ => {}
                     }
                 }
             }
