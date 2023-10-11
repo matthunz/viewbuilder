@@ -2,28 +2,21 @@
 
 use core::fmt;
 use slotmap::SparseSecondaryMap;
-use taffy::{
-    prelude::{Layout, Size},
-    style::Style,
-    style_helpers::TaffyMaxContent,
-    Taffy,
-};
+use taffy::{prelude::Layout, style::Style, style_helpers::TaffyMaxContent, Taffy};
 
 pub use taffy::node::Node;
 
 mod iter;
+use crate::Size;
+
 pub use self::iter::Iter;
+
+mod node;
+pub use self::node::LayoutNode;
 
 enum Operation {
     Push(Node),
     Pop,
-}
-
-#[derive(Debug, Default)]
-pub struct LayoutNode {
-    pub style: Style,
-    pub translation: Size<f32>,
-    pub is_listening: bool,
 }
 
 pub struct TreeLayout {
@@ -125,7 +118,7 @@ impl LayoutTree {
 
     /// Compute the layout of the tree.
     pub fn build_with_listener(&mut self, root: Node, mut listener: impl FnMut(Node, &Layout)) {
-        taffy::compute_layout(&mut self.taffy, root, Size::MAX_CONTENT).unwrap();
+        taffy::compute_layout(&mut self.taffy, root, taffy::prelude::Size::MAX_CONTENT).unwrap();
 
         let mut stack = vec![Operation::Push(root)];
         let mut layouts: Vec<TreeLayout> = vec![];
