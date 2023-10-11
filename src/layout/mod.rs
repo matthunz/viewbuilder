@@ -1,5 +1,4 @@
 use core::fmt;
-use slotmap::DefaultKey;
 use std::collections::HashMap;
 use taffy::{
     prelude::{Layout, Size},
@@ -8,8 +7,13 @@ use taffy::{
     Taffy,
 };
 
+pub use taffy::node::Node;
+
+mod iter;
+pub use self::iter::Iter;
+
 enum Operation {
-    Push(DefaultKey),
+    Push(Node),
     Pop,
 }
 
@@ -35,45 +39,65 @@ struct GlobalLayout {
 #[derive(Default)]
 pub struct LayoutTree {
     taffy: Taffy,
-    global_layouts: HashMap<DefaultKey, GlobalLayout>,
+    global_layouts: HashMap<Node, GlobalLayout>,
 }
 
 impl LayoutTree {
-    pub fn layout(&self, key: DefaultKey) -> Option<TreeLayout> {
+    /// Return the global layout of a node by its key.
+    pub fn layout(&self, key: Node) -> Option<TreeLayout> {
         self.global_layouts.get(&key).map(|global| TreeLayout {
             layout: global.layout,
             translation: global.translation,
         })
     }
 
-    pub fn insert(&mut self, node: LayoutNode) -> DefaultKey {
+    pub fn iter(&self, root: Node) -> Iter {
+        Iter::new(self, root)
+    }
+
+    /// Insert a new node and return its key.
+    pub fn insert(&mut self, node: LayoutNode) -> Node {
         let key = self.taffy.new_leaf(node.style).unwrap();
         self.global_layouts.insert(
             key,
             GlobalLayout {
                 layout: Layout::new(),
-                is_listening: false,
+                is_listening: node.is_listening,
                 translation: node.translation,
             },
         );
         key
     }
 
-    pub fn insert_with_children(&mut self, style: Style, children: &[DefaultKey]) -> DefaultKey {
-        self.taffy.new_with_children(style, children).unwrap()
+    /// Insert a new node with children and return its key.
+    pub fn insert_with_children(
+        &mut self,
+        node: LayoutNode,
+        children: &[Node],
+    ) -> Node {
+        let key = self.taffy.new_with_children(node.style, children).unwrap();
+        self.global_layouts.insert(
+            key,
+            GlobalLayout {
+                layout: Layout::new(),
+                is_listening: node.is_listening,
+                translation: node.translation,
+            },
+        );
+        key
     }
 
-    pub fn is_listening(&self, key: DefaultKey) -> bool {
+    pub fn is_listening(&self, key: Node) -> bool {
         let global_layout = self.global_layouts.get(&key).unwrap();
         global_layout.is_listening
     }
 
-    pub fn listen(&mut self, key: DefaultKey) {
+    pub fn listen(&mut self, key: Node) {
         let global_layout = self.global_layouts.get_mut(&key).unwrap();
         global_layout.is_listening = true;
     }
 
-    pub fn unlisten(&mut self, key: DefaultKey) {
+    pub fn unlisten(&mut self, key: Node) {
         let global_layout = self.global_layouts.get_mut(&key).unwrap();
         global_layout.is_listening = false;
     }
@@ -81,20 +105,20 @@ impl LayoutTree {
     /// Compute the layout of the tree.
     pub fn build_with_listener(
         &mut self,
-        root: DefaultKey,
-        mut listener: impl FnMut(DefaultKey, &Layout),
+        root: Node,
+        mut listener: impl FnMut(Node, &Layout),
     ) {
         taffy::compute_layout(&mut self.taffy, root, Size::MAX_CONTENT).unwrap();
 
         let mut stack = vec![Operation::Push(root)];
-        let mut layouts: Vec<Layout> = vec![];
+        let mut layouts: Vec<TreeLayout> = vec![];
         while let Some(op) = stack.pop() {
             match op {
                 Operation::Push(key) => {
                     let mut layout = self.taffy.layout(key).unwrap().clone();
-                    if let Some(parent_layout) = layouts.last() {
-                        layout.location.x += parent_layout.location.x;
-                        layout.location.y += parent_layout.location.y;
+                    if let Some(parent) = layouts.last() {
+                        layout.location.x += parent.layout.location.x + parent.translation.width;
+                        layout.location.y += parent.layout.location.y + parent.translation.height;
                     }
 
                     let dst = self.global_layouts.get_mut(&key).unwrap();
@@ -108,7 +132,10 @@ impl LayoutTree {
                         dst.layout = layout;
                     }
 
-                    layouts.push(layout);
+                    layouts.push(TreeLayout {
+                        layout,
+                        translation: dst.translation,
+                    });
                     stack.push(Operation::Pop);
 
                     let children = self.taffy.children(key).unwrap();
@@ -134,32 +161,30 @@ impl fmt::Debug for LayoutTree {
 mod tests {
     use super::LayoutNode;
     use crate::LayoutTree;
-    use taffy::{
-        prelude::{Rect, Size},
-        style::{LengthPercentage, Style},
-    };
+    use taffy::prelude::Size;
 
     #[test]
     fn it_works() {
         let mut tree = LayoutTree::default();
-
         let a = tree.insert(LayoutNode::default());
-
-        let b = tree.insert_with_children(Style::default(), &[a]);
-
+        let b = tree.insert_with_children(
+            LayoutNode {
+                is_listening: true,
+                ..Default::default()
+            },
+            &[a],
+        );
         let root = tree.insert_with_children(
-            Style {
-                size: Size::from_points(100., 100.),
-                padding: Rect {
-                    left: LengthPercentage::Points(100.),
-                    right: LengthPercentage::Points(0.),
-                    top: LengthPercentage::Points(0.),
-                    bottom: LengthPercentage::Points(0.),
+            LayoutNode {
+                translation: Size {
+                    width: 0.,
+                    height: 50.,
                 },
                 ..Default::default()
             },
             &[b],
         );
+
         tree.build_with_listener(root, |key, layout| {
             dbg!(key, layout);
         });
