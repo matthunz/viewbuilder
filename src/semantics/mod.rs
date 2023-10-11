@@ -1,15 +1,14 @@
 //! Semantics and accessibility
 
-use accesskit::{NodeBuilder, NodeClassSet, NodeId, TreeUpdate};
+use accesskit::{NodeClassSet, NodeId, TreeUpdate};
 use std::{
     collections::{HashMap, HashSet},
     mem,
     num::NonZeroU128,
 };
 
-pub trait NodeFactory {
-    fn semantics(&mut self) -> NodeBuilder;
-}
+pub mod node_factory;
+pub use node_factory::NodeFactory;
 
 /// Semantics and accessibility tree.
 pub struct SemanticsTree {
