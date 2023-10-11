@@ -25,7 +25,10 @@ pub struct LayoutNode {
 }
 
 pub struct TreeLayout {
+    /// Global layout of the node.
     pub layout: Layout,
+
+    /// Translation size of the node.
     pub translation: Size<f32>,
 }
 
@@ -36,7 +39,7 @@ struct GlobalLayout {
     translation: Size<f32>,
 }
 
-/// Layout tree build with Taffy.
+/// Layout tree built with Taffy.
 #[derive(Default)]
 pub struct LayoutTree {
     /// The taffy layout tree.
@@ -166,39 +169,5 @@ impl fmt::Debug for LayoutTree {
         f.debug_struct("LayoutTree")
             .field("global_layouts", &self.global_layouts)
             .finish()
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::LayoutNode;
-    use crate::LayoutTree;
-    use taffy::prelude::Size;
-
-    #[test]
-    fn it_works() {
-        let mut tree = LayoutTree::default();
-        let a = tree.insert(LayoutNode::default());
-        let b = tree.insert_with_children(
-            LayoutNode {
-                is_listening: true,
-                ..Default::default()
-            },
-            &[a],
-        );
-        let root = tree.insert_with_children(
-            LayoutNode {
-                translation: Size {
-                    width: 0.,
-                    height: 50.,
-                },
-                ..Default::default()
-            },
-            &[b],
-        );
-
-        tree.build_with_listener(root, |key, layout| {
-            dbg!(key, layout);
-        });
     }
 }
