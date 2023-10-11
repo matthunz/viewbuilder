@@ -1,4 +1,4 @@
-use crate::Size;
+use crate::geometry::Size;
 use taffy::style::{Dimension, Style};
 
 #[derive(Debug, Default)]

@@ -6,5 +6,4 @@ pub mod layout;
 #[cfg_attr(docsrs, doc(cfg(feature = "semantics")))]
 pub mod semantics;
 
-mod size;
-pub use size::Size;
+pub mod geometry;

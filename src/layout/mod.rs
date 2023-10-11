@@ -1,15 +1,17 @@
 //! Layout
 
+use crate::geometry::{Size};
 use core::fmt;
 use slotmap::SparseSecondaryMap;
-use taffy::{prelude::Layout, style::Style, style_helpers::TaffyMaxContent, Taffy};
+use taffy::{style_helpers::TaffyMaxContent, Taffy};
 
 pub use taffy::node::Node;
 
 mod iter;
-use crate::Size;
-
 pub use self::iter::Iter;
+
+mod layout;
+pub use layout::Layout;
 
 mod node;
 pub use self::node::LayoutNode;
@@ -19,17 +21,9 @@ enum Operation {
     Pop,
 }
 
-pub struct TreeLayout {
-    /// Global layout of the node.
-    pub layout: Layout,
-
-    /// Translation size of the node.
-    pub translation: Size<f32>,
-}
-
 #[derive(Debug)]
 struct GlobalLayout {
-    layout: Layout,
+    layout: taffy::prelude::Layout,
     is_listening: bool,
     translation: Size<f32>,
 }
@@ -46,8 +40,8 @@ pub struct LayoutTree {
 
 impl LayoutTree {
     /// Return the global layout of a node by its key.
-    pub fn layout(&self, key: Node) -> Option<TreeLayout> {
-        self.global_layouts.get(key).map(|global| TreeLayout {
+    pub fn layout(&self, key: Node) -> Option<Layout> {
+        self.global_layouts.get(key).map(|global| Layout {
             layout: global.layout,
             translation: global.translation,
         })
@@ -64,7 +58,7 @@ impl LayoutTree {
         self.global_layouts.insert(
             key,
             GlobalLayout {
-                layout: Layout::new(),
+                layout: taffy::prelude::Layout::new(),
                 is_listening: node.is_listening,
                 translation: node.translation,
             },
@@ -78,7 +72,7 @@ impl LayoutTree {
         self.global_layouts.insert(
             key,
             GlobalLayout {
-                layout: Layout::new(),
+                layout: taffy::prelude::Layout::new(),
                 is_listening: node.is_listening,
                 translation: node.translation,
             },
@@ -121,7 +115,7 @@ impl LayoutTree {
         taffy::compute_layout(&mut self.taffy, root, taffy::prelude::Size::MAX_CONTENT).unwrap();
 
         let mut stack = vec![Operation::Push(root)];
-        let mut layouts: Vec<TreeLayout> = vec![];
+        let mut layouts: Vec<Layout> = vec![];
         while let Some(op) = stack.pop() {
             match op {
                 Operation::Push(key) => {
@@ -137,12 +131,18 @@ impl LayoutTree {
                         || dst.layout.size != layout.size
                     {
                         if dst.is_listening {
-                            listener(key, &layout)
+                            listener(
+                                key,
+                                &Layout {
+                                    layout: layout,
+                                    translation: dst.translation,
+                                },
+                            )
                         }
                         dst.layout = layout;
                     }
 
-                    layouts.push(TreeLayout {
+                    layouts.push(Layout {
                         layout,
                         translation: dst.translation,
                     });

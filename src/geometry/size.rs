@@ -1,4 +1,3 @@
-
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Size<T> {
     pub width: T,
@@ -13,9 +12,17 @@ impl<T> Size<T> {
 
 #[cfg(feature = "layout")]
 mod with_layout {
+    use super::Size;
     use taffy::style::Dimension;
 
-    use crate::Size;
+    impl<T> Size<T> {
+        pub(crate) fn from_taffy(size: taffy::prelude::Size<T>) -> Self {
+            Self {
+                width: size.width,
+                height: size.height,
+            }
+        }
+    }
 
     impl Size<Dimension> {
         pub fn from_points(width: f32, height: f32) -> Self {

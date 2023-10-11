@@ -1,4 +1,4 @@
-use super::{LayoutTree, Node, TreeLayout};
+use super::{Layout, LayoutTree, Node};
 
 pub struct Iter<'a> {
     tree: &'a LayoutTree,
@@ -15,7 +15,7 @@ impl<'a> Iter<'a> {
 }
 
 impl<'a> Iterator for Iter<'a> {
-    type Item = TreeLayout;
+    type Item = Layout;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.stack.pop().map(|key| self.tree.layout(key).unwrap())
