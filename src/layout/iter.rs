@@ -1,6 +1,4 @@
-use super::{TreeLayout, Node, LayoutTree};
-
-
+use super::{LayoutTree, Node, TreeLayout};
 
 pub struct Iter<'a> {
     tree: &'a LayoutTree,
@@ -9,7 +7,10 @@ pub struct Iter<'a> {
 
 impl<'a> Iter<'a> {
     pub(crate) fn new(tree: &'a LayoutTree, root: Node) -> Self {
-        Self { tree, stack: vec![root] }
+        Self {
+            tree,
+            stack: vec![root],
+        }
     }
 }
 

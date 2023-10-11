@@ -1,3 +1,5 @@
+//! Layout
+
 use core::fmt;
 use slotmap::SparseSecondaryMap;
 use taffy::{

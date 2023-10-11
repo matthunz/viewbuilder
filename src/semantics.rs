@@ -1,3 +1,5 @@
+//! Semantics and accessibility
+
 use accesskit::{NodeBuilder, NodeClassSet, NodeId, TreeUpdate};
 use std::{
     collections::{HashMap, HashSet},
