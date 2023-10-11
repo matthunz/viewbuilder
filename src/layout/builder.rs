@@ -13,15 +13,26 @@ pub(super) struct Inner {
 }
 
 /// Builder for a layout node.
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct Builder {
     pub(super) inner: Option<Inner>,
+}
+
+impl Default for Builder {
+    fn default() -> Self {
+        Self { inner: Some(Inner::default())}
+    }
 }
 
 impl Builder {
     /// Set the size of the node.
     pub fn size(&mut self, size: Size<Dimension>) -> &mut Self {
         self.inner.as_mut().unwrap().style.size = size.into_taffy();
+        self
+    }
+
+    pub fn is_listening(&mut self, is_listening: bool) -> &mut Self {
+        self.inner.as_mut().unwrap().is_listening = is_listening;
         self
     }
 

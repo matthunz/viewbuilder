@@ -22,7 +22,7 @@
 
 Cross-platform user interface framework for Rust.
 
-This crate provides an HTML-like render API for the backend of a UI.
+This crate provides primitives for the backend of a UI.
 It's built for use as a backend for [concoct](https://github.com/concoct-rs/concoct),
 but you can bring your own state management tools or build your own framework using this as a backend.
 
@@ -37,49 +37,21 @@ but you can bring your own state management tools or build your own framework us
 ## Getting started
 Instatllation is simple with:
 ```sh
-cargo add viewbuilder
+cargo add viewbuilder --features full
 ```
 If you encounter errors, please check the instructions for building [rust-skia](https://github.com/rust-skia/rust-skia).
 
 ## Examples
 
-### Hello World
+### Layout
 ```rust
-fn app(cx: &mut Context) -> NodeKey {
-    Element::new()
-        .align_items(AlignItems::Center)
-        .justify_content(JustifyContent::Center)
-        .child(cx.insert("Hello World!"))
-        .build(cx)
-}
+let mut tree = LayoutTree::default();
+let root = Layout::builder()
+    .size(Size::from_points(100., 100.))
+    .is_listening(true)
+    .build(&mut tree);
 
-fn main() {
-    viewbuilder::run(app)
-}
-```
-
-### Scroll
-```rust
-fn app(cx: &mut Context) -> NodeKey {
-    let mut elem = Element::new();
-    elem.overflow_y(Overflow::Scroll)
-        .flex_direction(FlexDirection::Column)
-        .extend((0..100).map(|count| cx.insert(count.to_string())));
-    elem.build(cx)
-}
-```
-
-### Button Component
-```rust
-fn button(
-    cx: &mut Context,
-    label: &'static str,
-    mut handler: impl FnMut(&mut Context) + 'static,
-) -> NodeKey {
-    Element::new()
-        .on_click(Box::new(move |cx, _event| handler(cx)))
-        .background_color(Color4f::new(1., 1., 0., 1.))
-        .child(cx.insert(label))
-        .build(cx)
-}
+tree.build_with_listener(root, |key, node| {
+    dbg!(key, node);
+});
 ```
