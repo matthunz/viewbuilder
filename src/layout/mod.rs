@@ -1,5 +1,5 @@
 use core::fmt;
-use std::collections::HashMap;
+use slotmap::SparseSecondaryMap;
 use taffy::{
     prelude::{Layout, Size},
     style::Style,
@@ -36,21 +36,26 @@ struct GlobalLayout {
     translation: Size<f32>,
 }
 
+/// Layout tree build with Taffy.
 #[derive(Default)]
 pub struct LayoutTree {
+    /// The taffy layout tree.
     taffy: Taffy,
-    global_layouts: HashMap<Node, GlobalLayout>,
+
+    /// Global layout mappings to the taffy tree.
+    global_layouts: SparseSecondaryMap<Node, GlobalLayout>,
 }
 
 impl LayoutTree {
     /// Return the global layout of a node by its key.
     pub fn layout(&self, key: Node) -> Option<TreeLayout> {
-        self.global_layouts.get(&key).map(|global| TreeLayout {
+        self.global_layouts.get(key).map(|global| TreeLayout {
             layout: global.layout,
             translation: global.translation,
         })
     }
 
+    /// Create an iterator over the layouts in the tree.
     pub fn iter(&self, root: Node) -> Iter {
         Iter::new(self, root)
     }
@@ -70,11 +75,7 @@ impl LayoutTree {
     }
 
     /// Insert a new node with children and return its key.
-    pub fn insert_with_children(
-        &mut self,
-        node: LayoutNode,
-        children: &[Node],
-    ) -> Node {
+    pub fn insert_with_children(&mut self, node: LayoutNode, children: &[Node]) -> Node {
         let key = self.taffy.new_with_children(node.style, children).unwrap();
         self.global_layouts.insert(
             key,
@@ -87,27 +88,38 @@ impl LayoutTree {
         key
     }
 
+    /// Check the listening flag for a node in the tree.
     pub fn is_listening(&self, key: Node) -> bool {
-        let global_layout = self.global_layouts.get(&key).unwrap();
+        let global_layout = self.global_layouts.get(key).unwrap();
         global_layout.is_listening
     }
 
+    /// Set the listening flag for a node in the tree.
     pub fn listen(&mut self, key: Node) {
-        let global_layout = self.global_layouts.get_mut(&key).unwrap();
+        let global_layout = self.global_layouts.get_mut(key).unwrap();
         global_layout.is_listening = true;
     }
 
+    /// Remove the listening flag for a node in the tree.
     pub fn unlisten(&mut self, key: Node) {
-        let global_layout = self.global_layouts.get_mut(&key).unwrap();
+        let global_layout = self.global_layouts.get_mut(key).unwrap();
         global_layout.is_listening = false;
     }
 
+    /// Get the current translation of a node in the tree.
+    pub fn translation(&self, key: Node) -> Size<f32> {
+        let global_layout = self.global_layouts.get(key).unwrap();
+        global_layout.translation
+    }
+
+    /// Get a mutable reference to the current translation of a node in the tree.
+    pub fn translation_mut(&mut self, key: Node) -> &mut Size<f32> {
+        let global_layout = self.global_layouts.get_mut(key).unwrap();
+        &mut global_layout.translation
+    }
+
     /// Compute the layout of the tree.
-    pub fn build_with_listener(
-        &mut self,
-        root: Node,
-        mut listener: impl FnMut(Node, &Layout),
-    ) {
+    pub fn build_with_listener(&mut self, root: Node, mut listener: impl FnMut(Node, &Layout)) {
         taffy::compute_layout(&mut self.taffy, root, Size::MAX_CONTENT).unwrap();
 
         let mut stack = vec![Operation::Push(root)];
@@ -121,7 +133,7 @@ impl LayoutTree {
                         layout.location.y += parent.layout.location.y + parent.translation.height;
                     }
 
-                    let dst = self.global_layouts.get_mut(&key).unwrap();
+                    let dst = self.global_layouts.get_mut(key).unwrap();
                     if dst.layout.location != layout.location
                         || dst.layout.order != layout.order
                         || dst.layout.size != layout.size
