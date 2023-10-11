@@ -13,10 +13,23 @@ enum Operation {
     Pop,
 }
 
+#[derive(Debug, Default)]
+pub struct LayoutNode {
+    pub style: Style,
+    pub translation: Size<f32>,
+    pub is_listening: bool,
+}
+
+pub struct TreeLayout {
+    pub layout: Layout,
+    pub translation: Size<f32>,
+}
+
 #[derive(Debug)]
 struct GlobalLayout {
     layout: Layout,
     is_listening: bool,
+    translation: Size<f32>,
 }
 
 #[derive(Default)]
@@ -26,12 +39,24 @@ pub struct LayoutTree {
 }
 
 impl LayoutTree {
-    pub fn get(&self, key: DefaultKey) -> Option<&Layout> {
-        self.global_layouts.get(&key).map(|global| &global.layout)
+    pub fn layout(&self, key: DefaultKey) -> Option<TreeLayout> {
+        self.global_layouts.get(&key).map(|global| TreeLayout {
+            layout: global.layout,
+            translation: global.translation,
+        })
     }
 
-    pub fn insert(&mut self, style: Style) -> DefaultKey {
-        self.taffy.new_leaf(style).unwrap()
+    pub fn insert(&mut self, node: LayoutNode) -> DefaultKey {
+        let key = self.taffy.new_leaf(node.style).unwrap();
+        self.global_layouts.insert(
+            key,
+            GlobalLayout {
+                layout: Layout::new(),
+                is_listening: false,
+                translation: node.translation,
+            },
+        );
+        key
     }
 
     pub fn insert_with_children(&mut self, style: Style, children: &[DefaultKey]) -> DefaultKey {
@@ -53,7 +78,12 @@ impl LayoutTree {
         global_layout.is_listening = false;
     }
 
-    pub fn layout(&mut self, root: DefaultKey, mut listener: impl FnMut(DefaultKey, &Layout)) {
+    /// Compute the layout of the tree.
+    pub fn build_with_listener(
+        &mut self,
+        root: DefaultKey,
+        mut listener: impl FnMut(DefaultKey, &Layout),
+    ) {
         taffy::compute_layout(&mut self.taffy, root, Size::MAX_CONTENT).unwrap();
 
         let mut stack = vec![Operation::Push(root)];
@@ -67,28 +97,18 @@ impl LayoutTree {
                         layout.location.y += parent_layout.location.y;
                     }
 
-                    self.global_layouts
-                        .entry(key)
-                        .and_modify(|dst| {
-                            if dst.is_listening
-                                && (dst.layout.location != layout.location
-                                    || dst.layout.order != layout.order
-                                    || dst.layout.size != layout.size)
-                            {
-                                listener(key, &layout)
-                            }
+                    let dst = self.global_layouts.get_mut(&key).unwrap();
+                    if dst.layout.location != layout.location
+                        || dst.layout.order != layout.order
+                        || dst.layout.size != layout.size
+                    {
+                        if dst.is_listening {
+                            listener(key, &layout)
+                        }
+                        dst.layout = layout;
+                    }
 
-                            dst.layout = layout;
-                        })
-                        .or_insert_with(|| {
-                            listener(key, &layout);
-                            GlobalLayout {
-                                layout,
-                                is_listening: false,
-                            }
-                        });
                     layouts.push(layout);
-
                     stack.push(Operation::Pop);
 
                     let children = self.taffy.children(key).unwrap();
@@ -112,6 +132,7 @@ impl fmt::Debug for LayoutTree {
 
 #[cfg(test)]
 mod tests {
+    use super::LayoutNode;
     use crate::LayoutTree;
     use taffy::{
         prelude::{Rect, Size},
@@ -122,7 +143,7 @@ mod tests {
     fn it_works() {
         let mut tree = LayoutTree::default();
 
-        let a = tree.insert(Style::default());
+        let a = tree.insert(LayoutNode::default());
 
         let b = tree.insert_with_children(Style::default(), &[a]);
 
@@ -139,7 +160,7 @@ mod tests {
             },
             &[b],
         );
-        tree.layout(root, |key, layout| {
+        tree.build_with_listener(root, |key, layout| {
             dbg!(key, layout);
         });
     }
