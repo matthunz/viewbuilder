@@ -42,6 +42,6 @@ thiserror = "1.0.49"
 features = ["full"]
 rustdoc-args = ["--cfg", "docsrs"]
 
-[[examples]]
+[[example]]
 name = "app"
 required-features = ["full"]
