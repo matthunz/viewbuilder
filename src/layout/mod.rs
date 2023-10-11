@@ -1,6 +1,6 @@
 //! Layout
 
-use crate::geometry::{Size};
+use crate::geometry::Size;
 use core::fmt;
 use slotmap::SparseSecondaryMap;
 use taffy::{style_helpers::TaffyMaxContent, Taffy};
@@ -13,8 +13,8 @@ pub use self::iter::Iter;
 mod layout;
 pub use layout::Layout;
 
-mod node;
-pub use self::node::LayoutNode;
+mod builder;
+pub use self::builder::Builder;
 
 enum Operation {
     Push(Node),
@@ -50,34 +50,6 @@ impl LayoutTree {
     /// Create an iterator over the layouts in the tree.
     pub fn iter(&self, root: Node) -> Iter {
         Iter::new(self, root)
-    }
-
-    /// Insert a new node and return its key.
-    pub fn insert(&mut self, node: LayoutNode) -> Node {
-        let key = self.taffy.new_leaf(node.style).unwrap();
-        self.global_layouts.insert(
-            key,
-            GlobalLayout {
-                layout: taffy::prelude::Layout::new(),
-                is_listening: node.is_listening,
-                translation: node.translation,
-            },
-        );
-        key
-    }
-
-    /// Insert a new node with children and return its key.
-    pub fn insert_with_children(&mut self, node: LayoutNode, children: &[Node]) -> Node {
-        let key = self.taffy.new_with_children(node.style, children).unwrap();
-        self.global_layouts.insert(
-            key,
-            GlobalLayout {
-                layout: taffy::prelude::Layout::new(),
-                is_listening: node.is_listening,
-                translation: node.translation,
-            },
-        );
-        key
     }
 
     /// Check the listening flag for a node in the tree.
