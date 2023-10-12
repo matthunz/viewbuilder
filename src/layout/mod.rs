@@ -116,7 +116,7 @@ impl LayoutTree {
                     stack.push(Operation::Pop);
 
                     let children = self.taffy.children(key).unwrap();
-                    stack.extend(children.into_iter().map(|child| Operation::Push(child)));
+                    stack.extend(children.into_iter().map(Operation::Push));
                 }
                 Operation::Pop => {
                     layouts.pop();
