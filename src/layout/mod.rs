@@ -86,7 +86,7 @@ impl LayoutTree {
         while let Some(op) = stack.pop() {
             match op {
                 Operation::Push(key) => {
-                    let mut layout = self.taffy.layout(key).unwrap().clone();
+                    let mut layout = *self.taffy.layout(key).unwrap();
                     if let Some(parent) = layouts.last() {
                         layout.location.x += parent.layout.location.x + parent.translation.width;
                         layout.location.y += parent.layout.location.y + parent.translation.height;
@@ -101,7 +101,7 @@ impl LayoutTree {
                             listener(
                                 key,
                                 &Layout {
-                                    layout: layout,
+                                    layout,
                                     translation: dst.translation,
                                 },
                             )
