@@ -1,3 +1,4 @@
+#![allow(clippy::module_inception)]
 use slotmap::DefaultKey;
 
 #[cfg(feature = "layout")]
