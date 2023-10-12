@@ -1,5 +1,7 @@
 #![allow(clippy::module_inception)]
 
+use slotmap::DefaultKey;
+
 #[cfg(feature = "layout")]
 #[cfg_attr(docsrs, doc(cfg(feature = "layout")))]
 pub mod layout;
@@ -52,4 +54,10 @@ pub fn run(app: dioxus::prelude::Component) {
     vtree.rebuild();
 
     Renderer.run(vtree.tree, vtree.root)
+}
+
+
+pub(crate) enum Operation {
+    Push(DefaultKey   ),
+    Pop,
 }

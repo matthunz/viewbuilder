@@ -1,7 +1,7 @@
 use crate::{element::Element, layout::LayoutTree};
 use skia_safe::Canvas;
 use slotmap::{DefaultKey, SlotMap};
-use std::{collections::HashSet, mem};
+use std::{collections::HashSet, fmt, mem};
 
 struct Node {
     element: Box<dyn Element>,
@@ -18,6 +18,10 @@ pub struct Tree {
 }
 
 impl Tree {
+    pub fn get(&self, key: DefaultKey) -> &dyn Element {
+        &*self.nodes[key].element
+    }
+
     pub fn get_mut(&mut self, key: DefaultKey) -> &mut dyn Element {
         &mut *self.nodes[key].element
     }

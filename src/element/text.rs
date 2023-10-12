@@ -1,3 +1,5 @@
+use std::{borrow::Cow, fmt};
+
 use super::Element;
 use crate::layout::{self, Layout};
 use skia_safe::{Canvas, Color4f, Font, Paint, TextBlob};
@@ -5,18 +7,20 @@ use slotmap::DefaultKey;
 use taffy::node::MeasureFunc;
 
 pub struct TextElement {
+    value: Cow<'static, str>,
     text_blob: TextBlob,
 }
 
 impl TextElement {
-    pub fn new(content: &str, font: &Font) -> Self {
-        let text_blob = TextBlob::new(content, font).unwrap();
-        Self { text_blob }
+    pub fn new(content: impl Into<Cow<'static, str>>, font: &Font) -> Self {
+        let value = content.into();
+        let text_blob = TextBlob::new(&value, font).unwrap();
+        Self { text_blob, value }
     }
 }
 
 impl Element for TextElement {
-    fn children(&mut self) -> Option<Vec<DefaultKey>> {
+    fn children(&self) -> Option<Vec<DefaultKey>> {
         None
     }
 
@@ -50,5 +54,11 @@ impl Element for TextElement {
             ),
             &paint,
         );
+    }
+}
+
+impl fmt::Display for TextElement {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "\"{}\"", self.value)
     }
 }

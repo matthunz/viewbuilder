@@ -1,3 +1,5 @@
+use std::fmt;
+
 use super::Element;
 use crate::layout::Layout;
 use slotmap::DefaultKey;
@@ -13,7 +15,7 @@ impl ViewElement {
 }
 
 impl Element for ViewElement {
-    fn children(&mut self) -> Option<Vec<slotmap::DefaultKey>> {
+    fn children(& self) -> Option<Vec<slotmap::DefaultKey>> {
         Some(self.children.clone())
     }
 
@@ -30,4 +32,10 @@ impl Element for ViewElement {
     }
 
     fn paint(&mut self, _layout: &crate::layout::Layout, _canvas: &mut skia_safe::Canvas) {}
+}
+
+impl fmt::Display for ViewElement {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "view")
+    }
 }

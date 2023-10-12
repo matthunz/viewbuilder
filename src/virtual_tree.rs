@@ -1,6 +1,7 @@
 use crate::{
     element::{TextElement, ViewElement},
     tree::Tree,
+    Operation,
 };
 use dioxus::{
     core::{ElementId, Mutation},
@@ -8,7 +9,7 @@ use dioxus::{
 };
 use skia_safe::{Font, Typeface};
 use slotmap::DefaultKey;
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt};
 
 enum Node {
     Text(String),
@@ -100,7 +101,7 @@ fn insert(tree: &mut Tree, node: &Node) -> DefaultKey {
             let typeface = Typeface::new("Arial", Default::default()).unwrap();
             let font = Font::new(typeface, 100.);
 
-            tree.insert(Box::new(TextElement::new(&text, &font)))
+            tree.insert(Box::new(TextElement::new(text.to_string(), &font)))
         }
         Node::Element { children } => {
             let child_keys = children
@@ -109,5 +110,39 @@ fn insert(tree: &mut Tree, node: &Node) -> DefaultKey {
                 .collect();
             tree.insert(Box::new(ViewElement::new(child_keys)))
         }
+    }
+}
+
+impl fmt::Display for VirtualTree {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut stack = vec![Operation::Push(self.root)];
+
+        let mut level = 0;
+        while let Some(op) = stack.pop() {
+            match op {
+                Operation::Push(key) => {
+                    let elem = self.tree.get(key);
+
+                    for _ in 0..level {
+                        write!(f, "    ")?;
+                    }
+                    writeln!(f, "{} {{", elem)?;
+
+                    level += 1;
+                    stack.push(Operation::Pop);
+                    stack.extend(elem.children().into_iter().flatten().map(Operation::Push));
+                }
+                Operation::Pop => {
+                    level -= 1;
+
+                    for _ in 0..level {
+                        write!(f, "    ")?;
+                    }
+                    writeln!(f, "}}")?;
+                }
+            }
+        }
+
+        Ok(())
     }
 }

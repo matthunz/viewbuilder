@@ -1,4 +1,4 @@
-use viewbuilder::prelude::*;
+use viewbuilder::{prelude::*, virtual_tree::VirtualTree};
 
 #[allow(non_snake_case)]
 fn App(cx: Scope) -> Element {
@@ -14,5 +14,7 @@ fn App(cx: Scope) -> Element {
 }
 
 fn main() {
-    viewbuilder::run(App)
+    let mut vtree = VirtualTree::new(App);
+
+    println!("{}", vtree);
 }

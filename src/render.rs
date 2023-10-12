@@ -1,3 +1,4 @@
+use crate::tree::Tree;
 use gl::types::*;
 use glutin::{
     config::{ConfigTemplateBuilder, GlConfig},
@@ -11,6 +12,10 @@ use glutin::{
 };
 use glutin_winit::DisplayBuilder;
 use raw_window_handle::HasRawWindowHandle;
+use skia_safe::{
+    gpu::{self, backend_render_targets, gl::FramebufferInfo, SurfaceOrigin},
+    Color, ColorType, Surface,
+};
 use slotmap::DefaultKey;
 use std::{
     ffi::CString,
@@ -23,12 +28,17 @@ use winit::{
     window::{Window, WindowBuilder},
 };
 
-use skia_safe::{
-    gpu::{self, backend_render_targets, gl::FramebufferInfo, SurfaceOrigin},
-    Color, ColorType, Surface,
-};
-
-use crate::tree::Tree;
+// Guarantee the drop order inside the FnMut closure. `Window` _must_ be dropped after
+// `DirectContext`.
+//
+// https://github.com/rust-skia/rust-skia/issues/476
+struct Env {
+    surface: Surface,
+    gl_surface: GlutinSurface<WindowSurface>,
+    gr_context: skia_safe::gpu::DirectContext,
+    gl_context: PossiblyCurrentContext,
+    window: Window,
+}
 
 pub struct Renderer;
 
@@ -62,7 +72,6 @@ impl Renderer {
                     .unwrap()
             })
             .unwrap();
-        println!("Picked a config with {} samples", gl_config.num_samples());
         let window = window.expect("Could not create window with OpenGL context");
         let raw_window_handle = window.raw_window_handle();
 
@@ -171,18 +180,6 @@ impl Renderer {
         let surface = create_surface(&window, fb_info, &mut gr_context, num_samples, stencil_size);
 
         let mut frame = 0usize;
-
-        // Guarantee the drop order inside the FnMut closure. `Window` _must_ be dropped after
-        // `DirectContext`.
-        //
-        // https://github.com/rust-skia/rust-skia/issues/476
-        struct Env {
-            surface: Surface,
-            gl_surface: GlutinSurface<WindowSurface>,
-            gr_context: skia_safe::gpu::DirectContext,
-            gl_context: PossiblyCurrentContext,
-            window: Window,
-        }
 
         let mut env = Env {
             surface,
