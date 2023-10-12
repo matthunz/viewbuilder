@@ -1,14 +1,5 @@
-use crate::{
-    layout::{self, LayoutTree},
-    Operation,
-};
+use crate::{element::Element, layout::LayoutTree, Operation};
 use slotmap::{DefaultKey, SlotMap};
-
-pub trait Element {
-    fn children(&mut self) -> Option<Vec<DefaultKey>>;
-
-    fn layout(&mut self) -> layout::Builder;
-}
 
 struct Node {
     element: Box<dyn Element>,

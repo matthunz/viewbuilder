@@ -16,8 +16,6 @@ pub use layout::Layout;
 mod builder;
 pub use self::builder::Builder;
 
-
-
 #[derive(Debug)]
 struct GlobalLayout {
     layout: taffy::prelude::Layout,

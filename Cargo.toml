@@ -17,7 +17,8 @@ gl = [
 ]
 layout = ["dep:taffy"]
 semantics = ["dep:accesskit"]
-full = ["layout", "semantics"]
+element = ["dep:skia-safe"]
+full = ["gl", "layout", "semantics", "element"]
 default = []
 
 [dependencies]

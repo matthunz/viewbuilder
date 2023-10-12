@@ -1,21 +1,12 @@
-use viewbuilder::{Tree, Element, layout::{self, Layout}};
-
-struct Button {
-
-}
-
-impl Element for Button {
-    fn children(&mut self) -> Option<Vec<slotmap::DefaultKey>> {
-        None
-    }
-
-    fn layout(&mut self) -> layout::Builder {
-        Layout::builder()
-    }
-}
+use skia_safe::{Font, Typeface};
+use viewbuilder::{element::TextElement, Tree};
 
 fn main() {
     let mut tree = Tree::default();
-    let root = tree.insert(Box::new(Button {}));
+
+    let typeface = Typeface::new("Arial", Default::default()).unwrap();
+    let font = Font::new(typeface, 100.);
+    let root = tree.insert(Box::new(TextElement::new("Hello World!", &font)));
+
     tree.layout(root)
 }

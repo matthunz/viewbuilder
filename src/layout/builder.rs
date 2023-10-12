@@ -20,7 +20,9 @@ pub struct Builder {
 
 impl Default for Builder {
     fn default() -> Self {
-        Self { inner: Some(Inner::default())}
+        Self {
+            inner: Some(Inner::default()),
+        }
     }
 }
 
