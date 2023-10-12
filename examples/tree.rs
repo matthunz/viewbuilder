@@ -13,7 +13,7 @@ fn main() {
 
     let a = tree.insert(Box::new(TextElement::new("More!", &font)));
     let b = tree.insert(Box::new(TextElement::new("Less!", &font)));
-    let root = tree.insert(Box::new(ViewElement::new(vec![a, b])));
+    let root = tree.insert(Box::new(ViewElement::new(vec![ a, b ])));
 
     Renderer.run(tree, root);
 }

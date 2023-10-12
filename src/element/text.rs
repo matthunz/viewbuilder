@@ -20,7 +20,7 @@ impl Element for TextElement {
         None
     }
 
-    fn push_child(&mut self,key: DefaultKey) {
+    fn push_child(&mut self, _key: DefaultKey) {
         todo!()
     }
 

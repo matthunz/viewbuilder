@@ -13,6 +13,20 @@ use slotmap::DefaultKey;
 
 enum Node {
     Text(String),
+    Element { children: Vec<Self> },
+}
+
+impl Node {
+    fn from_template(template_node: &TemplateNode) -> Self {
+        match template_node {
+            TemplateNode::Text { text } => Node::Text(text.to_string()),
+            TemplateNode::Element { tag: _, namespace: _, attrs: _, children } => {
+                let children = children.into_iter().map(Self::from_template).collect();
+                Node::Element { children }
+            }
+            _ => todo!()
+        }
+    }
 }
 
 struct Template {
@@ -50,10 +64,7 @@ impl VirtualTree {
             let roots = template
                 .roots
                 .iter()
-                .map(|node| match node {
-                    TemplateNode::Text { text } => Node::Text(text.to_string()),
-                    _ => todo!(),
-                })
+                .map(Node::from_template)
                 .collect();
 
             self.templates
@@ -65,14 +76,7 @@ impl VirtualTree {
             match edit {
                 Mutation::LoadTemplate { name, index, id } => {
                     let root = &self.templates[name].roots[index];
-                    let key = match root {
-                        Node::Text(text) => {
-                            let typeface = Typeface::new("Arial", Default::default()).unwrap();
-                            let font = Font::new(typeface, 100.);
-
-                            self.tree.insert(Box::new(TextElement::new(&text, &font)))
-                        }
-                    };
+                    let key = insert(&mut self.tree, root);
                     self.elements.insert(id, key);
                     stack.push(key);
                 }
@@ -86,6 +90,26 @@ impl VirtualTree {
                 }
                 _ => todo!(),
             }
+        }
+    }
+
+    
+}
+
+fn insert(tree: &mut Tree, node: &Node) -> DefaultKey {
+    match node {
+        Node::Text(text) => {
+            let typeface = Typeface::new("Arial", Default::default()).unwrap();
+            let font = Font::new(typeface, 100.);
+
+            tree.insert(Box::new(TextElement::new(&text, &font)))
+        }
+        Node::Element { children } => {
+            let child_keys = children
+                .into_iter()
+                .map(|child| insert(tree, child))
+                .collect();
+            tree.insert(Box::new(ViewElement::new(child_keys)))
         }
     }
 }

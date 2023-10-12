@@ -6,6 +6,7 @@ use std::mem;
 struct Node {
     element: Box<dyn Element>,
     layout_key: Option<DefaultKey>,
+    parent: Option<DefaultKey>,
 }
 
 #[derive(Default)]
@@ -24,7 +25,13 @@ impl Tree {
         let key = self.nodes.insert(Node {
             element,
             layout_key: None,
+            parent: None
         });
+
+        for child_key in self.nodes[key].element.children().iter().flatten() {
+            self.nodes[*child_key].parent = Some(key);
+        }
+
         self.dirty.push(key);
         key
     }
@@ -35,9 +42,11 @@ impl Tree {
             let layout_key = node.element.layout().build(&mut self.layout_tree);
             node.layout_key = Some(layout_key);
 
-            for child in node.element.children().iter().flatten() {
-                let child_layout_key = self.nodes[*child].layout_key.unwrap();
-                self.layout_tree.add_child(key, child_layout_key)
+            if let Some(parent_key) = node.parent {
+                if let Some(parent_layout_key) = self.nodes[parent_key].layout_key {
+                    self.layout_tree.add_child(parent_layout_key, layout_key);
+                }
+                
             }
         }
 
