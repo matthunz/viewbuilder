@@ -22,9 +22,7 @@
 
 Cross-platform user interface framework for Rust.
 
-This crate provides primitives for the backend of a UI.
-It's built for use as a backend for [concoct](https://github.com/concoct-rs/concoct),
-but you can bring your own state management tools or build your own framework using this as a backend.
+This crate provides a moduler GUI library that can be used as an entire framework, or with individual parts.
 
 ```rust
 fn App(cx: Scope) -> Element {
