@@ -26,10 +26,24 @@ This crate provides primitives for the backend of a UI.
 It's built for use as a backend for [concoct](https://github.com/concoct-rs/concoct),
 but you can bring your own state management tools or build your own framework using this as a backend.
 
+```rust
+fn App(cx: Scope) -> Element {
+    let mut count = use_state(cx, || 0);
+
+    cx.render(rsx! {
+        view {
+            "{count}"
+            view { onclick: move |_| count += 1, "Up high!" }
+            view { onclick: move |_| count -= 1, "Down low!" }
+        }
+    })
+}
+```
+
 ## Features
-- State management with [dioxus](https://github.com/DioxusLabs/dioxus/) (optional)
 - Cross-platform with desktop and mobile support
 - Event handling with an HTML-like API
+- State management with [dioxus](https://github.com/DioxusLabs/dioxus/) (optional)
 - CSS flexbox and grid layout with [taffy](https://github.com/DioxusLabs/taffy/)
 - Accessibility with [accesskit](https://github.com/AccessKit/accesskit)
 - High performance rendering with [rust-skia](https://github.com/rust-skia/rust-skia)
@@ -41,34 +55,3 @@ cargo add viewbuilder --features full
 ```
 If you encounter errors, please check the instructions for building [rust-skia](https://github.com/rust-skia/rust-skia).
 
-## Examples
-
-### Hello world
-```rust
-fn App(cx: Scope) -> Element {
-    cx.render(rsx!("Hello World!"))
-}
-```
-
-### Layout
-```rust
-let mut tree = LayoutTree::default();
-let root = Layout::builder()
-    .size(Size::from_points(100., 100.))
-    .is_listening(true)
-    .build(&mut tree);
-
-tree.build_with_listener(root, |key, node| {
-    dbg!(key, node);
-});
-```
-
-### Semantics
-```rust
-let mut tree = SemanticsTree::default();
-
-let button = node_factory::from_fn(|| NodeBuilder::new(Role::Button));
-tree.insert(Box::new(button));
-
-dbg!(tree.update());
-```
