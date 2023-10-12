@@ -5,6 +5,9 @@ use slotmap::DefaultKey;
 mod text;
 pub use self::text::TextElement;
 
+mod view;
+pub use self::view::ViewElement;
+
 pub trait Element {
     fn children(&mut self) -> Option<Vec<DefaultKey>>;
 
