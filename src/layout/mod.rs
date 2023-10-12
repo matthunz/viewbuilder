@@ -47,7 +47,7 @@ impl LayoutTree {
         Iter::new(self, root)
     }
 
-    pub fn children(&self, parent: Node) -> Vec<Node>{
+    pub fn children(&self, parent: Node) -> Vec<Node> {
         self.taffy.children(parent).unwrap()
     }
 

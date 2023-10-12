@@ -1,8 +1,5 @@
 use super::Element;
-use crate::{
-    geometry::Size,
-    layout::{self, Layout},
-};
+use crate::layout::{self, Layout};
 use skia_safe::{Canvas, Color4f, Font, Paint, TextBlob};
 use slotmap::DefaultKey;
 use taffy::node::MeasureFunc;
@@ -26,13 +23,12 @@ impl Element for TextElement {
     fn layout(&mut self) -> layout::Builder {
         let mut builder = Layout::builder();
         let blob = self.text_blob.clone();
-        builder
-            .on_measure(MeasureFunc::Boxed(Box::new(move |a, size| {
-                taffy::prelude::Size {
-                    width: blob.bounds().width(),
-                    height: blob.bounds().height(),
-                }
-            })));
+        builder.on_measure(MeasureFunc::Boxed(Box::new(move |_a, _size| {
+            taffy::prelude::Size {
+                width: blob.bounds().width() / 2.,
+                height: blob.bounds().height(),
+            }
+        })));
         builder
     }
 

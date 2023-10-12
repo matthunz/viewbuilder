@@ -1,8 +1,7 @@
-use std::mem;
-
 use crate::{element::Element, layout::LayoutTree, Operation};
 use skia_safe::Canvas;
 use slotmap::{DefaultKey, SlotMap};
+use std::mem;
 
 struct Node {
     element: Box<dyn Element>,

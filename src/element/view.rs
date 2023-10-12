@@ -1,5 +1,5 @@
 use super::Element;
-use crate::{geometry::Size, layout::Layout};
+use crate::layout::Layout;
 use slotmap::DefaultKey;
 
 pub struct ViewElement {
@@ -18,9 +18,7 @@ impl Element for ViewElement {
     }
 
     fn layout(&mut self) -> crate::layout::Builder {
-        let mut builder = Layout::builder();
-        builder.size(Size::from_points(1000., 1000.));
-        builder
+        Layout::builder()
     }
 
     fn semantics(&mut self) -> accesskit::NodeBuilder {
