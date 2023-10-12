@@ -33,7 +33,6 @@ impl Element for TextElement {
     }
 
     fn paint(&mut self, layout: &Layout, canvas: &mut Canvas) {
-        dbg!(layout);
         let paint = Paint::new(Color4f::new(1., 0., 0., 1.), None);
         canvas.draw_text_blob(
             &self.text_blob,

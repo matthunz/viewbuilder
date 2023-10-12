@@ -11,10 +11,9 @@ fn main() {
     let typeface = Typeface::new("Arial", Default::default()).unwrap();
     let font = Font::new(typeface, 100.);
 
-    let a = tree.insert(Box::new(TextElement::new("A!", &font)));
-    let b = tree.insert(Box::new(TextElement::new("B!", &font)));
-    let c = tree.insert(Box::new(TextElement::new("C!", &font)));
-    let root = tree.insert(Box::new(ViewElement::new(vec![a, b, c])));
+    let a = tree.insert(Box::new(TextElement::new("More!", &font)));
+    let b = tree.insert(Box::new(TextElement::new("Less!", &font)));
+    let root = tree.insert(Box::new(ViewElement::new(vec![a, b])));
 
     Renderer.run(tree, root);
 }
