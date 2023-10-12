@@ -15,6 +15,7 @@ struct Node {
     layout_key: Option<DefaultKey>,
 }
 
+#[derive(Default)]
 pub struct Tree {
     layout_tree: LayoutTree,
     nodes: SlotMap<DefaultKey, Node>,
@@ -36,8 +37,8 @@ impl Tree {
             match op {
                 Operation::Push(key) => {
                     let node = self.nodes.get_mut(key).unwrap();
-                    let key = node.element.layout().build(&mut self.layout_tree);
-                    node.layout_key = Some(key);
+                    let layout_key = node.element.layout().build(&mut self.layout_tree);
+                    node.layout_key = Some(layout_key);
 
                     stack.push(Operation::Pop);
                     parents.push(key);

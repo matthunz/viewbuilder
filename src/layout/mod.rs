@@ -1,6 +1,6 @@
 //! Layout
 
-use crate::geometry::Size;
+use crate::{geometry::Size, Operation};
 use core::fmt;
 use slotmap::SparseSecondaryMap;
 use taffy::{style_helpers::TaffyMaxContent, Taffy};
@@ -16,10 +16,7 @@ pub use layout::Layout;
 mod builder;
 pub use self::builder::Builder;
 
-pub(crate) enum Operation {
-    Push(Node),
-    Pop,
-}
+
 
 #[derive(Debug)]
 struct GlobalLayout {
