@@ -49,13 +49,13 @@ name = "layout"
 required-features = ["layout"]
 
 [[example]]
-name = "semantics"
-required-features = ["semantics"]
-
-[[example]]
 name = "tree"
 required-features = ["element"]
 
 [[example]]
+name = "hello"
+required-features = ["full"]
+
+[[example]]
 name = "counter"
-required-features = ["element"]
+required-features = ["full"]

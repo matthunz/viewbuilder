@@ -35,9 +35,11 @@ pub(crate) enum Operation {
 }
 
 pub mod prelude {
-    pub use dioxus::prelude::{rsx, Element, Scope};
+    pub use dioxus::prelude::{rsx, Element, Scope, use_state};
 
     pub mod dioxus_elements {
+        pub use dioxus::prelude::dioxus_elements::events;
+        
         #[allow(non_camel_case_types)]
         pub struct view;
 
