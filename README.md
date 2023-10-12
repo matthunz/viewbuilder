@@ -27,7 +27,7 @@ It's built for use as a backend for [concoct](https://github.com/concoct-rs/conc
 but you can bring your own state management tools or build your own framework using this as a backend.
 
 ## Features
-
+- State management with [dioxus](https://github.com/DioxusLabs/dioxus/) (optional)
 - Cross-platform with desktop and mobile support
 - Event handling with an HTML-like API
 - CSS flexbox and grid layout with [taffy](https://github.com/DioxusLabs/taffy/)
@@ -42,6 +42,13 @@ cargo add viewbuilder --features full
 If you encounter errors, please check the instructions for building [rust-skia](https://github.com/rust-skia/rust-skia).
 
 ## Examples
+
+### Hello world
+```rust
+fn App(cx: Scope) -> Element {
+    cx.render(rsx!("Hello World!"))
+}
+```
 
 ### Layout
 ```rust

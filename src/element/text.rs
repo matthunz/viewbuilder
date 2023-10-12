@@ -20,6 +20,10 @@ impl Element for TextElement {
         None
     }
 
+    fn push_child(&mut self,key: DefaultKey) {
+        todo!()
+    }
+
     fn layout(&mut self) -> layout::Builder {
         let mut builder = Layout::builder();
         let blob = self.text_blob.clone();

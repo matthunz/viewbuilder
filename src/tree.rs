@@ -16,6 +16,10 @@ pub struct Tree {
 }
 
 impl Tree {
+    pub fn get_mut(&mut self, key: DefaultKey) -> &mut dyn Element {
+        &mut *self.nodes[key].element
+    }
+
     pub fn insert(&mut self, element: Box<dyn Element>) -> DefaultKey {
         let key = self.nodes.insert(Node {
             element,
@@ -32,7 +36,8 @@ impl Tree {
             node.layout_key = Some(layout_key);
 
             for child in node.element.children().iter().flatten() {
-                self.layout_tree.add_child(key, *child)
+                let child_layout_key = self.nodes[*child].layout_key.unwrap();
+                self.layout_tree.add_child(key, child_layout_key)
             }
         }
 

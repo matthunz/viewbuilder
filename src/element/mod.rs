@@ -11,6 +11,8 @@ pub use self::view::ViewElement;
 pub trait Element {
     fn children(&mut self) -> Option<Vec<DefaultKey>>;
 
+    fn push_child(&mut self,key: DefaultKey);
+
     fn layout(&mut self) -> layout::Builder;
 
     fn semantics(&mut self) -> NodeBuilder;

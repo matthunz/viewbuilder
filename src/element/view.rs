@@ -17,6 +17,10 @@ impl Element for ViewElement {
         Some(self.children.clone())
     }
 
+    fn push_child(&mut self, key: DefaultKey) {
+        self.children.push(key);
+    }
+
     fn layout(&mut self) -> crate::layout::Builder {
         Layout::builder()
     }
