@@ -16,7 +16,7 @@ pub use layout::Layout;
 mod builder;
 pub use self::builder::Builder;
 
-enum Operation {
+pub(crate) enum Operation {
     Push(Node),
     Pop,
 }
