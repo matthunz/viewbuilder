@@ -1,19 +1,20 @@
 use super::{GlobalLayout, LayoutTree};
 use crate::geometry::Size;
 use taffy::{
+    node::MeasureFunc,
     prelude::Node,
     style::{Dimension, Style},
 };
 
-#[derive(Debug, Default)]
+#[derive(Default)]
 pub(super) struct Inner {
     pub(super) style: Style,
     pub(super) translation: Size<f32>,
     pub(super) is_listening: bool,
+    pub(super) measure_func: Option<MeasureFunc>,
 }
 
 /// Builder for a layout node.
-#[derive(Debug)]
 pub struct Builder {
     pub(super) inner: Option<Inner>,
 }
@@ -38,11 +39,20 @@ impl Builder {
         self
     }
 
+    pub fn on_measure(&mut self, measure_func: MeasureFunc) -> &mut Self {
+        self.inner.as_mut().unwrap().measure_func = Some(measure_func);
+        self
+    }
+
     /// Build a new node with children and return its key.
     pub fn build(&mut self, tree: &mut LayoutTree) -> Node {
         let inner = self.inner.take().unwrap();
 
         let key = tree.taffy.new_leaf(inner.style).unwrap();
+        if let Some(measure_func) = inner.measure_func {
+            tree.taffy.set_measure(key, Some(measure_func)).unwrap();
+        }
+
         tree.global_layouts.insert(
             key,
             GlobalLayout {
