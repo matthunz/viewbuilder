@@ -50,3 +50,7 @@ required-features = ["layout"]
 [[example]]
 name = "semantics"
 required-features = ["semantics"]
+
+[[example]]
+name = "tree"
+required-features = ["element"]

@@ -1,6 +1,6 @@
-use slotmap::DefaultKey;
-use crate::{geometry::Size, layout::Layout};
 use super::Element;
+use crate::{geometry::Size, layout::Layout};
+use slotmap::DefaultKey;
 
 pub struct ViewElement {
     children: Vec<DefaultKey>,
@@ -27,7 +27,5 @@ impl Element for ViewElement {
         todo!()
     }
 
-    fn paint(&mut self, layout: &crate::layout::Layout, canvas: &mut skia_safe::Canvas) {
-
-    }
+    fn paint(&mut self, _layout: &crate::layout::Layout, _canvas: &mut skia_safe::Canvas) {}
 }

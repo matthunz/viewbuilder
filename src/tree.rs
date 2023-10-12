@@ -32,9 +32,12 @@ impl Tree {
                     let layout_key = node.element.layout().build(&mut self.layout_tree);
                     node.layout_key = Some(layout_key);
 
-                    stack.push(Operation::Pop);
-                    parents.push(key);
+                    if let Some(parent) = parents.last() {
+                        self.layout_tree.add_child(*parent, layout_key);
+                    }
+                    parents.push(layout_key);
 
+                    stack.push(Operation::Pop);
                     stack.extend(
                         node.element
                             .children()
@@ -48,6 +51,8 @@ impl Tree {
                 }
             }
         }
+
+        self.layout_tree.build_with_listener(root, |_, _| {});
     }
 
     pub fn paint(&mut self, root: DefaultKey, canvas: &mut Canvas) {

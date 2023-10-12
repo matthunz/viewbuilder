@@ -47,6 +47,10 @@ impl LayoutTree {
         Iter::new(self, root)
     }
 
+    pub fn add_child(&mut self, parent: Node, child: Node) {
+        self.taffy.add_child(parent, child).unwrap();
+    }
+
     /// Check the listening flag for a node in the tree.
     pub fn is_listening(&self, key: Node) -> bool {
         let global_layout = self.global_layouts.get(key).unwrap();

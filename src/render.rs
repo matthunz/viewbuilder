@@ -1,8 +1,3 @@
-use std::{
-    ffi::CString,
-    num::NonZeroU32,
-    time::{Duration, Instant},
-};
 use gl::types::*;
 use glutin::{
     config::{ConfigTemplateBuilder, GlConfig},
@@ -17,6 +12,11 @@ use glutin::{
 use glutin_winit::DisplayBuilder;
 use raw_window_handle::HasRawWindowHandle;
 use slotmap::DefaultKey;
+use std::{
+    ffi::CString,
+    num::NonZeroU32,
+    time::{Duration, Instant},
+};
 use winit::{
     event::{Event, KeyboardInput, VirtualKeyCode, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
@@ -193,7 +193,6 @@ impl Renderer {
         };
         let mut previous_frame_start = Instant::now();
 
-
         // LAYOUT
         tree.layout(root);
 
@@ -261,10 +260,9 @@ impl Renderer {
                 frame += 1;
                 let canvas = env.surface.canvas();
                 canvas.clear(Color::WHITE);
-                
+
                 // PAINT
                 tree.paint(root, canvas);
-
 
                 env.gr_context.flush_and_submit();
                 env.gl_surface.swap_buffers(&env.gl_context).unwrap();
