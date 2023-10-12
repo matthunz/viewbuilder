@@ -15,9 +15,12 @@ pub mod element;
 pub mod geometry;
 
 #[cfg(feature = "element")]
-pub mod tree;
 #[cfg_attr(docsrs, doc(cfg(feature = "element")))]
-pub use tree::Tree;
+pub mod tree;
+
+#[cfg(feature = "gl")]
+#[cfg_attr(docsrs, doc(cfg(feature = "gl")))]
+pub mod render;
 
 pub(crate) enum Operation {
     Push(DefaultKey),

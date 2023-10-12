@@ -29,6 +29,6 @@ impl Element for TextElement {
 
     fn paint(&mut self, _layout: &Layout, canvas: &mut Canvas) {
         let paint = Paint::new(Color4f::new(1., 0., 0., 1.), None);
-        canvas.draw_text_blob(&self.text_blob, (0., 0.), &paint);
+        canvas.draw_text_blob(&self.text_blob, (100., 100.), &paint);
     }
 }

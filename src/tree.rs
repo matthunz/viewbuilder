@@ -1,4 +1,5 @@
 use crate::{element::Element, layout::LayoutTree, Operation};
+use skia_safe::Canvas;
 use slotmap::{DefaultKey, SlotMap};
 
 struct Node {
@@ -30,6 +31,35 @@ impl Tree {
                     let node = self.nodes.get_mut(key).unwrap();
                     let layout_key = node.element.layout().build(&mut self.layout_tree);
                     node.layout_key = Some(layout_key);
+
+                    stack.push(Operation::Pop);
+                    parents.push(key);
+
+                    stack.extend(
+                        node.element
+                            .children()
+                            .iter()
+                            .flatten()
+                            .map(|child_key| Operation::Push(*child_key)),
+                    )
+                }
+                Operation::Pop => {
+                    parents.pop();
+                }
+            }
+        }
+    }
+
+    pub fn paint(&mut self, root: DefaultKey, canvas: &mut Canvas) {
+        let mut stack = vec![Operation::Push(root)];
+        let mut parents = Vec::new();
+
+        while let Some(op) = stack.pop() {
+            match op {
+                Operation::Push(key) => {
+                    let node = self.nodes.get_mut(key).unwrap();
+                    let layout = self.layout_tree.layout(node.layout_key.unwrap()).unwrap();
+                    node.element.paint(&layout, canvas);
 
                     stack.push(Operation::Pop);
                     parents.push(key);
