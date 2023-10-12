@@ -1,8 +1,5 @@
 #![allow(clippy::module_inception)]
 
-
-use slotmap::DefaultKey;
-
 #[cfg(feature = "layout")]
 #[cfg_attr(docsrs, doc(cfg(feature = "layout")))]
 pub mod layout;
@@ -29,17 +26,12 @@ pub mod render;
 #[cfg_attr(docsrs, doc(cfg(feature = "element")))]
 pub mod virtual_tree;
 
-pub(crate) enum Operation {
-    Push(DefaultKey),
-    Pop,
-}
-
 pub mod prelude {
-    pub use dioxus::prelude::{rsx, Element, Scope, use_state};
+    pub use dioxus::prelude::{rsx, use_state, Element, Scope};
 
     pub mod dioxus_elements {
         pub use dioxus::prelude::dioxus_elements::events;
-        
+
         #[allow(non_camel_case_types)]
         pub struct view;
 

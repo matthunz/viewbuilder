@@ -262,7 +262,7 @@ impl Renderer {
                 canvas.clear(Color::WHITE);
 
                 // PAINT
-                tree.paint(root, canvas);
+                tree.paint(canvas);
 
                 env.gr_context.flush_and_submit();
                 env.gl_surface.swap_buffers(&env.gl_context).unwrap();

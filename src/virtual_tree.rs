@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use crate::{
     element::{TextElement, ViewElement},
     tree::Tree,
@@ -10,6 +8,7 @@ use dioxus::{
 };
 use skia_safe::{Font, Typeface};
 use slotmap::DefaultKey;
+use std::collections::HashMap;
 
 enum Node {
     Text(String),
@@ -20,11 +19,16 @@ impl Node {
     fn from_template(template_node: &TemplateNode) -> Self {
         match template_node {
             TemplateNode::Text { text } => Node::Text(text.to_string()),
-            TemplateNode::Element { tag: _, namespace: _, attrs: _, children } => {
+            TemplateNode::Element {
+                tag: _,
+                namespace: _,
+                attrs: _,
+                children,
+            } => {
                 let children = children.into_iter().map(Self::from_template).collect();
                 Node::Element { children }
             }
-            _ => todo!()
+            _ => todo!(),
         }
     }
 }
@@ -60,13 +64,9 @@ impl VirtualTree {
 
     pub fn rebuild(&mut self) {
         let mutations = self.vdom.rebuild();
+        dbg!(&mutations);
         for template in mutations.templates {
-            let roots = template
-                .roots
-                .iter()
-                .map(Node::from_template)
-                .collect();
-
+            let roots = template.roots.iter().map(Node::from_template).collect();
             self.templates
                 .insert(template.name.to_string(), Template { roots });
         }
@@ -92,8 +92,6 @@ impl VirtualTree {
             }
         }
     }
-
-    
 }
 
 fn insert(tree: &mut Tree, node: &Node) -> DefaultKey {
