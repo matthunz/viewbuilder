@@ -11,7 +11,7 @@ mod view;
 pub use self::view::ViewElement;
 
 pub trait Element: Display {
-    fn children(& self) -> Option<Vec<DefaultKey>>;
+    fn children(&self) -> Option<Vec<DefaultKey>>;
 
     fn push_child(&mut self, key: DefaultKey);
 

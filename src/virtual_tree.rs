@@ -26,7 +26,7 @@ impl Node {
                 attrs: _,
                 children,
             } => {
-                let children = children.into_iter().map(Self::from_template).collect();
+                let children = children.iter().map(Self::from_template).collect();
                 Node::Element { children }
             }
             _ => todo!(),
@@ -105,7 +105,7 @@ fn insert(tree: &mut Tree, node: &Node) -> DefaultKey {
         }
         Node::Element { children } => {
             let child_keys = children
-                .into_iter()
+                .iter()
                 .map(|child| insert(tree, child))
                 .collect();
             tree.insert(Box::new(ViewElement::new(child_keys)))

@@ -15,7 +15,7 @@ impl ViewElement {
 }
 
 impl Element for ViewElement {
-    fn children(& self) -> Option<Vec<slotmap::DefaultKey>> {
+    fn children(&self) -> Option<Vec<slotmap::DefaultKey>> {
         Some(self.children.clone())
     }
 

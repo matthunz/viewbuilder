@@ -40,6 +40,10 @@ pub mod prelude {
         impl view {
             pub const TAG_NAME: &'static str = "view";
             pub const NAME_SPACE: Option<&'static str> = None;
+
+            #[allow(non_upper_case_globals)]
+            pub const flex_direction: (&'static str, Option<&'static str>, bool) =
+                ("flex_direction", None, false);
         }
     }
 }
@@ -56,8 +60,7 @@ pub fn run(app: dioxus::prelude::Component) {
     Renderer.run(vtree.tree, vtree.root)
 }
 
-
 pub(crate) enum Operation {
-    Push(DefaultKey   ),
+    Push(DefaultKey),
     Pop,
 }

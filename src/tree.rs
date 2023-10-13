@@ -1,7 +1,7 @@
 use crate::{element::Element, layout::LayoutTree};
 use skia_safe::Canvas;
 use slotmap::{DefaultKey, SlotMap};
-use std::{collections::HashSet, fmt, mem};
+use std::{collections::HashSet, mem};
 
 struct Node {
     element: Box<dyn Element>,

@@ -2,7 +2,15 @@
 
 use crate::{geometry::Size, Operation};
 use core::fmt;
+use dioxus::{
+    core::{
+        exports::bumpalo::{boxed::Box as BumpBox, Bump},
+        AnyValue, AttributeValue,
+    },
+    prelude::IntoAttributeValue,
+};
 use slotmap::SparseSecondaryMap;
+use std::cell::RefCell;
 use taffy::{style_helpers::TaffyMaxContent, Taffy};
 
 pub use taffy::node::Node;
@@ -15,6 +23,21 @@ pub use layout::Layout;
 
 mod builder;
 pub use self::builder::Builder;
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum FlexDirection {
+    Row,
+    RowReverse,
+    Column,
+    ColumnReverse,
+}
+
+impl<'a> IntoAttributeValue<'a> for FlexDirection {
+    fn into_value(self, bump: &'a Bump) -> AttributeValue<'a> {
+        let boxed: BumpBox<'a, dyn AnyValue> = unsafe { BumpBox::from_raw(bump.alloc(self)) };
+        AttributeValue::Any(RefCell::new(Some(boxed)))
+    }
+}
 
 #[derive(Debug)]
 struct GlobalLayout {
