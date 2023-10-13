@@ -32,6 +32,17 @@ pub enum FlexDirection {
     ColumnReverse,
 }
 
+impl FlexDirection {
+    pub(crate) fn into_taffy(self) -> taffy::prelude::FlexDirection {
+        match self {
+            FlexDirection::Row => taffy::prelude::FlexDirection::Row,
+            FlexDirection::RowReverse => taffy::prelude::FlexDirection::RowReverse,
+            FlexDirection::Column => taffy::prelude::FlexDirection::Column,
+            FlexDirection::ColumnReverse => taffy::prelude::FlexDirection::ColumnReverse,
+        }
+    }
+}
+
 impl<'a> IntoAttributeValue<'a> for FlexDirection {
     fn into_value(self, bump: &'a Bump) -> AttributeValue<'a> {
         let boxed: BumpBox<'a, dyn AnyValue> = unsafe { BumpBox::from_raw(bump.alloc(self)) };

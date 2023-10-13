@@ -106,7 +106,7 @@ impl VirtualTree {
                     name,
                     value,
                     id,
-                    ns,
+                    ns: _,
                 } => {
                     let key = self.elements[&id];
                     let elem = self.tree.get_mut(key);

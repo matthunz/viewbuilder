@@ -1,18 +1,22 @@
-use std::fmt;
-
 use super::Element;
-use crate::{geometry::Size, layout::{Layout, FlexDirection}};
-use dioxus::prelude::SvgAttributes;
+use crate::{
+    geometry::Size,
+    layout::{FlexDirection, Layout},
+};
 use slotmap::DefaultKey;
+use std::fmt;
 
 pub struct ViewElement {
     children: Vec<DefaultKey>,
-    flex_direction: FlexDirection
+    flex_direction: FlexDirection,
 }
 
 impl ViewElement {
     pub fn new(children: Vec<DefaultKey>) -> Self {
-        Self { children, flex_direction: FlexDirection::Row }
+        Self {
+            children,
+            flex_direction: FlexDirection::Row,
+        }
     }
 }
 
@@ -21,16 +25,15 @@ impl Element for ViewElement {
         Some(self.children.clone())
     }
 
-fn set_attr(&mut self, name: &str, value: &dyn std::any::Any) {
-    match name {
-        "flex_direction" => {
-            let flex_direction: &FlexDirection = value.downcast_ref().unwrap();
-            self.flex_direction= *flex_direction;
+    fn set_attr(&mut self, name: &str, value: &dyn std::any::Any) {
+        match name {
+            "flex_direction" => {
+                let flex_direction: &FlexDirection = value.downcast_ref().unwrap();
+                self.flex_direction = *flex_direction;
+            }
+            _ => todo!(),
         }
-        _ => todo!()
     }
-   
-}
 
     fn push_child(&mut self, key: DefaultKey) {
         self.children.push(key);
@@ -39,7 +42,8 @@ fn set_attr(&mut self, name: &str, value: &dyn std::any::Any) {
     fn layout(&mut self) -> crate::layout::Builder {
         // TODO
         let mut b = Layout::builder();
-        b.size(Size::from_points(500., 500.));
+        b.flex_direction(self.flex_direction)
+            .size(Size::from_points(500., 500.));
         b
     }
 

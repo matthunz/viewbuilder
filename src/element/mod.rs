@@ -1,9 +1,8 @@
-use std::any::Any;
-use std::fmt::Display;
-
 use crate::layout::{self, Layout};
 use accesskit::NodeBuilder;
 use slotmap::DefaultKey;
+use std::any::Any;
+use std::fmt::Display;
 
 mod text;
 pub use self::text::TextElement;

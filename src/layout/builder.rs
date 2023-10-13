@@ -1,4 +1,4 @@
-use super::{GlobalLayout, LayoutTree};
+use super::{FlexDirection, GlobalLayout, LayoutTree};
 use crate::geometry::Size;
 use taffy::{
     node::MeasureFunc,
@@ -31,6 +31,12 @@ impl Builder {
     /// Set the size of the node.
     pub fn size(&mut self, size: Size<Dimension>) -> &mut Self {
         self.inner.as_mut().unwrap().style.size = size.into_taffy();
+        self
+    }
+
+    /// Set the size of the node.
+    pub fn flex_direction(&mut self, flex_direction: FlexDirection) -> &mut Self {
+        self.inner.as_mut().unwrap().style.flex_direction = flex_direction.into_taffy();
         self
     }
 
