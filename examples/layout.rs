@@ -11,6 +11,6 @@ fn main() {
         .build(&mut tree);
 
     tree.build_with_listener(root, |key, node| {
-        dbg!( key, node );
+        dbg!(key, node);
     });
 }

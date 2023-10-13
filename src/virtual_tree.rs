@@ -65,7 +65,6 @@ impl VirtualTree {
 
     pub fn rebuild(&mut self) {
         let mutations = self.vdom.rebuild();
-        dbg!(&mutations);
         for template in mutations.templates {
             let roots = template.roots.iter().map(Node::from_template).collect();
             self.templates
@@ -104,10 +103,7 @@ fn insert(tree: &mut Tree, node: &Node) -> DefaultKey {
             tree.insert(Box::new(TextElement::new(text.to_string(), &font)))
         }
         Node::Element { children } => {
-            let child_keys = children
-                .iter()
-                .map(|child| insert(tree, child))
-                .collect();
+            let child_keys = children.iter().map(|child| insert(tree, child)).collect();
             tree.insert(Box::new(ViewElement::new(child_keys)))
         }
     }

@@ -1,18 +1,20 @@
-use crate::{element::Element, layout::LayoutTree};
+use crate::{
+    element::Element,
+    layout::{Layout, LayoutTree},
+};
 use skia_safe::Canvas;
-use slotmap::{DefaultKey, SlotMap};
+use slotmap::{DefaultKey, SparseSecondaryMap};
 use std::{collections::HashSet, mem};
 
 struct Node {
     element: Box<dyn Element>,
-    layout_key: Option<DefaultKey>,
     parent: Option<DefaultKey>,
 }
 
 #[derive(Default)]
 pub struct Tree {
     layout_tree: LayoutTree,
-    nodes: SlotMap<DefaultKey, Node>,
+    nodes: SparseSecondaryMap<DefaultKey, Node>,
     pending_layouts: HashSet<DefaultKey>,
     pending_paints: HashSet<DefaultKey>,
 }
@@ -27,13 +29,18 @@ impl Tree {
     }
 
     pub fn insert(&mut self, element: Box<dyn Element>) -> DefaultKey {
-        let key = self.nodes.insert(Node {
-            element,
-            layout_key: None,
-            parent: None,
-        });
+        let children: Vec<_> = element.children().into_iter().flatten().collect();
+        dbg!(&children);
+        let key = Layout::builder().build_with_children(&mut self.layout_tree, &children);
+        self.nodes.insert(
+            key,
+            Node {
+                element,
+                parent: None,
+            },
+        );
 
-        for child_key in self.nodes[key].element.children().iter().flatten() {
+        for child_key in children.iter() {
             self.nodes[*child_key].parent = Some(key);
         }
 
@@ -46,14 +53,7 @@ impl Tree {
     pub fn layout(&mut self, root: DefaultKey) {
         for key in mem::take(&mut self.pending_layouts) {
             let node = &mut self.nodes[key];
-            let layout_key = node.element.layout().build(&mut self.layout_tree);
-            node.layout_key = Some(layout_key);
-
-            if let Some(parent_key) = node.parent {
-                if let Some(parent_layout_key) = self.nodes[parent_key].layout_key {
-                    self.layout_tree.add_child(parent_layout_key, layout_key);
-                }
-            }
+            node.element.layout().update(key, &mut self.layout_tree);
         }
 
         self.layout_tree.build_with_listener(root, |_, _| {});
@@ -63,7 +63,7 @@ impl Tree {
         // TODO clear
         for key in &self.pending_paints {
             let node = self.nodes.get_mut(*key).unwrap();
-            let layout = self.layout_tree.layout(node.layout_key.unwrap()).unwrap();
+            let layout = self.layout_tree.layout(*key).unwrap();
             node.element.paint(&layout, canvas);
         }
     }

@@ -1,7 +1,7 @@
 use std::fmt;
 
 use super::Element;
-use crate::layout::Layout;
+use crate::{geometry::Size, layout::Layout};
 use slotmap::DefaultKey;
 
 pub struct ViewElement {
@@ -24,7 +24,10 @@ impl Element for ViewElement {
     }
 
     fn layout(&mut self) -> crate::layout::Builder {
-        Layout::builder()
+        // TODO
+        let mut b = Layout::builder();
+        b.size(Size::from_points(500., 500.));
+        b
     }
 
     fn semantics(&mut self) -> accesskit::NodeBuilder {

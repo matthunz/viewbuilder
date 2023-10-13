@@ -1,15 +1,12 @@
-use viewbuilder::{prelude::*, virtual_tree::VirtualTree};
+use viewbuilder::prelude::*;
 
 #[allow(non_snake_case)]
 fn App(cx: Scope) -> Element {
     cx.render(rsx! {
-        view { "Hello World!" }
+        "A", "B"
     })
 }
 
 fn main() {
-    let mut vtree = VirtualTree::new(App);
-    vtree.rebuild();
-
-    println!("{}", vtree);
+    viewbuilder::run(App)
 }

@@ -69,6 +69,10 @@ impl Builder {
         let inner = self.inner.take().unwrap();
 
         let key = tree.taffy.new_with_children(inner.style, children).unwrap();
+        if let Some(measure_func) = inner.measure_func {
+            tree.taffy.set_measure(key, Some(measure_func)).unwrap();
+        }
+
         tree.global_layouts.insert(
             key,
             GlobalLayout {
@@ -78,5 +82,15 @@ impl Builder {
             },
         );
         key
+    }
+
+    /// Build a new node with children and return its key.
+    pub fn update(&mut self, key: Node, tree: &mut LayoutTree) {
+        let inner = self.inner.take().unwrap();
+
+        tree.taffy.set_style(key, inner.style).unwrap();
+        if let Some(measure_func) = inner.measure_func {
+            tree.taffy.set_measure(key, Some(measure_func)).unwrap();
+        }
     }
 }
