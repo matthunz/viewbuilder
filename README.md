@@ -30,9 +30,13 @@ fn App(cx: Scope) -> Element {
 
     cx.render(rsx! {
         view {
-            "{count}"
-            view { onclick: move |_| count += 1, "Up high!" }
-            view { onclick: move |_| count -= 1, "Down low!" }
+            flex_direction: FlexDirection::Column,
+            "High five count: {count}",
+            view {
+                flex_direction: FlexDirection::Row,
+                view { onclick: move |_| count += 1, "Up high!" },
+                view { onclick: move |_| count -= 1, "Down low!" }
+            }
         }
     })
 }
