@@ -3,7 +3,7 @@ use viewbuilder::{prelude::*, virtual_tree::VirtualTree};
 #[allow(non_snake_case)]
 fn App(cx: Scope) -> Element {
     cx.render(rsx! {
-        view { "Hello World!", "test" }
+        view { "Hello World!" }
     })
 }
 
