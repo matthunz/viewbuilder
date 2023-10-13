@@ -82,10 +82,9 @@ impl VirtualTree {
                 }
                 Mutation::AppendChildren { id, m } => {
                     let key = self.elements[&id];
-                    let elem = self.tree.get_mut(key);
-                    for _ in 0..m {
-                        let child_key = stack.pop().unwrap();
-                        elem.push_child(child_key);
+
+                    for child_key in stack.splice(stack.len() - m.., []) {
+                        self.tree.push_child(key, child_key)
                     }
                 }
                 _ => todo!(),

@@ -50,6 +50,14 @@ impl Tree {
         key
     }
 
+    pub fn push_child(&mut self, parent: DefaultKey, child: DefaultKey) {
+        self.nodes[parent].element.push_child(child);
+        self.layout_tree.add_child(parent, child);
+
+        self.pending_layouts.insert(parent);
+        self.pending_paints.insert(parent);
+    }
+
     pub fn layout(&mut self, root: DefaultKey) {
         for key in mem::take(&mut self.pending_layouts) {
             let node = &mut self.nodes[key];
