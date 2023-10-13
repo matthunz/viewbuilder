@@ -29,8 +29,8 @@ impl Tree {
     }
 
     pub fn insert(&mut self, element: Box<dyn Element>) -> DefaultKey {
+        // TODO avoid collect
         let children: Vec<_> = element.children().into_iter().flatten().collect();
-        dbg!(&children);
         let key = Layout::builder().build_with_children(&mut self.layout_tree, &children);
         self.nodes.insert(
             key,

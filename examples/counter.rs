@@ -18,7 +18,8 @@ fn App(cx: Scope) -> Element {
 }
 
 fn main() {
-    let vtree = VirtualTree::new(App);
+    let mut vtree = VirtualTree::new(App);
+    vtree.rebuild();
 
     println!("{}", vtree);
 }

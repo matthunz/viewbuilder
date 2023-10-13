@@ -4,16 +4,23 @@ use crate::{
     Operation,
 };
 use dioxus::{
-    core::{ElementId, Mutation},
-    prelude::{Component, TemplateNode, VirtualDom},
+    core::{BorrowedAttributeValue, ElementId, Mutation},
+    prelude::{Component, TemplateAttribute, TemplateNode, VirtualDom},
 };
 use skia_safe::{Font, Typeface};
 use slotmap::DefaultKey;
 use std::{collections::HashMap, fmt};
 
+enum Attribute {
+    Dynamic { id: usize },
+}
+
 enum Node {
     Text(String),
-    Element { children: Vec<Self> },
+    Element {
+        attrs: Vec<Attribute>,
+        children: Vec<Self>,
+    },
 }
 
 impl Node {
@@ -23,11 +30,18 @@ impl Node {
             TemplateNode::Element {
                 tag: _,
                 namespace: _,
-                attrs: _,
+                attrs,
                 children,
             } => {
                 let children = children.iter().map(Self::from_template).collect();
-                Node::Element { children }
+                let attrs = attrs
+                    .into_iter()
+                    .map(|attr| match attr {
+                        TemplateAttribute::Dynamic { id } => Attribute::Dynamic { id: *id },
+                        _ => todo!(),
+                    })
+                    .collect();
+                Node::Element { attrs, children }
             }
             _ => todo!(),
         }
@@ -65,6 +79,7 @@ impl VirtualTree {
 
     pub fn rebuild(&mut self) {
         let mutations = self.vdom.rebuild();
+        dbg!(&mutations);
         for template in mutations.templates {
             let roots = template.roots.iter().map(Node::from_template).collect();
             self.templates
@@ -87,6 +102,20 @@ impl VirtualTree {
                         self.tree.push_child(key, child_key)
                     }
                 }
+                Mutation::SetAttribute {
+                    name,
+                    value,
+                    id,
+                    ns,
+                } => {
+                    let key = self.elements[&id];
+                    let elem = self.tree.get_mut(key);
+
+                    match value {
+                        BorrowedAttributeValue::Any(any) => elem.set_attr(name, &*any.as_any()),
+                        _ => todo!(),
+                    }
+                }
                 _ => todo!(),
             }
         }
@@ -101,7 +130,7 @@ fn insert(tree: &mut Tree, node: &Node) -> DefaultKey {
 
             tree.insert(Box::new(TextElement::new(text.to_string(), &font)))
         }
-        Node::Element { children } => {
+        Node::Element { children, .. } => {
             let child_keys = children.iter().map(|child| insert(tree, child)).collect();
             tree.insert(Box::new(ViewElement::new(child_keys)))
         }
@@ -121,7 +150,7 @@ impl fmt::Display for VirtualTree {
                     for _ in 0..level {
                         write!(f, "    ")?;
                     }
-                    writeln!(f, "{} {{", elem)?;
+                    writeln!(f, "{}", elem)?;
 
                     level += 1;
                     stack.push(Operation::Pop);

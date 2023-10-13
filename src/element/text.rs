@@ -28,6 +28,10 @@ impl Element for TextElement {
         todo!()
     }
 
+    fn set_attr(&mut self, name: &str, value: &dyn std::any::Any) {
+        
+    }
+
     fn layout(&mut self) -> layout::Builder {
         let mut builder = Layout::builder();
         let blob = self.text_blob.clone();

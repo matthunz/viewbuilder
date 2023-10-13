@@ -1,16 +1,18 @@
 use std::fmt;
 
 use super::Element;
-use crate::{geometry::Size, layout::Layout};
+use crate::{geometry::Size, layout::{Layout, FlexDirection}};
+use dioxus::prelude::SvgAttributes;
 use slotmap::DefaultKey;
 
 pub struct ViewElement {
     children: Vec<DefaultKey>,
+    flex_direction: FlexDirection
 }
 
 impl ViewElement {
     pub fn new(children: Vec<DefaultKey>) -> Self {
-        Self { children }
+        Self { children, flex_direction: FlexDirection::Row }
     }
 }
 
@@ -18,6 +20,17 @@ impl Element for ViewElement {
     fn children(&self) -> Option<Vec<slotmap::DefaultKey>> {
         Some(self.children.clone())
     }
+
+fn set_attr(&mut self, name: &str, value: &dyn std::any::Any) {
+    match name {
+        "flex_direction" => {
+            let flex_direction: &FlexDirection = value.downcast_ref().unwrap();
+            self.flex_direction= *flex_direction;
+        }
+        _ => todo!()
+    }
+   
+}
 
     fn push_child(&mut self, key: DefaultKey) {
         self.children.push(key);
@@ -39,6 +52,7 @@ impl Element for ViewElement {
 
 impl fmt::Display for ViewElement {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "view")
+        writeln!(f, "view {{")?;
+        writeln!(f, "{:?}", self.flex_direction)
     }
 }

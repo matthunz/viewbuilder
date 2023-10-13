@@ -1,3 +1,4 @@
+use std::any::Any;
 use std::fmt::Display;
 
 use crate::layout::{self, Layout};
@@ -14,6 +15,8 @@ pub trait Element: Display {
     fn children(&self) -> Option<Vec<DefaultKey>>;
 
     fn push_child(&mut self, key: DefaultKey);
+
+    fn set_attr(&mut self, name: &str, value: &dyn Any);
 
     fn layout(&mut self) -> layout::Builder;
 
