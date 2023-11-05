@@ -38,7 +38,10 @@ winit = { version = "0.28.7", optional = true }
 interpolation = "0.3.0"
 tokio = { version = "1.32.0", features = ["full"] }
 thiserror = "1.0.49"
-dioxus = "0.4.0"
+dioxus = { git = "https://github.com/DioxusLabs/dioxus" }
+dioxus-native-core = { git = "https://github.com/DioxusLabs/dioxus", features = ["dioxus"] }
+dioxus-native-core-macro = { git = "https://github.com/DioxusLabs/dioxus" }
+shipyard = { version = "0.6.2", features = ["proc", "std"], default-features = false }
 
 [package.metadata.docs.rs]
 features = ["full"]

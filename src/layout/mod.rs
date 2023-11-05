@@ -9,6 +9,7 @@ use dioxus::{
     },
     prelude::IntoAttributeValue,
 };
+use shipyard::Component;
 use slotmap::SparseSecondaryMap;
 use std::cell::RefCell;
 use taffy::{style_helpers::TaffyMaxContent, Taffy};
@@ -24,10 +25,11 @@ pub use layout::Layout;
 mod builder;
 pub use self::builder::Builder;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Component, Default)]
 pub enum FlexDirection {
     Row,
     RowReverse,
+    #[default]
     Column,
     ColumnReverse,
 }

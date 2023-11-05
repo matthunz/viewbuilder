@@ -24,6 +24,8 @@ pub mod tree;
 #[cfg_attr(docsrs, doc(cfg(feature = "gl")))]
 pub mod render;
 
+pub mod virtual_dom;
+
 #[cfg(feature = "element")]
 #[cfg_attr(docsrs, doc(cfg(feature = "element")))]
 pub mod virtual_tree;
