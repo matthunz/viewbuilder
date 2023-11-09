@@ -42,23 +42,12 @@ dioxus = { git = "https://github.com/DioxusLabs/dioxus" }
 dioxus-native-core = { git = "https://github.com/DioxusLabs/dioxus", features = ["dioxus"] }
 dioxus-native-core-macro = { git = "https://github.com/DioxusLabs/dioxus" }
 shipyard = { version = "0.6.2", features = ["proc", "std"], default-features = false }
+rustc-hash = "1.1.0"
 
 [package.metadata.docs.rs]
 features = ["full"]
 rustdoc-args = ["--cfg", "docsrs"]
 
 [[example]]
-name = "layout"
-required-features = ["layout"]
-
-[[example]]
-name = "tree"
-required-features = ["element"]
-
-[[example]]
-name = "hello"
-required-features = ["full"]
-
-[[example]]
-name = "counter"
+name = "dom"
 required-features = ["full"]

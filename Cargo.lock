@@ -2164,6 +2164,7 @@ dependencies = [
  "interpolation",
  "kurbo",
  "raw-window-handle",
+ "rustc-hash",
  "shipyard",
  "skia-safe",
  "slotmap",

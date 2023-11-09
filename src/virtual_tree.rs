@@ -1,172 +1,181 @@
-use crate::{
-    element::{TextElement, ViewElement},
-    tree::Tree,
-    Operation,
-};
-use dioxus::{
-    core::{BorrowedAttributeValue, ElementId, Mutation},
-    prelude::{Component, TemplateAttribute, TemplateNode, VirtualDom},
-};
-use skia_safe::{Font, Typeface};
-use slotmap::DefaultKey;
-use std::{collections::HashMap, fmt};
+#![allow(non_snake_case)]
 
-enum Attribute {
-    Dynamic { id: usize },
-}
+use dioxus::prelude::VirtualDom;
+use dioxus_native_core::exports::shipyard::Component;
+use dioxus_native_core::node::OwnedAttributeDiscription;
+use dioxus_native_core::node::OwnedAttributeValue;
+use dioxus_native_core::node_ref::*;
+use dioxus_native_core::prelude::*;
 
-enum Node {
-    Text(String),
-    Element {
-        attrs: Vec<Attribute>,
-        children: Vec<Self>,
-    },
-}
+use dioxus_native_core_macro::partial_derive_state;
+use skia_safe::Typeface;
 
-impl Node {
-    fn from_template(template_node: &TemplateNode) -> Self {
-        match template_node {
-            TemplateNode::Text { text } => Node::Text(text.to_string()),
-            TemplateNode::Element {
-                tag: _,
-                namespace: _,
-                attrs,
-                children,
-            } => {
-                let children = children.iter().map(Self::from_template).collect();
-                let attrs = attrs
-                    .into_iter()
-                    .map(|attr| match attr {
-                        TemplateAttribute::Dynamic { id } => Attribute::Dynamic { id: *id },
-                        _ => todo!(),
-                    })
-                    .collect();
-                Node::Element { attrs, children }
-            }
-            _ => todo!(),
-        }
+use std::borrow::Cow;
+use std::collections::HashMap;
+use std::hash::BuildHasherDefault;
+
+use crate::element::Element;
+use crate::text_factory::TextElementFactory;
+use crate::Factory;
+use crate::TextFactory;
+
+#[derive(Clone, Copy, Default, PartialEq, Eq, Debug)]
+pub struct DynAttribute {}
+
+impl FromAnyValue for DynAttribute {
+    fn from_any_value(_value: &dyn std::any::Any) -> Self {
+        todo!()
     }
 }
 
-struct Template {
-    roots: Vec<Node>,
+#[derive(Debug, Clone, Copy, PartialEq, Default, Component)]
+struct FlexDirectionAttr(DynAttribute);
+
+#[partial_derive_state]
+impl State<DynAttribute> for FlexDirectionAttr {
+    // TextColor depends on the TextColor part of the parent
+    type ParentDependencies = (Self,);
+
+    type ChildDependencies = ();
+
+    type NodeDependencies = ();
+
+    // Border does not depended on any other member in the current node
+    const NODE_MASK: NodeMaskBuilder<'static> =
+        // Get access to the border attribute
+        NodeMaskBuilder::new().with_attrs(AttributeMaskBuilder::Some(&["flex_direction"]));
+
+    fn update<'a>(
+        &mut self,
+        node_view: NodeView<DynAttribute>,
+        _node: <Self::NodeDependencies as Dependancy>::ElementBorrowed<'a>,
+        _parent: Option<<Self::ParentDependencies as Dependancy>::ElementBorrowed<'a>>,
+        _children: Vec<<Self::ChildDependencies as Dependancy>::ElementBorrowed<'a>>,
+        _context: &SendAnyMap,
+    ) -> bool {
+        let direction: DynAttribute = node_view
+            .attributes()
+            .and_then(|mut attrs| {
+                attrs.next().map(|a| {
+                    if a.attribute.name == "flex_direction" {
+                        let direction: &DynAttribute = a.value.as_custom().unwrap();
+                        direction.clone()
+                    } else {
+                        todo!()
+                    }
+                })
+            })
+            .unwrap_or_default();
+
+        // check if the node contians a border attribute
+        let new = Self(direction);
+        // check if the member has changed
+        let changed = new != *self;
+        *self = new;
+        changed
+    }
 }
 
 pub struct VirtualTree {
-    pub(crate) vdom: VirtualDom,
-    pub(crate) tree: Tree,
-    templates: HashMap<String, Template>,
-    elements: HashMap<ElementId, DefaultKey>,
-    pub(crate) root: DefaultKey,
+    elements: HashMap<Cow<'static, str>, Box<dyn Factory>>,
+    text_factory: Box<dyn TextFactory>,
+}
+
+impl Default for VirtualTree {
+    fn default() -> Self {
+        Self {
+            elements: Default::default(),
+            text_factory: Box::new(TextElementFactory {}),
+        }
+    }
 }
 
 impl VirtualTree {
-    pub fn new(app: Component) -> Self {
-        let mut tree = Tree::default();
-        let root = tree.insert(Box::new(ViewElement::new(Vec::new())));
-
-        let mut elements = HashMap::new();
-        elements.insert(ElementId(0), root);
-
-        Self {
-            vdom: VirtualDom::new(app),
-            tree,
-            templates: HashMap::new(),
-            elements,
-            root,
-        }
+    pub fn insert_element(
+        &mut self,
+        tag: impl Into<Cow<'static, str>>,
+        element: impl Factory + 'static,
+    ) {
+        self.elements.insert(tag.into(), Box::new(element));
     }
 
-    pub fn rebuild(&mut self) {
-        let mutations = self.vdom.rebuild();
-        dbg!(&mutations);
-        for template in mutations.templates {
-            let roots = template.roots.iter().map(Node::from_template).collect();
-            self.templates
-                .insert(template.name.to_string(), Template { roots });
-        }
-
-        let mut stack = Vec::new();
-        for edit in mutations.edits {
-            match edit {
-                Mutation::LoadTemplate { name, index, id } => {
-                    let root = &self.templates[name].roots[index];
-                    let key = insert(&mut self.tree, root);
-                    self.elements.insert(id, key);
-                    stack.push(key);
-                }
-                Mutation::AppendChildren { id, m } => {
-                    let key = self.elements[&id];
-
-                    for child_key in stack.splice(stack.len() - m.., []) {
-                        self.tree.push_child(key, child_key)
-                    }
-                }
-                Mutation::SetAttribute {
-                    name,
-                    value,
-                    id,
-                    ns: _,
-                } => {
-                    let key = self.elements[&id];
-                    let elem = self.tree.get_mut(key);
-
-                    match value {
-                        BorrowedAttributeValue::Any(any) => elem.set_attr(name, &*any.as_any()),
-                        _ => todo!(),
-                    }
-                }
-                _ => todo!(),
-            }
-        }
+    pub fn create_element(
+        &mut self,
+        tag: &str,
+        attrs: &HashMap<
+            OwnedAttributeDiscription,
+            OwnedAttributeValue<DynAttribute>,
+            BuildHasherDefault<rustc_hash::FxHasher>,
+        >,
+    ) -> Option<Box<dyn Element>> {
+        self.elements
+            .get_mut(tag)
+            .map(|elem| elem.from_attrs(attrs))
     }
-}
 
-fn insert(tree: &mut Tree, node: &Node) -> DefaultKey {
-    match node {
-        Node::Text(text) => {
-            let typeface = Typeface::new("Arial", Default::default()).unwrap();
-            let font = Font::new(typeface, 100.);
-
-            tree.insert(Box::new(TextElement::new(text.to_string(), &font)))
-        }
-        Node::Element { children, .. } => {
-            let child_keys = children.iter().map(|child| insert(tree, child)).collect();
-            tree.insert(Box::new(ViewElement::new(child_keys)))
-        }
+    pub fn create_text_element(&mut self, text: &str) -> Box<dyn Element> {
+        self.text_factory.create_text(text)
     }
-}
 
-impl fmt::Display for VirtualTree {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let mut stack = vec![Operation::Push(self.root)];
+    pub fn run(
+        mut self,
+        app: dioxus::prelude::Component,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        // create the vdom, the real_dom, and the binding layer between them
+        let mut vdom = VirtualDom::new(app);
+        let mut rdom: RealDom<DynAttribute> = RealDom::new([FlexDirectionAttr::to_type_erased()]);
+        let mut dioxus_intigration_state = DioxusState::create(&mut rdom);
 
-        let mut level = 0;
-        while let Some(op) = stack.pop() {
-            match op {
-                Operation::Push(key) => {
-                    let elem = self.tree.get(key);
+        let mutations = vdom.rebuild();
+        // update the structure of the real_dom tree
+        dioxus_intigration_state.apply_mutations(&mut rdom, mutations);
+        let ctx = SendAnyMap::new();
+        // set the font size to 3.3
+        // ctx.insert(FontSize(3.3));
+        // update the State for nodes in the real_dom tree
+        let _to_rerender = rdom.update_state(ctx);
 
-                    for _ in 0..level {
-                        write!(f, "    ")?;
-                    }
-                    writeln!(f, "{}", elem)?;
+        // we need to run the vdom in a async runtime
+        tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()?
+            .block_on(async {
+                loop {
+                    // wait for the vdom to update
+                    vdom.wait_for_work().await;
 
-                    level += 1;
-                    stack.push(Operation::Pop);
-                    stack.extend(elem.children().into_iter().flatten().map(Operation::Push));
+                    // get the mutations from the vdom
+                    let mutations = vdom.render_immediate();
+
+                    // update the structure of the real_dom tree
+                    dioxus_intigration_state.apply_mutations(&mut rdom, mutations);
+
+                    // update the state of the real_dom tree
+                    let ctx = SendAnyMap::new();
+                    // set the font size to 3.3
+                    // ctx.insert(FontSize(3.3));
+                    let _to_rerender = rdom.update_state(ctx);
+
+                    // render...
+                    rdom.traverse_depth_first_advanced(true, |node| {
+                        let _indent = " ".repeat(node.height() as usize);
+                        let _border = *node.get::<FlexDirectionAttr>().unwrap();
+
+                        let _id = node.id();
+
+                        let node_type = node.node_type();
+
+                        let typeface = Typeface::new("monospace", Default::default()).unwrap();
+                        let _font = skia_safe::Font::new(typeface, Some(100.));
+                        let _elem = match &*node_type {
+                            NodeType::Text(text_node) => self.create_text_element(&text_node.text),
+                            NodeType::Element(elem) => {
+                                self.create_element(&elem.tag, &elem.attributes).unwrap()
+                            }
+                            NodeType::Placeholder => todo!(),
+                        };
+                    });
                 }
-                Operation::Pop => {
-                    level -= 1;
-
-                    for _ in 0..level {
-                        write!(f, "    ")?;
-                    }
-                    writeln!(f, "}}")?;
-                }
-            }
-        }
-
-        Ok(())
+            })
     }
 }

@@ -1,34 +1,12 @@
-#![allow(clippy::module_inception)]
+pub mod virtual_tree;
 
-use slotmap::DefaultKey;
-
-#[cfg(feature = "layout")]
-#[cfg_attr(docsrs, doc(cfg(feature = "layout")))]
-pub mod layout;
-
-#[cfg(feature = "semantics")]
-#[cfg_attr(docsrs, doc(cfg(feature = "semantics")))]
-pub mod semantics;
-
-#[cfg(feature = "element")]
-#[cfg_attr(docsrs, doc(cfg(feature = "element")))]
 pub mod element;
 
-pub mod geometry;
+mod factory;
+pub use self::factory::Factory;
 
-#[cfg(feature = "element")]
-#[cfg_attr(docsrs, doc(cfg(feature = "element")))]
-pub mod tree;
-
-#[cfg(feature = "gl")]
-#[cfg_attr(docsrs, doc(cfg(feature = "gl")))]
-pub mod render;
-
-pub mod virtual_dom;
-
-#[cfg(feature = "element")]
-#[cfg_attr(docsrs, doc(cfg(feature = "element")))]
-pub mod virtual_tree;
+mod text_factory;
+pub use self::text_factory::TextFactory;
 
 pub mod prelude {
     pub use dioxus::prelude::{rsx, use_state, Element, Scope};
@@ -48,21 +26,4 @@ pub mod prelude {
                 ("flex_direction", None, false);
         }
     }
-}
-
-#[cfg(feature = "element")]
-#[cfg_attr(docsrs, doc(cfg(feature = "element")))]
-pub fn run(app: dioxus::prelude::Component) {
-    use render::Renderer;
-    use virtual_tree::VirtualTree;
-
-    let mut vtree = VirtualTree::new(app);
-    vtree.rebuild();
-
-    Renderer.run(vtree.tree, vtree.root)
-}
-
-pub(crate) enum Operation {
-    Push(DefaultKey),
-    Pop,
 }
