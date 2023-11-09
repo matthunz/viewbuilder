@@ -15,6 +15,7 @@ use std::collections::HashMap;
 use std::hash::BuildHasherDefault;
 
 use crate::element::Element;
+use crate::factory::ViewFactory;
 use crate::text_factory::TextElementFactory;
 use crate::Factory;
 use crate::TextFactory;
@@ -83,10 +84,13 @@ pub struct VirtualTree {
 
 impl Default for VirtualTree {
     fn default() -> Self {
-        Self {
+        let mut me = Self {
             elements: Default::default(),
             text_factory: Box::new(TextElementFactory {}),
-        }
+        };
+        me.insert_element("view", ViewFactory {});
+        me.insert_element("Root", ViewFactory {});
+        me
     }
 }
 
@@ -170,6 +174,7 @@ impl VirtualTree {
                         let _elem = match &*node_type {
                             NodeType::Text(text_node) => self.create_text_element(&text_node.text),
                             NodeType::Element(elem) => {
+                                dbg!(&elem.tag);
                                 self.create_element(&elem.tag, &elem.attributes).unwrap()
                             }
                             NodeType::Placeholder => todo!(),

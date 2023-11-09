@@ -1,5 +1,5 @@
 use super::Element;
 
-pub struct TextElement {}
+pub struct Text {}
 
-impl Element for TextElement {}
+impl Element for Text {}

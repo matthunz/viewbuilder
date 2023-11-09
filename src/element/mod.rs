@@ -1,4 +1,7 @@
 mod text;
-pub use text::TextElement;
+pub use self::text::Text;
+
+mod view;
+pub use self::view::View;
 
 pub trait Element {}
