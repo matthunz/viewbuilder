@@ -2,7 +2,7 @@ use crate::element::Element;
 use crate::factory::ViewFactory;
 use crate::text_factory::TextElementFactory;
 use crate::virtual_tree::DynAttribute;
-use crate::{Factory, TextFactory};
+use crate::{Factory, LayoutTree, TextFactory};
 use dioxus_native_core::node_ref::NodeMask;
 use dioxus_native_core::prelude::NodeType;
 use dioxus_native_core::real_dom::{NodeImmutable, NodeRef};

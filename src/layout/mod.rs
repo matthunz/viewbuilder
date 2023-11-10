@@ -99,14 +99,16 @@ impl State<DynAttribute> for LayoutComponent {
     }
 }
 
-pub struct Layout {
+pub struct LayoutTree {
     quadtree: Quadtree<i64, EntityId>,
+    taffy: Taffy,
 }
 
-impl Layout {
+impl LayoutTree {
     pub fn new(depth: usize) -> Self {
         Self {
             quadtree: Quadtree::new(depth),
+            taffy: Taffy::new(),
         }
     }
 
@@ -114,10 +116,16 @@ impl Layout {
         self.quadtree.insert(area(point, size), id);
     }
 
-    pub fn query(&self, point: [f64; 2], size: [f64; 2]) -> impl Iterator<Item = EntityId> + '_ {
-        self.quadtree
-            .query(area(point, size))
-            .map(|i| i.value_ref().clone())
+    pub fn query(&self, point: [f64; 2]) -> impl Iterator<Item = EntityId> + '_ {
+        let point = point.map(to_rounded);
+        let area = AreaBuilder::default()
+            .anchor(Point {
+                x: point[0],
+                y: point[1],
+            })
+            .build()
+            .unwrap();
+        self.quadtree.query(area).map(|i| i.value_ref().clone())
     }
 }
 

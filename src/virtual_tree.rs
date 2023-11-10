@@ -1,12 +1,13 @@
 use crate::layout::FlexDirection;
 use crate::layout::LayoutComponent;
+use crate::LayoutTree;
 use crate::Tree;
 use dioxus::core::Mutations;
 use dioxus::prelude::VirtualDom;
 use dioxus_native_core::node_ref::*;
 use dioxus_native_core::prelude::*;
 use dioxus_native_core_macro::partial_derive_state;
-use shipyard::Component;
+use shipyard::{Component, EntityId};
 use std::any::Any;
 use std::sync::Arc;
 use std::sync::Mutex;
@@ -82,6 +83,7 @@ pub struct VirtualTree {
     rdom: RealDom<DynAttribute>,
     state: DioxusState,
     taffy: Arc<Mutex<Taffy>>,
+    layout: LayoutTree,
 }
 
 impl VirtualTree {
@@ -93,6 +95,7 @@ impl VirtualTree {
         ]);
         let mut state = DioxusState::create(&mut rdom);
         let taffy = Arc::new(Mutex::new(Taffy::new()));
+        let mut layout = LayoutTree::new(32);
 
         let mutations = vdom.rebuild();
         apply(
@@ -101,6 +104,7 @@ impl VirtualTree {
             &mut state,
             mutations,
             taffy.clone(),
+            &mut layout,
         );
 
         Self {
@@ -109,6 +113,7 @@ impl VirtualTree {
             state,
             rdom,
             taffy,
+            layout,
         }
     }
 
@@ -122,9 +127,14 @@ impl VirtualTree {
             &mut self.state,
             mutations,
             self.taffy.clone(),
+            &mut self.layout,
         );
 
         Ok(())
+    }
+
+    pub fn target(&self, x: f64, y: f64) -> impl Iterator<Item = EntityId> + '_ {
+        self.layout.query([x, y])
     }
 }
 
@@ -134,21 +144,21 @@ fn apply(
     state: &mut DioxusState,
     mutations: Mutations,
     taffy: Arc<Mutex<Taffy>>,
+    layout_tree: &mut LayoutTree,
 ) {
     state.apply_mutations(rdom, mutations);
 
     let mut cx = SendAnyMap::new();
     cx.insert(taffy.clone());
-    let (updates, changes) = rdom.update_state(cx);
 
-    for id in updates {
-        let node = rdom.get(id).unwrap();
-        tree.insert(node, &taffy);
-    }
-
+    let (_, changes) = rdom.update_state(cx);
     for (id, mask) in changes.iter() {
         let node = rdom.get(*id).unwrap();
-        tree.update(id.clone(), node, mask.clone(), &taffy);
+        if tree.slots.contains_key(id) {
+            tree.update(id.clone(), node, mask.clone(), &taffy);
+        } else {
+            tree.insert(node, &taffy);
+        }
     }
 
     // Compute the new layout
@@ -174,5 +184,11 @@ fn apply(
             layout.location.y += parent_layout.location.y;
         }
         tree.slots.get_mut(&node.id()).unwrap().layout = layout;
+
+        layout_tree.insert(
+            [layout.location.x as _, layout.location.y as _],
+            [layout.size.width as _, layout.size.height as _],
+            node.id(),
+        );
     });
 }
