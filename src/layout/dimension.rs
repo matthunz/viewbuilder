@@ -6,6 +6,7 @@ use dioxus::{
     },
     prelude::IntoAttributeValue,
 };
+use dioxus_native_core::node::OwnedAttributeValue;
 use std::{cell::RefCell, sync::Arc};
 
 #[repr(u8)]
@@ -19,13 +20,24 @@ pub enum Dimension {
 }
 
 impl Dimension {
-    pub fn into_taffy(self, scale: f64) -> taffy::prelude::Dimension {
+    pub(crate) fn into_taffy(self, scale: f64) -> taffy::prelude::Dimension {
         match self {
             Dimension::Auto => taffy::prelude::Dimension::Auto,
             Dimension::Px(px) => taffy::prelude::Dimension::Points(px as _),
             Dimension::Dp(dp) => taffy::prelude::Dimension::Points((dp * scale) as _),
             Dimension::Percent(percent) => taffy::prelude::Dimension::Percent(percent as _),
         }
+    }
+
+    pub(crate) fn from_value(value: &OwnedAttributeValue<DynAttribute>) -> Self {
+        *value
+            .as_custom()
+            .unwrap()
+            .0
+            .as_ref()
+            .unwrap()
+            .downcast_ref()
+            .unwrap()
     }
 }
 

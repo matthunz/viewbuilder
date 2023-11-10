@@ -1,10 +1,9 @@
-use std::sync::{Arc, Mutex};
-
 use crate::{
     element::{Element, View},
     virtual_tree::DynAttribute,
 };
 use dioxus_native_core::{prelude::ElementNode, real_dom::NodeRef};
+use std::sync::{Arc, Mutex};
 use taffy::Taffy;
 
 pub trait Factory: Send {

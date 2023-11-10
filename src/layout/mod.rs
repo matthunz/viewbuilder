@@ -48,36 +48,21 @@ impl State<DynAttribute> for LayoutComponent {
         let mut taffy = taffy.lock().unwrap();
 
         let mut style = Style::default();
-        for attr in node_view.attributes().into_iter().flatten() {
-            if attr.attribute.name == "flex_direction" {
-                let i = attr.value.as_int().unwrap();
-                let n = u8::try_from(i).unwrap();
-                let flex_direction: FlexDirection = n.try_into().unwrap();
-                style.flex_direction = flex_direction.into();
-            } else if attr.attribute.name == "width" {
-                let dimension: Dimension = *attr
-                    .value
-                    .as_custom()
-                    .unwrap()
-                    .0
-                    .as_ref()
-                    .unwrap()
-                    .downcast_ref()
-                    .unwrap();
-                style.size.width = dimension.into_taffy(2.);
-            } else if attr.attribute.name == "height" {
-                let dimension: Dimension = *attr
-                    .value
-                    .as_custom()
-                    .unwrap()
-                    .0
-                    .as_ref()
-                    .unwrap()
-                    .downcast_ref()
-                    .unwrap();
-                style.size.height = dimension.into_taffy(2.);
-            } else {
-                todo!()
+        for attr_view in node_view.attributes().into_iter().flatten() {
+            match &*attr_view.attribute.name {
+                "flex_direction" => {
+                    let i = attr_view.value.as_int().unwrap();
+                    let n = u8::try_from(i).unwrap();
+                    let flex_direction: FlexDirection = n.try_into().unwrap();
+                    style.flex_direction = flex_direction.into();
+                }
+                "width" => {
+                    style.size.width = Dimension::from_value(attr_view.value).into_taffy(2.);
+                }
+                "height" => {
+                    style.size.height = Dimension::from_value(attr_view.value).into_taffy(2.);
+                }
+                _ => unimplemented!(),
             }
         }
 

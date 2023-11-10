@@ -1,11 +1,9 @@
-use std::{cell::RefCell, sync::Arc};
-
+use crate::virtual_tree::DynAttribute;
 use dioxus::{
     core::{exports::bumpalo::boxed::Box as BumpBox, AnyValue, AttributeValue},
     prelude::IntoAttributeValue,
 };
-
-use crate::virtual_tree::DynAttribute;
+use std::{cell::RefCell, sync::Arc};
 
 #[derive(Clone, Copy, PartialEq)]
 pub struct Color {
