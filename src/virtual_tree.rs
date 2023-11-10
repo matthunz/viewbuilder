@@ -1,4 +1,5 @@
 use crate::layout::FlexDirection;
+use crate::layout::LayoutComponent;
 use crate::Tree;
 use dioxus::core::Mutations;
 use dioxus::prelude::VirtualDom;
@@ -10,6 +11,7 @@ use std::any::Any;
 use std::sync::Arc;
 use std::sync::Mutex;
 use taffy::style::Style;
+use taffy::Taffy;
 
 #[derive(Clone, Default, PartialEq, Component)]
 pub struct StyleComponent(pub Style);
@@ -70,22 +72,34 @@ pub struct VirtualTree {
     vdom: VirtualDom,
     rdom: RealDom<DynAttribute>,
     state: DioxusState,
+    taffy: Arc<Mutex<Taffy>>,
 }
 
 impl VirtualTree {
     pub fn new(app: dioxus::prelude::Component, tree: Arc<Mutex<Tree>>) -> Self {
         let mut vdom = VirtualDom::new(app);
-        let mut rdom = RealDom::new([StyleComponent::to_type_erased()]);
+        let mut rdom = RealDom::new([
+            StyleComponent::to_type_erased(),
+            LayoutComponent::to_type_erased(),
+        ]);
         let mut state = DioxusState::create(&mut rdom);
+        let taffy = Arc::new(Mutex::new(Taffy::new()));
 
         let mutations = vdom.rebuild();
-        apply(&mut rdom, &mut tree.lock().unwrap(), &mut state, mutations);
+        apply(
+            &mut rdom,
+            &mut tree.lock().unwrap(),
+            &mut state,
+            mutations,
+            taffy.clone(),
+        );
 
         Self {
             tree,
             vdom,
             state,
             rdom,
+            taffy,
         }
     }
 
@@ -98,6 +112,7 @@ impl VirtualTree {
             &mut self.tree.lock().unwrap(),
             &mut self.state,
             mutations,
+            self.taffy.clone(),
         );
 
         Ok(())
@@ -109,15 +124,17 @@ fn apply(
     tree: &mut Tree,
     state: &mut DioxusState,
     mutations: Mutations,
+    taffy: Arc<Mutex<Taffy>>,
 ) {
     state.apply_mutations(rdom, mutations);
 
-    let ctx = SendAnyMap::new();
-    let (updates, changes) = rdom.update_state(ctx);
+    let mut cx = SendAnyMap::new();
+    cx.insert(taffy.clone());
+    let (updates, changes) = rdom.update_state(cx);
 
     for id in updates {
         let node = rdom.get(id).unwrap();
-        tree.insert(node);
+        tree.insert(node, &taffy);
     }
 
     for (id, mask) in changes.iter() {

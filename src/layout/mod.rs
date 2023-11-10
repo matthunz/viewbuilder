@@ -1,12 +1,91 @@
+use dioxus::prelude::SvgAttributes;
+use dioxus_native_core::prelude::*;
+use dioxus_native_core_macro::partial_derive_state;
 use quadtree_rs::{
     area::{Area, AreaBuilder},
     point::Point,
     Quadtree,
 };
-use shipyard::EntityId;
+use shipyard::{Component, EntityId};
+use slotmap::DefaultKey;
+use std::sync::{Arc, Mutex};
+use taffy::{style::Style, Taffy};
 
 mod flex_direction;
 pub use flex_direction::FlexDirection;
+
+use crate::virtual_tree::DynAttribute;
+
+#[derive(Clone, Default, Debug, Component)]
+pub struct LayoutComponent {
+    pub style: Style,
+    pub key: Option<DefaultKey>,
+}
+
+#[partial_derive_state]
+impl State<DynAttribute> for LayoutComponent {
+    type ChildDependencies = (Self,);
+    type ParentDependencies = ();
+    type NodeDependencies = ();
+
+    const NODE_MASK: NodeMaskBuilder<'static> =
+        NodeMaskBuilder::new().with_attrs(AttributeMaskBuilder::Some(&["flex_direction"]));
+
+    fn update<'a>(
+        &mut self,
+        node_view: NodeView<DynAttribute>,
+        _: <Self::NodeDependencies as Dependancy>::ElementBorrowed<'a>,
+        _: Option<<Self::ParentDependencies as Dependancy>::ElementBorrowed<'a>>,
+        children: Vec<<Self::ChildDependencies as Dependancy>::ElementBorrowed<'a>>,
+        context: &SendAnyMap,
+    ) -> bool {
+        let taffy: &Arc<Mutex<Taffy>> = context.get().unwrap();
+        let mut taffy = taffy.lock().unwrap();
+
+        let mut style = Style::default();
+        for attr in node_view.attributes().into_iter().flatten() {
+            if attr.attribute.name == "flex_direction" {
+                let i = attr.value.as_int().unwrap();
+                let n = u8::try_from(i).unwrap();
+                let flex_direction: FlexDirection = n.try_into().unwrap();
+                style.flex_direction = flex_direction.into();
+            } else {
+                todo!()
+            }
+        }
+
+        let mut is_changed = self.style != style;
+
+        let mut child_layout = vec![];
+        for (child,) in children {
+            child_layout.push(child.key.unwrap());
+        }
+
+        if let Some(key) = self.key {
+            if taffy.children(key).unwrap() != child_layout {
+                taffy.set_children(key, &child_layout).unwrap();
+                is_changed = true;
+            }
+
+            if is_changed {
+                taffy.set_style(key, style.clone()).unwrap();
+            }
+        } else {
+            self.key = Some(
+                taffy
+                    .new_with_children(style.clone(), &child_layout)
+                    .unwrap(),
+            );
+            is_changed = true;
+        }
+
+        if is_changed {
+            self.style = style;
+        }
+
+        is_changed
+    }
+}
 
 pub struct Layout {
     quadtree: Quadtree<i64, EntityId>,

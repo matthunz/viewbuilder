@@ -14,6 +14,9 @@ use shipyard::EntityId;
 use skia_safe::Canvas;
 use std::borrow::Cow;
 use std::collections::HashMap;
+use std::sync::Arc;
+use std::sync::Mutex;
+use taffy::Taffy;
 
 pub struct Tree {
     factories: HashMap<Cow<'static, str>, Box<dyn Factory>>,
@@ -43,19 +46,23 @@ impl Tree {
         self.factories.insert(tag.into(), Box::new(element));
     }
 
-    pub fn create_element(&mut self, node: NodeRef<DynAttribute>) -> Option<Box<dyn Element>> {
+    pub fn create_element(
+        &mut self,
+        node: NodeRef<DynAttribute>,
+        taffy: &Arc<Mutex<Taffy>>,
+    ) -> Option<Box<dyn Element>> {
         match &*node.node_type() {
             NodeType::Text(text_node) => Some(self.text_factory.create_text(&text_node.text)),
             NodeType::Element(elem) => self
                 .factories
                 .get_mut(&*elem.tag)
-                .map(|factory| factory.create_element(node, elem)),
+                .map(|factory| factory.create_element(node, elem, taffy)),
             NodeType::Placeholder => todo!(),
         }
     }
 
-    pub fn insert(&mut self, node: NodeRef<DynAttribute>) {
-        let elem = self.create_element(node).unwrap();
+    pub fn insert(&mut self, node: NodeRef<DynAttribute>, taffy: &Arc<Mutex<Taffy>>) {
+        let elem = self.create_element(node, taffy).unwrap();
         self.elements.insert(node.id(), elem);
     }
 
