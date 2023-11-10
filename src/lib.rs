@@ -33,6 +33,12 @@ pub mod prelude {
             #[allow(non_upper_case_globals)]
             pub const flex_direction: (&'static str, Option<&'static str>, bool) =
                 ("flex_direction", None, false);
+
+            #[allow(non_upper_case_globals)]
+            pub const width: (&'static str, Option<&'static str>, bool) = ("width", None, false);
+
+            #[allow(non_upper_case_globals)]
+            pub const height: (&'static str, Option<&'static str>, bool) = ("height", None, false);
         }
     }
 }

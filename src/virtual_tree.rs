@@ -10,7 +10,9 @@ use shipyard::Component;
 use std::any::Any;
 use std::sync::Arc;
 use std::sync::Mutex;
+use taffy::prelude::Size;
 use taffy::style::Style;
+use taffy::style_helpers::TaffyMaxContent;
 use taffy::Taffy;
 
 #[derive(Clone, Default, PartialEq, Component)]
@@ -139,6 +141,21 @@ fn apply(
 
     for (id, mask) in changes.iter() {
         let node = rdom.get(*id).unwrap();
-        tree.update(id.clone(), node, mask.clone());
+        tree.update(id.clone(), node, mask.clone(), &taffy);
     }
+
+    let mut root = None;
+    rdom.traverse_depth_first(|node| {
+        if root.is_none() {
+            let layout = node.get::<LayoutComponent>().unwrap();
+            root = Some(layout.key.unwrap());
+        }
+    });
+
+    taffy::compute_layout(
+        &mut *taffy.lock().unwrap(),
+        root.unwrap(),
+        Size::MAX_CONTENT,
+    )
+    .unwrap();
 }

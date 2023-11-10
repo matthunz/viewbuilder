@@ -1,11 +1,12 @@
+use super::Element;
 use crate::virtual_tree::DynAttribute;
 use dioxus_native_core::{
     prelude::NodeType,
     real_dom::{NodeImmutable, NodeRef},
 };
 use skia_safe::{Color4f, Font, Paint, TextBlob, Typeface};
-
-use super::Element;
+use std::sync::{Arc, Mutex};
+use taffy::Taffy;
 
 pub struct Text {
     pub(crate) content: String,
@@ -16,6 +17,7 @@ impl Element for Text {
         &mut self,
         node: NodeRef<DynAttribute>,
         _mask: dioxus_native_core::node_ref::NodeMask,
+        _taffy: &Arc<Mutex<Taffy>>,
     ) {
         let node_type = node.node_type();
         if let NodeType::Text(text_node) = &*node_type {

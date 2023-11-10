@@ -1,4 +1,3 @@
-use dioxus::prelude::SvgAttributes;
 use dioxus_native_core::prelude::*;
 use dioxus_native_core_macro::partial_derive_state;
 use quadtree_rs::{
@@ -9,7 +8,10 @@ use quadtree_rs::{
 use shipyard::{Component, EntityId};
 use slotmap::DefaultKey;
 use std::sync::{Arc, Mutex};
-use taffy::{style::Style, Taffy};
+use taffy::{
+    style::{Dimension, Style},
+    Taffy,
+};
 
 mod flex_direction;
 pub use flex_direction::FlexDirection;
@@ -29,7 +31,11 @@ impl State<DynAttribute> for LayoutComponent {
     type NodeDependencies = ();
 
     const NODE_MASK: NodeMaskBuilder<'static> =
-        NodeMaskBuilder::new().with_attrs(AttributeMaskBuilder::Some(&["flex_direction"]));
+        NodeMaskBuilder::new().with_attrs(AttributeMaskBuilder::Some(&[
+            "flex_direction",
+            "width",
+            "height",
+        ]));
 
     fn update<'a>(
         &mut self,
@@ -49,6 +55,10 @@ impl State<DynAttribute> for LayoutComponent {
                 let n = u8::try_from(i).unwrap();
                 let flex_direction: FlexDirection = n.try_into().unwrap();
                 style.flex_direction = flex_direction.into();
+            } else if attr.attribute.name == "width" {
+                style.size.width = Dimension::Points(attr.value.as_float().unwrap() as _);
+            } else if attr.attribute.name == "height" {
+                style.size.height = Dimension::Points(attr.value.as_float().unwrap() as _);
             } else {
                 todo!()
             }

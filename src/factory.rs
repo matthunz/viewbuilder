@@ -2,7 +2,6 @@ use std::sync::{Arc, Mutex};
 
 use crate::{
     element::{Element, View},
-    layout::LayoutComponent,
     virtual_tree::{DynAttribute, StyleComponent},
 };
 use dioxus_native_core::{
@@ -27,14 +26,8 @@ impl Factory for ViewFactory {
         &mut self,
         node: NodeRef<DynAttribute>,
         _element_node: &ElementNode<DynAttribute>,
-        taffy: &Arc<Mutex<Taffy>>,
+        _taffy: &Arc<Mutex<Taffy>>,
     ) -> Box<dyn Element> {
-        let layout = node.get::<LayoutComponent>().unwrap();
-
-        let guard = taffy.lock().unwrap();
-        let layout = guard.layout(layout.key.unwrap()).unwrap();
-        dbg!(layout);
-
         let style = node.get::<StyleComponent>().unwrap().clone();
         Box::new(View { style: style.0 })
     }

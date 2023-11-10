@@ -2,20 +2,15 @@ use crate::element::Element;
 use crate::factory::ViewFactory;
 use crate::text_factory::TextElementFactory;
 use crate::virtual_tree::DynAttribute;
-use crate::Factory;
-use crate::TextFactory;
-
+use crate::{Factory, TextFactory};
 use dioxus_native_core::node_ref::NodeMask;
 use dioxus_native_core::prelude::NodeType;
-use dioxus_native_core::real_dom::NodeImmutable;
-use dioxus_native_core::real_dom::NodeRef;
-
+use dioxus_native_core::real_dom::{NodeImmutable, NodeRef};
 use shipyard::EntityId;
 use skia_safe::Canvas;
 use std::borrow::Cow;
 use std::collections::HashMap;
-use std::sync::Arc;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use taffy::Taffy;
 
 pub struct Tree {
@@ -70,8 +65,17 @@ impl Tree {
         self.elements.remove(&id)
     }
 
-    pub fn update(&mut self, id: EntityId, node: NodeRef<DynAttribute>, mask: NodeMask) {
-        self.elements.get_mut(&id).unwrap().update(node, mask)
+    pub fn update(
+        &mut self,
+        id: EntityId,
+        node: NodeRef<DynAttribute>,
+        mask: NodeMask,
+        taffy: &Arc<Mutex<Taffy>>,
+    ) {
+        self.elements
+            .get_mut(&id)
+            .unwrap()
+            .update(node, mask, taffy)
     }
 
     pub fn render(&mut self, canvas: &mut Canvas) {
