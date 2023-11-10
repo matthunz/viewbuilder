@@ -1,3 +1,4 @@
+use crate::virtual_tree::DynAttribute;
 use dioxus_native_core::prelude::*;
 use dioxus_native_core_macro::partial_derive_state;
 use quadtree_rs::{
@@ -8,15 +9,13 @@ use quadtree_rs::{
 use shipyard::{Component, EntityId};
 use slotmap::DefaultKey;
 use std::sync::{Arc, Mutex};
-use taffy::{
-    style::{Dimension, Style},
-    Taffy,
-};
+use taffy::{style::Style, Taffy};
+
+mod dimension;
+pub use dimension::{Dimension, IntoDimension};
 
 mod flex_direction;
 pub use flex_direction::FlexDirection;
-
-use crate::virtual_tree::DynAttribute;
 
 #[derive(Clone, Default, Debug, Component)]
 pub struct LayoutComponent {
@@ -56,9 +55,27 @@ impl State<DynAttribute> for LayoutComponent {
                 let flex_direction: FlexDirection = n.try_into().unwrap();
                 style.flex_direction = flex_direction.into();
             } else if attr.attribute.name == "width" {
-                style.size.width = Dimension::Points(attr.value.as_float().unwrap() as _);
+                let dimension: Dimension = *attr
+                    .value
+                    .as_custom()
+                    .unwrap()
+                    .0
+                    .as_ref()
+                    .unwrap()
+                    .downcast_ref()
+                    .unwrap();
+                style.size.width = dimension.into_taffy(1.);
             } else if attr.attribute.name == "height" {
-                style.size.height = Dimension::Points(attr.value.as_float().unwrap() as _);
+                let dimension: Dimension = *attr
+                    .value
+                    .as_custom()
+                    .unwrap()
+                    .0
+                    .as_ref()
+                    .unwrap()
+                    .downcast_ref()
+                    .unwrap();
+                style.size.width = dimension.into_taffy(1.);
             } else {
                 todo!()
             }

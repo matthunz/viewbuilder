@@ -22,6 +22,7 @@ pub use render::Renderer;
 
 pub mod prelude {
     pub use crate::Color;
+    pub use crate::layout::{FlexDirection, Dimension, IntoDimension};
 
     pub use dioxus::prelude::{render, rsx, use_future, use_state, Element, Scope};
 

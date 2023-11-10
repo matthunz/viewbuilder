@@ -1,4 +1,4 @@
-use viewbuilder::{layout::FlexDirection, prelude::*, Renderer};
+use viewbuilder::{prelude::*, Renderer};
 
 fn app(cx: Scope) -> Element {
     let count = use_state(cx, || 0);
@@ -12,10 +12,10 @@ fn app(cx: Scope) -> Element {
 
     render!(
         view { flex_direction: FlexDirection::Column,
-            view { width: 200., height: 100., "High five count: {count}" }
+            view { width: 1.percent(), height: 1.percent(), "High five count: {count}" }
             view { flex_direction: FlexDirection::Row,
-                view { width: 200., height: 100., background_color: Color::from_rgb(0, 255, 255), "Up high!" }
-                view { width: 200., height: 100., background_color: Color::from_rgb(0, 255, 255), "Down low!" }
+                view { width: 200.dp(), height: 100.dp(), background_color: Color::from_rgb(0, 255, 255),"Up high!" }
+                view { width: 200.dp(), height: 100.dp(), background_color: Color::from_rgb(0, 255, 255), "Down low!" }
             }
         }
     )
