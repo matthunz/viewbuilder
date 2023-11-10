@@ -11,12 +11,18 @@ use skia_safe::Canvas;
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
+use taffy::prelude::Layout;
 use taffy::Taffy;
+
+pub(crate) struct Slot {
+    element: Box<dyn Element>,
+    pub(crate) layout: Layout,
+}
 
 pub struct Tree {
     factories: HashMap<Cow<'static, str>, Box<dyn Factory>>,
     text_factory: Box<dyn TextFactory>,
-    elements: HashMap<EntityId, Box<dyn Element>>,
+    pub(crate) slots: HashMap<EntityId, Slot>,
 }
 
 impl Default for Tree {
@@ -24,7 +30,7 @@ impl Default for Tree {
         let mut me = Self {
             factories: Default::default(),
             text_factory: Box::new(TextElementFactory {}),
-            elements: HashMap::new(),
+            slots: HashMap::new(),
         };
         me.insert_factory("view", ViewFactory {});
         me.insert_factory("Root", ViewFactory {});
@@ -57,12 +63,18 @@ impl Tree {
     }
 
     pub fn insert(&mut self, node: NodeRef<DynAttribute>, taffy: &Arc<Mutex<Taffy>>) {
-        let elem = self.create_element(node, taffy).unwrap();
-        self.elements.insert(node.id(), elem);
+        let element = self.create_element(node, taffy).unwrap();
+        self.slots.insert(
+            node.id(),
+            Slot {
+                element,
+                layout: Layout::new(),
+            },
+        );
     }
 
     pub fn remove(&mut self, id: EntityId) -> Option<Box<dyn Element>> {
-        self.elements.remove(&id)
+        self.slots.remove(&id).map(|slot| slot.element)
     }
 
     pub fn update(
@@ -72,15 +84,16 @@ impl Tree {
         mask: NodeMask,
         taffy: &Arc<Mutex<Taffy>>,
     ) {
-        self.elements
+        self.slots
             .get_mut(&id)
             .unwrap()
+            .element
             .update(node, mask, taffy)
     }
 
     pub fn render(&mut self, canvas: &mut Canvas) {
-        for element in self.elements.values_mut() {
-            element.render(canvas)
+        for slot in self.slots.values_mut() {
+            slot.element.render(slot.layout, canvas)
         }
     }
 }

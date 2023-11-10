@@ -10,7 +10,12 @@ fn app(cx: Scope) -> Element {
         }
     });
 
-    render!(view { flex_direction: FlexDirection::Column, width: 100., height: 100., "{count}" })
+    render!(
+        view { flex_direction: FlexDirection::Column,
+            view { width: 100., height: 100., "{count}" }
+            view { width: 100., height: 100., "{count}" }
+        }
+    )
 }
 
 #[tokio::main]

@@ -3,7 +3,7 @@ use std::sync::{Arc, Mutex};
 use super::Element;
 use crate::{layout::LayoutComponent, virtual_tree::DynAttribute};
 use dioxus_native_core::real_dom::{NodeImmutable, NodeRef};
-use taffy::{style::Style, Taffy};
+use taffy::{prelude::Layout, style::Style, Taffy};
 
 pub struct View {
     pub(crate) style: Style,
@@ -20,8 +20,7 @@ impl Element for View {
 
         let guard = taffy.lock().unwrap();
         let layout = guard.layout(layout.key.unwrap()).unwrap();
-        dbg!(layout);
     }
 
-    fn render(&mut self, _canvas: &mut skia_safe::Canvas) {}
+    fn render(&mut self, layout: Layout, _canvas: &mut skia_safe::Canvas) {}
 }

@@ -6,7 +6,7 @@ use dioxus_native_core::{
 };
 use skia_safe::{Color4f, Font, Paint, TextBlob, Typeface};
 use std::sync::{Arc, Mutex};
-use taffy::Taffy;
+use taffy::{prelude::Layout, Taffy};
 
 pub struct Text {
     pub(crate) content: String,
@@ -27,12 +27,18 @@ impl Element for Text {
         }
     }
 
-    fn render(&mut self, canvas: &mut skia_safe::Canvas) {
+    fn render(&mut self, layout: Layout, canvas: &mut skia_safe::Canvas) {
+        dbg!(layout);
         let typeface = Typeface::new("monospace", Default::default()).unwrap();
         let font = Font::new(typeface, 24.);
         if let Some(blob) = TextBlob::new(&self.content, &font) {
             let paint = Paint::new(Color4f::new(1., 0., 0., 1.), None);
-            canvas.draw_text_blob(blob, (100., 100.), &paint);
+            let height = blob.bounds().height();
+            canvas.draw_text_blob(
+                blob,
+                (layout.location.x, layout.location.y + height),
+                &paint,
+            );
         }
     }
 }

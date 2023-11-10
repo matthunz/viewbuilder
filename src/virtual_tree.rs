@@ -144,18 +144,28 @@ fn apply(
         tree.update(id.clone(), node, mask.clone(), &taffy);
     }
 
-    let mut root = None;
-    rdom.traverse_depth_first(|node| {
-        if root.is_none() {
-            let layout = node.get::<LayoutComponent>().unwrap();
-            root = Some(layout.key.unwrap());
-        }
-    });
+    // Compute the new layout
+    let mut taffy_ref = taffy.lock().unwrap();
+    let root_layout_key = rdom
+        .get(rdom.root_id())
+        .unwrap()
+        .get::<LayoutComponent>()
+        .unwrap()
+        .key
+        .unwrap();
+    taffy::compute_layout(&mut taffy_ref, root_layout_key, Size::MAX_CONTENT).unwrap();
 
-    taffy::compute_layout(
-        &mut *taffy.lock().unwrap(),
-        root.unwrap(),
-        Size::MAX_CONTENT,
-    )
-    .unwrap();
+    // Convert the new relative layouts to global layouts
+    rdom.traverse_depth_first(|node| {
+        let layout = node.get::<LayoutComponent>().unwrap();
+        let layout_key = layout.key.unwrap();
+
+        let mut layout = taffy_ref.layout(layout_key).unwrap().clone();
+        if let Some(parent_id) = node.parent_id() {
+            let parent_layout = tree.slots[&parent_id].layout;
+            layout.location.x += parent_layout.location.x;
+            layout.location.y += parent_layout.location.y;
+        }
+        tree.slots.get_mut(&node.id()).unwrap().layout = layout;
+    });
 }
