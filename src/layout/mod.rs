@@ -64,7 +64,7 @@ impl State<DynAttribute> for LayoutComponent {
                     .unwrap()
                     .downcast_ref()
                     .unwrap();
-                style.size.width = dimension.into_taffy(1.);
+                style.size.width = dimension.into_taffy(2.);
             } else if attr.attribute.name == "height" {
                 let dimension: Dimension = *attr
                     .value
@@ -75,7 +75,7 @@ impl State<DynAttribute> for LayoutComponent {
                     .unwrap()
                     .downcast_ref()
                     .unwrap();
-                style.size.width = dimension.into_taffy(1.);
+                style.size.height = dimension.into_taffy(2.);
             } else {
                 todo!()
             }
