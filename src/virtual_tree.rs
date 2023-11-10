@@ -1,16 +1,14 @@
 use std::any::Any;
-use std::cell::RefCell;
-use std::rc::Rc;
+
 use std::sync::Arc;
 
 use crate::layout::FlexDirection;
 use crate::Tree;
-use dioxus::core::exports::bumpalo::Bump;
-use dioxus::core::AttributeValue;
+
 use dioxus::core::Mutations;
-use dioxus::prelude::IntoAttributeValue;
+
 use dioxus::prelude::VirtualDom;
-use dioxus_native_core::exports::shipyard::Component;
+
 use dioxus_native_core::node_ref::*;
 use dioxus_native_core::prelude::*;
 use dioxus_native_core_macro::partial_derive_state;
@@ -93,7 +91,7 @@ impl VirtualTree {
         }
     }
 
-    pub async fn run(mut self) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn run(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         self.vdom.wait_for_work().await;
 
         let mutations = self.vdom.render_immediate();
@@ -112,10 +110,15 @@ fn apply(
     state.apply_mutations(rdom, mutations);
 
     let ctx = SendAnyMap::new();
-    let (updates, _) = rdom.update_state(ctx);
+    let (updates, changes) = rdom.update_state(ctx);
 
     for id in updates {
         let node = rdom.get(id).unwrap();
         tree.insert(node);
+    }
+
+    for (id, mask) in changes.iter() {
+        let node = rdom.get(*id).unwrap();
+        tree.update(id.clone(), node, mask.clone());
     }
 }

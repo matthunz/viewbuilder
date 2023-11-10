@@ -4,16 +4,15 @@ use crate::text_factory::TextElementFactory;
 use crate::virtual_tree::DynAttribute;
 use crate::Factory;
 use crate::TextFactory;
-use dioxus_native_core::node::OwnedAttributeDiscription;
-use dioxus_native_core::node::OwnedAttributeValue;
+
+use dioxus_native_core::node_ref::NodeMask;
 use dioxus_native_core::prelude::NodeType;
 use dioxus_native_core::real_dom::NodeImmutable;
 use dioxus_native_core::real_dom::NodeRef;
-use dioxus_native_core::tree::Node;
+
 use shipyard::EntityId;
 use std::borrow::Cow;
 use std::collections::HashMap;
-use std::hash::BuildHasherDefault;
 
 pub struct Tree {
     factories: HashMap<Cow<'static, str>, Box<dyn Factory>>,
@@ -61,5 +60,9 @@ impl Tree {
 
     pub fn remove(&mut self, id: EntityId) -> Option<Box<dyn Element>> {
         self.elements.remove(&id)
+    }
+
+    pub fn update(&mut self, id: EntityId, node: NodeRef<DynAttribute>, mask: NodeMask) {
+        self.elements.get_mut(&id).unwrap().update(node, mask)
     }
 }

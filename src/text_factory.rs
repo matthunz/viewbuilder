@@ -7,7 +7,8 @@ pub trait TextFactory {
 pub struct TextElementFactory {}
 
 impl TextFactory for TextElementFactory {
-    fn create_text(&mut self, _text: &str) -> Box<dyn Element> {
+    fn create_text(&mut self, text: &str) -> Box<dyn Element> {
+        dbg!(text);
         Box::new(Text {})
     }
 }

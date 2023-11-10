@@ -1,4 +1,7 @@
-use dioxus::{prelude::IntoAttributeValue, core::{AttributeValue, exports::bumpalo::Bump}};
+use dioxus::{
+    core::{exports::bumpalo::Bump, AttributeValue},
+    prelude::IntoAttributeValue,
+};
 use shipyard::Component;
 
 #[repr(u8)]
@@ -22,7 +25,7 @@ impl TryFrom<u8> for FlexDirection {
 }
 
 impl<'a> IntoAttributeValue<'a> for FlexDirection {
-    fn into_value(self, bump: &'a Bump) -> AttributeValue<'a> {
+    fn into_value(self, _bump: &'a Bump) -> AttributeValue<'a> {
         AttributeValue::Int(self as u8 as _)
     }
 }
