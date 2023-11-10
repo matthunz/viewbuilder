@@ -6,6 +6,10 @@ use crate::Factory;
 use crate::TextFactory;
 use dioxus_native_core::node::OwnedAttributeDiscription;
 use dioxus_native_core::node::OwnedAttributeValue;
+use dioxus_native_core::prelude::NodeType;
+use dioxus_native_core::real_dom::NodeImmutable;
+use dioxus_native_core::real_dom::NodeRef;
+use dioxus_native_core::tree::Node;
 use shipyard::EntityId;
 use std::borrow::Cow;
 use std::collections::HashMap;
@@ -39,41 +43,20 @@ impl Tree {
         self.factories.insert(tag.into(), Box::new(element));
     }
 
-    pub fn create_element(
-        &mut self,
-        tag: &str,
-        attrs: &HashMap<
-            OwnedAttributeDiscription,
-            OwnedAttributeValue<DynAttribute>,
-            BuildHasherDefault<rustc_hash::FxHasher>,
-        >,
-    ) -> Option<Box<dyn Element>> {
-        self.factories
-            .get_mut(tag)
-            .map(|elem| elem.from_attrs(attrs))
+    pub fn create_element(&mut self, node: NodeRef<DynAttribute>) -> Option<Box<dyn Element>> {
+        match &*node.node_type() {
+            NodeType::Text(text_node) => Some(self.text_factory.create_text(&text_node.text)),
+            NodeType::Element(elem) => self
+                .factories
+                .get_mut(&*elem.tag)
+                .map(|factory| factory.create_element(node, elem)),
+            NodeType::Placeholder => todo!(),
+        }
     }
 
-    pub fn create_text_element(&mut self, text: &str) -> Box<dyn Element> {
-        self.text_factory.create_text(text)
-    }
-
-    pub fn insert_element(
-        &mut self,
-        id: EntityId,
-        tag: &str,
-        attrs: &HashMap<
-            OwnedAttributeDiscription,
-            OwnedAttributeValue<DynAttribute>,
-            BuildHasherDefault<rustc_hash::FxHasher>,
-        >,
-    ) {
-        let elem = self.create_element(tag, attrs).unwrap();
-        self.elements.insert(id, elem);
-    }
-
-    pub fn insert_text_element(&mut self, id: EntityId, text: &str) {
-        let elem = self.create_text_element(text);
-        self.elements.insert(id, elem);
+    pub fn insert(&mut self, node: NodeRef<DynAttribute>) {
+        let elem = self.create_element(node).unwrap();
+        self.elements.insert(node.id(), elem);
     }
 
     pub fn remove(&mut self, id: EntityId) -> Option<Box<dyn Element>> {

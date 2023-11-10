@@ -1,13 +1,21 @@
+use std::any::Any;
+use std::cell::RefCell;
+use std::rc::Rc;
+use std::sync::Arc;
+
 use crate::Tree;
+use dioxus::core::exports::bumpalo::Bump;
+use dioxus::core::AttributeValue;
 use dioxus::core::Mutations;
+use dioxus::prelude::IntoAttributeValue;
 use dioxus::prelude::VirtualDom;
 use dioxus_native_core::exports::shipyard::Component;
 use dioxus_native_core::node_ref::*;
 use dioxus_native_core::prelude::*;
 use dioxus_native_core_macro::partial_derive_state;
 
-#[derive(Clone, Copy, Default, PartialEq, Eq, Debug)]
-pub struct DynAttribute {}
+#[derive(Clone, Default)]
+pub struct DynAttribute(Option<Arc<dyn Any + Send + Sync>>);
 
 impl FromAnyValue for DynAttribute {
     fn from_any_value(_value: &dyn std::any::Any) -> Self {
@@ -15,13 +23,36 @@ impl FromAnyValue for DynAttribute {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Default, Component)]
-struct FlexDirectionAttr(DynAttribute);
+#[repr(u8)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Component)]
+pub enum FlexDirection {
+    #[default]
+    Row,
+    Column,
+}
+
+impl TryFrom<u8> for FlexDirection {
+    type Error = ();
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(Self::Row),
+            1 => Ok(Self::Column),
+            _ => Err(()),
+        }
+    }
+}
+
+impl<'a> IntoAttributeValue<'a> for FlexDirection {
+    fn into_value(self, bump: &'a Bump) -> AttributeValue<'a> {
+        AttributeValue::Int(self as u8 as _)
+    }
+}
 
 #[partial_derive_state]
-impl State<DynAttribute> for FlexDirectionAttr {
+impl State<DynAttribute> for FlexDirection {
     // TextColor depends on the TextColor part of the parent
-    type ParentDependencies = (Self,);
+    type ParentDependencies = ();
 
     type ChildDependencies = ();
 
@@ -40,13 +71,14 @@ impl State<DynAttribute> for FlexDirectionAttr {
         _children: Vec<<Self::ChildDependencies as Dependancy>::ElementBorrowed<'a>>,
         _context: &SendAnyMap,
     ) -> bool {
-        let direction: DynAttribute = node_view
+        let direction: FlexDirection = node_view
             .attributes()
             .and_then(|mut attrs| {
                 attrs.next().map(|a| {
                     if a.attribute.name == "flex_direction" {
-                        let direction: &DynAttribute = a.value.as_custom().unwrap();
-                        direction.clone()
+                        let i = a.value.as_int().unwrap();
+                        let n = u8::try_from(i).unwrap();
+                        n.try_into().unwrap()
                     } else {
                         todo!()
                     }
@@ -54,11 +86,9 @@ impl State<DynAttribute> for FlexDirectionAttr {
             })
             .unwrap_or_default();
 
-        // check if the node contians a border attribute
-        let new = Self(direction);
         // check if the member has changed
-        let changed = new != *self;
-        *self = new;
+        let changed = direction != *self;
+        *self = direction;
         changed
     }
 }
@@ -74,7 +104,7 @@ impl VirtualTree {
     pub fn new(app: dioxus::prelude::Component) -> Self {
         let mut vdom = VirtualDom::new(app);
         let mut tree = Tree::default();
-        let mut rdom = RealDom::new([FlexDirectionAttr::to_type_erased()]);
+        let mut rdom = RealDom::new([FlexDirection::to_type_erased()]);
         let mut state = DioxusState::create(&mut rdom);
 
         let mutations = vdom.rebuild();
@@ -111,13 +141,6 @@ fn apply(
 
     for id in updates {
         let node = rdom.get(id).unwrap();
-        let node_type = node.node_type();
-        match &*node_type {
-            NodeType::Text(text_node) => tree.insert_text_element(node.id(), &text_node.text),
-            NodeType::Element(elem) => {
-                tree.insert_element(node.id(), &elem.tag, &elem.attributes);
-            }
-            NodeType::Placeholder => todo!(),
-        }
+        tree.insert(node);
     }
 }

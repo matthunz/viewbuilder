@@ -1,5 +1,8 @@
 use dioxus::prelude::{render, use_future};
-use viewbuilder::{prelude::*, virtual_tree::VirtualTree};
+use viewbuilder::{
+    prelude::*,
+    virtual_tree::{FlexDirection, VirtualTree},
+};
 
 fn app(cx: Scope) -> Element {
     let count = use_state(cx, || 0);
@@ -11,7 +14,7 @@ fn app(cx: Scope) -> Element {
         }
     });
 
-    render!( view { "Hello World!" } )
+    render!( view { flex_direction: FlexDirection::Column, "Hello World!" } )
 }
 
 #[tokio::main]
