@@ -1,4 +1,4 @@
-use viewbuilder::{layout::FlexDirection, prelude::*, virtual_tree::VirtualTree};
+use viewbuilder::{layout::FlexDirection, prelude::*, Renderer};
 
 fn app(cx: Scope) -> Element {
     let count = use_state(cx, || 0);
@@ -15,8 +15,5 @@ fn app(cx: Scope) -> Element {
 
 #[tokio::main]
 async fn main() {
-    let mut tree = VirtualTree::new(app);
-    loop {
-        tree.run().await.unwrap();
-    }
+    Renderer.run(app);
 }

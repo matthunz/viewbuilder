@@ -1,14 +1,13 @@
 use crate::{
     element::{Element, View},
-    layout::FlexDirection,
-    virtual_tree::DynAttribute,
+    virtual_tree::{DynAttribute, StyleComponent},
 };
 use dioxus_native_core::{
     prelude::ElementNode,
     real_dom::{NodeImmutable, NodeRef},
 };
 
-pub trait Factory {
+pub trait Factory: Send {
     fn create_element(
         &mut self,
         node: NodeRef<DynAttribute>,
@@ -24,9 +23,7 @@ impl Factory for ViewFactory {
         node: NodeRef<DynAttribute>,
         _element_node: &ElementNode<DynAttribute>,
     ) -> Box<dyn Element> {
-        let flex_direction = *node.get::<FlexDirection>().unwrap();
-        dbg!(flex_direction);
-
-        Box::new(View { flex_direction })
+        let style = node.get::<StyleComponent>().unwrap().clone();
+        Box::new(View { style: style.0 })
     }
 }

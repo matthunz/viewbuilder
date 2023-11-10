@@ -29,3 +29,12 @@ impl<'a> IntoAttributeValue<'a> for FlexDirection {
         AttributeValue::Int(self as u8 as _)
     }
 }
+
+impl From<FlexDirection> for taffy::prelude::FlexDirection {
+    fn from(value: FlexDirection) -> Self {
+        match value {
+            FlexDirection::Row => taffy::prelude::FlexDirection::Row,
+            FlexDirection::Column => taffy::prelude::FlexDirection::Column,
+        }
+    }
+}

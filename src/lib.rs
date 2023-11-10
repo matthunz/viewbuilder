@@ -14,6 +14,9 @@ pub use self::text_factory::TextFactory;
 pub mod layout;
 pub use layout::Layout;
 
+mod render;
+pub use render::Renderer;
+
 pub mod prelude {
     pub use dioxus::prelude::{render, rsx, use_future, use_state, Element, Scope};
 

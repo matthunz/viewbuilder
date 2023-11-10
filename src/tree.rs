@@ -11,6 +11,7 @@ use dioxus_native_core::real_dom::NodeImmutable;
 use dioxus_native_core::real_dom::NodeRef;
 
 use shipyard::EntityId;
+use skia_safe::Canvas;
 use std::borrow::Cow;
 use std::collections::HashMap;
 
@@ -64,5 +65,11 @@ impl Tree {
 
     pub fn update(&mut self, id: EntityId, node: NodeRef<DynAttribute>, mask: NodeMask) {
         self.elements.get_mut(&id).unwrap().update(node, mask)
+    }
+
+    pub fn render(&mut self, canvas: &mut Canvas) {
+        for element in self.elements.values_mut() {
+            element.render(canvas)
+        }
     }
 }
