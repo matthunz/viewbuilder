@@ -11,6 +11,9 @@ pub use tree::Tree;
 mod text_factory;
 pub use self::text_factory::TextFactory;
 
+mod layout;
+pub use layout::Layout;
+
 pub mod prelude {
     pub use dioxus::prelude::{rsx, use_state, Element, Scope};
 
