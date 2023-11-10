@@ -5,6 +5,9 @@ use quadtree_rs::{
 };
 use shipyard::EntityId;
 
+mod flex_direction;
+pub use flex_direction::FlexDirection;
+
 pub struct Layout {
     quadtree: Quadtree<i64, EntityId>,
 }

@@ -1,6 +1,6 @@
 use crate::{
     element::{Element, View},
-    virtual_tree::{DynAttribute, FlexDirection},
+    virtual_tree::{DynAttribute}, layout::FlexDirection,
 };
 use dioxus_native_core::{
     node::{OwnedAttributeDiscription, OwnedAttributeValue},

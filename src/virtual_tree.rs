@@ -3,6 +3,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use std::sync::Arc;
 
+use crate::layout::FlexDirection;
 use crate::Tree;
 use dioxus::core::exports::bumpalo::Bump;
 use dioxus::core::AttributeValue;
@@ -20,32 +21,6 @@ pub struct DynAttribute(Option<Arc<dyn Any + Send + Sync>>);
 impl FromAnyValue for DynAttribute {
     fn from_any_value(_value: &dyn std::any::Any) -> Self {
         todo!()
-    }
-}
-
-#[repr(u8)]
-#[derive(Debug, Default, Clone, Copy, PartialEq, Component)]
-pub enum FlexDirection {
-    #[default]
-    Row,
-    Column,
-}
-
-impl TryFrom<u8> for FlexDirection {
-    type Error = ();
-
-    fn try_from(value: u8) -> Result<Self, Self::Error> {
-        match value {
-            0 => Ok(Self::Row),
-            1 => Ok(Self::Column),
-            _ => Err(()),
-        }
-    }
-}
-
-impl<'a> IntoAttributeValue<'a> for FlexDirection {
-    fn into_value(self, bump: &'a Bump) -> AttributeValue<'a> {
-        AttributeValue::Int(self as u8 as _)
     }
 }
 

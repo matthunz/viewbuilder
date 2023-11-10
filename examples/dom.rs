@@ -1,8 +1,4 @@
-use dioxus::prelude::{render, use_future};
-use viewbuilder::{
-    prelude::*,
-    virtual_tree::{FlexDirection, VirtualTree},
-};
+use viewbuilder::{layout::FlexDirection, prelude::*, virtual_tree::VirtualTree};
 
 fn app(cx: Scope) -> Element {
     let count = use_state(cx, || 0);

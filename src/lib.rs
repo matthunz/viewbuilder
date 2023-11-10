@@ -11,11 +11,11 @@ pub use tree::Tree;
 mod text_factory;
 pub use self::text_factory::TextFactory;
 
-mod layout;
+pub mod layout;
 pub use layout::Layout;
 
 pub mod prelude {
-    pub use dioxus::prelude::{rsx, use_state, Element, Scope};
+    pub use dioxus::prelude::{render, rsx, use_future, use_state, Element, Scope};
 
     pub mod dioxus_elements {
         pub use dioxus::prelude::dioxus_elements::events;
