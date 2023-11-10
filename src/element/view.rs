@@ -1,9 +1,5 @@
 use super::Element;
 
-pub struct View {
+pub struct View {}
 
-}
-
-impl Element for View {
-    
-}
+impl Element for View {}

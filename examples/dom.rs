@@ -14,7 +14,8 @@ fn app(cx: Scope) -> Element {
     render!( view { "Hello World!" } )
 }
 
-fn main() {
-    let tree = VirtualTree::default();
-    tree.run(app).unwrap();
+#[tokio::main]
+async fn main() {
+    let tree = VirtualTree::new(app);
+    tree.run().await.unwrap();
 }

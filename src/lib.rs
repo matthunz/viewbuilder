@@ -5,6 +5,9 @@ pub mod element;
 mod factory;
 pub use self::factory::Factory;
 
+mod tree;
+pub use tree::Tree;
+
 mod text_factory;
 pub use self::text_factory::TextFactory;
 
