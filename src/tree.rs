@@ -75,4 +75,8 @@ impl Tree {
         let elem = self.create_text_element(text);
         self.elements.insert(id, elem);
     }
+
+    pub fn remove(&mut self, id: EntityId) -> Option<Box<dyn Element>> {
+        self.elements.remove(&id)
+    }
 }

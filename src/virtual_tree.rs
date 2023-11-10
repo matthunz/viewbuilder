@@ -1,7 +1,7 @@
 use crate::Tree;
+use dioxus::core::Mutations;
 use dioxus::prelude::VirtualDom;
 use dioxus_native_core::exports::shipyard::Component;
-
 use dioxus_native_core::node_ref::*;
 use dioxus_native_core::prelude::*;
 use dioxus_native_core_macro::partial_derive_state;
@@ -67,48 +67,57 @@ pub struct VirtualTree {
     tree: Tree,
     vdom: VirtualDom,
     rdom: RealDom<DynAttribute>,
+    state: DioxusState,
 }
 
 impl VirtualTree {
     pub fn new(app: dioxus::prelude::Component) -> Self {
+        let mut vdom = VirtualDom::new(app);
+        let mut tree = Tree::default();
+        let mut rdom = RealDom::new([FlexDirectionAttr::to_type_erased()]);
+        let mut state = DioxusState::create(&mut rdom);
+
+        let mutations = vdom.rebuild();
+        apply(&mut rdom, &mut tree, &mut state, mutations);
+
         Self {
-            tree: Tree::default(),
-            vdom: VirtualDom::new(app),
-            rdom: RealDom::new([FlexDirectionAttr::to_type_erased()]),
+            tree,
+            vdom,
+            state,
+            rdom,
         }
     }
 
     pub async fn run(mut self) -> Result<(), Box<dyn std::error::Error>> {
-        let mut dioxus_intigration_state = DioxusState::create(&mut self.rdom);
-
-        let mutations = self.vdom.rebuild();
-        dioxus_intigration_state.apply_mutations(&mut self.rdom, mutations);
-
-        let ctx = SendAnyMap::new();
-        let _to_rerender = self.rdom.update_state(ctx);
-
         self.vdom.wait_for_work().await;
 
         let mutations = self.vdom.render_immediate();
-        dioxus_intigration_state.apply_mutations(&mut self.rdom, mutations);
-
-        let ctx = SendAnyMap::new();
-        let _to_rerender = self.rdom.update_state(ctx);
-
-        self.rdom.traverse_depth_first_advanced(true, |node| {
-            let _id = node.id();
-            let _element = match &*node.node_type() {
-                NodeType::Text(text_node) => {
-                    self.tree.insert_text_element(node.id(), &text_node.text)
-                }
-                NodeType::Element(elem) => {
-                    self.tree
-                        .insert_element(node.id(), &elem.tag, &elem.attributes);
-                }
-                NodeType::Placeholder => todo!(),
-            };
-        });
+        apply(&mut self.rdom, &mut self.tree, &mut self.state, mutations);
 
         Ok(())
+    }
+}
+
+fn apply(
+    rdom: &mut RealDom<DynAttribute>,
+    tree: &mut Tree,
+    state: &mut DioxusState,
+    mutations: Mutations,
+) {
+    state.apply_mutations(rdom, mutations);
+
+    let ctx = SendAnyMap::new();
+    let (updates, _) = rdom.update_state(ctx);
+
+    for id in updates {
+        let node = rdom.get(id).unwrap();
+        let node_type = node.node_type();
+        match &*node_type {
+            NodeType::Text(text_node) => tree.insert_text_element(node.id(), &text_node.text),
+            NodeType::Element(elem) => {
+                tree.insert_element(node.id(), &elem.tag, &elem.attributes);
+            }
+            NodeType::Placeholder => todo!(),
+        }
     }
 }
