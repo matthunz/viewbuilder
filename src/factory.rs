@@ -2,12 +2,9 @@ use std::sync::{Arc, Mutex};
 
 use crate::{
     element::{Element, View},
-    virtual_tree::{DynAttribute, StyleComponent},
+    virtual_tree::DynAttribute,
 };
-use dioxus_native_core::{
-    prelude::ElementNode,
-    real_dom::{NodeImmutable, NodeRef},
-};
+use dioxus_native_core::{prelude::ElementNode, real_dom::NodeRef};
 use taffy::Taffy;
 
 pub trait Factory: Send {
@@ -24,11 +21,10 @@ pub struct ViewFactory {}
 impl Factory for ViewFactory {
     fn create_element(
         &mut self,
-        node: NodeRef<DynAttribute>,
+        _node: NodeRef<DynAttribute>,
         _element_node: &ElementNode<DynAttribute>,
         _taffy: &Arc<Mutex<Taffy>>,
     ) -> Box<dyn Element> {
-        let style = node.get::<StyleComponent>().unwrap().clone();
-        Box::new(View { style: style.0 })
+        Box::new(View {})
     }
 }

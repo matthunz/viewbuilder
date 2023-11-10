@@ -19,11 +19,18 @@ use taffy::Taffy;
 pub struct StyleComponent(pub Style);
 
 #[derive(Clone, Default)]
-pub struct DynAttribute(Option<Arc<dyn Any + Send + Sync>>);
+pub struct DynAttribute(pub Option<Arc<dyn Any + Send + Sync>>);
+
+impl PartialEq for DynAttribute {
+    fn eq(&self, _other: &Self) -> bool {
+        // TODO
+        false
+    }
+}
 
 impl FromAnyValue for DynAttribute {
-    fn from_any_value(_value: &dyn std::any::Any) -> Self {
-        todo!()
+    fn from_any_value(value: &dyn std::any::Any) -> Self {
+        value.downcast_ref::<Self>().unwrap().clone()
     }
 }
 

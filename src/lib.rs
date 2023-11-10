@@ -1,5 +1,8 @@
 pub mod virtual_tree;
 
+mod color;
+pub use color::Color;
+
 pub mod element;
 
 mod factory;
@@ -18,6 +21,8 @@ mod render;
 pub use render::Renderer;
 
 pub mod prelude {
+    pub use crate::Color;
+
     pub use dioxus::prelude::{render, rsx, use_future, use_state, Element, Scope};
 
     pub mod dioxus_elements {
@@ -39,6 +44,10 @@ pub mod prelude {
 
             #[allow(non_upper_case_globals)]
             pub const height: (&'static str, Option<&'static str>, bool) = ("height", None, false);
+
+            #[allow(non_upper_case_globals)]
+            pub const background_color: (&'static str, Option<&'static str>, bool) =
+                ("background_color", None, false);
         }
     }
 }

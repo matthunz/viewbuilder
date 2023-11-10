@@ -12,8 +12,11 @@ fn app(cx: Scope) -> Element {
 
     render!(
         view { flex_direction: FlexDirection::Column,
-            view { width: 100., height: 100., "{count}" }
-            view { width: 100., height: 100., "{count}" }
+            view { width: 200., height: 100., "High five count: {count}" }
+            view { flex_direction: FlexDirection::Row,
+                view { width: 200., height: 100., background_color: Color::from_rgb(0, 255, 255), "Up high!" }
+                view { width: 200., height: 100., background_color: Color::from_rgb(0, 255, 255), "Down low!" }
+            }
         }
     )
 }

@@ -28,7 +28,6 @@ impl Element for Text {
     }
 
     fn render(&mut self, layout: Layout, canvas: &mut skia_safe::Canvas) {
-        dbg!(layout);
         let typeface = Typeface::new("monospace", Default::default()).unwrap();
         let font = Font::new(typeface, 24.);
         if let Some(blob) = TextBlob::new(&self.content, &font) {
