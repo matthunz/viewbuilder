@@ -7,6 +7,7 @@ use dioxus::prelude::VirtualDom;
 use dioxus_native_core::node_ref::*;
 use dioxus_native_core::prelude::*;
 use dioxus_native_core_macro::partial_derive_state;
+use quadtree_rs::Quadtree;
 use shipyard::{Component, EntityId};
 use std::any::Any;
 use std::sync::Arc;
@@ -82,8 +83,6 @@ pub struct VirtualTree {
     vdom: VirtualDom,
     rdom: RealDom<DynAttribute>,
     state: DioxusState,
-    taffy: Arc<Mutex<Taffy>>,
-    layout: LayoutTree,
 }
 
 impl VirtualTree {
@@ -94,17 +93,15 @@ impl VirtualTree {
             LayoutComponent::to_type_erased(),
         ]);
         let mut state = DioxusState::create(&mut rdom);
-        let taffy = Arc::new(Mutex::new(Taffy::new()));
-        let mut layout = LayoutTree::new(32);
 
         let mutations = vdom.rebuild();
+        let taffy = tree.lock().unwrap().taffy.clone();
         apply(
             &mut rdom,
             &mut tree.lock().unwrap(),
             &mut state,
             mutations,
-            taffy.clone(),
-            &mut layout,
+            taffy,
         );
 
         Self {
@@ -112,8 +109,6 @@ impl VirtualTree {
             vdom,
             state,
             rdom,
-            taffy,
-            layout,
         }
     }
 
@@ -121,20 +116,16 @@ impl VirtualTree {
         self.vdom.wait_for_work().await;
 
         let mutations = self.vdom.render_immediate();
+        let taffy = self.tree.lock().unwrap().taffy.clone();
         apply(
             &mut self.rdom,
             &mut self.tree.lock().unwrap(),
             &mut self.state,
             mutations,
-            self.taffy.clone(),
-            &mut self.layout,
+            taffy,
         );
 
         Ok(())
-    }
-
-    pub fn target(&self, x: f64, y: f64) -> impl Iterator<Item = EntityId> + '_ {
-        self.layout.query([x, y])
     }
 }
 
@@ -144,7 +135,6 @@ fn apply(
     state: &mut DioxusState,
     mutations: Mutations,
     taffy: Arc<Mutex<Taffy>>,
-    layout_tree: &mut LayoutTree,
 ) {
     state.apply_mutations(rdom, mutations);
 
@@ -172,6 +162,9 @@ fn apply(
         .unwrap();
     taffy::compute_layout(&mut taffy_ref, root_layout_key, Size::MAX_CONTENT).unwrap();
 
+    // TODO
+    tree.layout.quadtree = Quadtree::new(20);
+
     // Convert the new relative layouts to global layouts
     rdom.traverse_depth_first(|node| {
         let layout = node.get::<LayoutComponent>().unwrap();
@@ -185,7 +178,7 @@ fn apply(
         }
         tree.slots.get_mut(&node.id()).unwrap().layout = layout;
 
-        layout_tree.insert(
+        tree.layout.insert(
             [layout.location.x as _, layout.location.y as _],
             [layout.size.width as _, layout.size.height as _],
             node.id(),

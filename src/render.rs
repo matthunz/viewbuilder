@@ -255,6 +255,15 @@ impl Renderer {
                         frame = frame.saturating_sub(10);
                         env.window.request_redraw();
                     }
+                    WindowEvent::CursorMoved {
+                        device_id,
+                        position,
+                        modifiers,
+                    } => {
+                        let tree_ref = tree.lock().unwrap();
+                        let mut targets = tree_ref.target(position.x, position.y);
+                        dbg!(targets.next());
+                    }
                     _ => (),
                 },
                 Event::RedrawRequested(_) => {

@@ -100,7 +100,7 @@ impl State<DynAttribute> for LayoutComponent {
 }
 
 pub struct LayoutTree {
-    quadtree: Quadtree<i64, EntityId>,
+    pub(crate) quadtree: Quadtree<i64, EntityId>,
     taffy: Taffy,
 }
 
@@ -131,7 +131,8 @@ impl LayoutTree {
 
 fn area(point: [f64; 2], size: [f64; 2]) -> Area<i64> {
     let point = point.map(to_rounded);
-    let size = size.map(to_rounded);
+    let size = size.map(|n| to_rounded(n).max(1));
+  
     AreaBuilder::default()
         .anchor(Point {
             x: point[0],
@@ -143,7 +144,7 @@ fn area(point: [f64; 2], size: [f64; 2]) -> Area<i64> {
 }
 
 fn to_rounded(n: f64) -> i64 {
-    (n * 10_000.).round() as _
+    (n * 100.).round() as _
 }
 
 /*

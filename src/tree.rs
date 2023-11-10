@@ -23,6 +23,8 @@ pub struct Tree {
     factories: HashMap<Cow<'static, str>, Box<dyn Factory>>,
     text_factory: Box<dyn TextFactory>,
     pub(crate) slots: HashMap<EntityId, Slot>,
+    pub(crate) taffy: Arc<Mutex<Taffy>>,
+    pub(crate) layout: LayoutTree,
 }
 
 impl Default for Tree {
@@ -31,6 +33,8 @@ impl Default for Tree {
             factories: Default::default(),
             text_factory: Box::new(TextElementFactory {}),
             slots: HashMap::new(),
+            taffy: Arc::new(Mutex::new(Taffy::new())),
+            layout:LayoutTree::new(16)
         };
         me.insert_factory("view", ViewFactory {});
         me.insert_factory("Root", ViewFactory {});
@@ -95,5 +99,9 @@ impl Tree {
         for slot in self.slots.values_mut() {
             slot.element.render(slot.layout, canvas)
         }
+    }
+
+    pub fn target(&self, x: f64, y: f64) -> impl Iterator<Item = EntityId> + '_ {
+        self.layout.query([x, y])
     }
 }
