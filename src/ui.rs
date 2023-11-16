@@ -1,4 +1,5 @@
 use crate::{any_element::AnyElement, element::View, Element, ElementRef};
+use kurbo::Point;
 use skia_safe::Canvas;
 use slotmap::{DefaultKey, SparseSecondaryMap};
 use std::{
@@ -12,8 +13,8 @@ use taffy::{
 };
 
 pub struct Node {
-    pub(crate) element: Box<dyn AnyElement>,
-    pub(crate) layout: Layout,
+    pub element: Box<dyn AnyElement>,
+    pub layout: Layout,
 }
 
 /// Graphical user interface.
@@ -113,6 +114,19 @@ impl UserInterface {
                 );
             }
         }
+    }
+
+    pub fn target(&self, point: Point) -> Option<DefaultKey> {
+        self.nodes
+            .iter()
+            .filter(move |(key, node)| {
+                point.x >= node.layout.location.x as _
+                    && point.x <= (node.layout.location.x + node.layout.size.width) as _
+                    && point.y >= node.layout.location.y as _
+                    && point.y <= (node.layout.location.y + node.layout.size.height) as _
+            })
+            .max_by_key(|(key, node)| node.layout.order)
+            .map(|(key, node)| key)
     }
 }
 

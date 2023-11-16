@@ -1,6 +1,7 @@
 use crate::{Element, ElementRef};
 use skia_safe::textlayout::{FontCollection, ParagraphBuilder, ParagraphStyle, TextStyle};
 use skia_safe::{surfaces, Color4f, FontMgr, FontStyle, Image, Paint};
+use slotmap::DefaultKey;
 
 use std::borrow::Cow;
 use std::mem;
@@ -33,7 +34,11 @@ impl Builder {
         self
     }
 
-    pub fn on_click(&mut self, _handler: impl FnMut(ElementRef<Text>) + 'static) -> &mut Self {
+    pub fn on_click(
+        &mut self,
+        handler: impl FnMut(ElementRef<Text>) + Send + 'static,
+    ) -> &mut Self {
+        self.text.on_click = Some(Box::new(handler));
         self
     }
 
@@ -48,6 +53,7 @@ pub struct Text {
     color: Color4f,
     image: Option<Image>,
     is_changed: bool,
+    on_click: Option<Box<dyn FnMut(ElementRef<Text>) + Send>>,
 }
 
 impl Default for Text {
@@ -58,6 +64,7 @@ impl Default for Text {
             color: Color4f::new(0., 0., 0., 1.),
             image: None,
             is_changed: false,
+            on_click: None,
         }
     }
 }
@@ -69,6 +76,7 @@ impl Text {
 
     pub fn set_content(&mut self, index: usize, text: impl Into<Cow<'static, str>>) {
         self.parts[index] = Part::Text(text.into());
+        self.is_changed = true;
     }
 }
 
@@ -81,6 +89,15 @@ impl Element for Text {
         Style {
             size: Size::from_points(1000., 200.),
             ..Default::default()
+        }
+    }
+
+    fn handle(&mut self, key: DefaultKey, event: winit::event::WindowEvent) {
+        if let Some(ref mut handler) = self.on_click {
+            handler(ElementRef {
+                key,
+                _marker: std::marker::PhantomData,
+            });
         }
     }
 

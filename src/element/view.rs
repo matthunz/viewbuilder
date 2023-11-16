@@ -75,6 +75,8 @@ impl Element for View {
         }
     }
 
+    fn handle(&mut self, key: DefaultKey, event: winit::event::WindowEvent) {}
+
     fn render(&mut self, size: Size<f32>) -> Option<Image> {
         if let Some(image) = self.image.clone() {
             if !self.is_changed {

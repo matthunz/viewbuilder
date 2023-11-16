@@ -1,4 +1,4 @@
-use crate::App;
+use crate::{transaction, App};
 use gl::types::*;
 use glutin::{
     config::{ConfigTemplateBuilder, GlConfig},
@@ -8,6 +8,7 @@ use glutin::{
     surface::{Surface as GlutinSurface, SurfaceAttributesBuilder, WindowSurface},
 };
 use glutin_winit::DisplayBuilder;
+use kurbo::Point;
 use lazy_static::lazy_static;
 use raw_window_handle::HasRawWindowHandle;
 use skia_safe::{
@@ -225,6 +226,8 @@ impl Runtime {
             }
         });
 
+        let mut cursor = None;
+
         el.run(move |event, window_target| {
             let frame_start = Instant::now();
             let mut draw_frame = false;
@@ -265,6 +268,32 @@ impl Runtime {
                     }
                     WindowEvent::RedrawRequested => {
                         draw_frame = true;
+                    }
+                    WindowEvent::CursorMoved {
+                        device_id,
+                        position,
+                    } => {
+                        cursor = Some(position);
+                    }
+                    WindowEvent::MouseInput {
+                        device_id,
+                        state,
+                        button,
+                    } => {
+                        if let Some(cursor) = cursor {
+                            transaction(move |ui| {
+                                if let Some(key) = ui.target(Point::new(cursor.x, cursor.y)) {
+                                    ui.nodes[key].element.as_element_mut().handle(
+                                        key,
+                                        WindowEvent::MouseInput {
+                                            device_id,
+                                            state,
+                                            button,
+                                        },
+                                    );
+                                }
+                            });
+                        }
                     }
                     _ => (),
                 }

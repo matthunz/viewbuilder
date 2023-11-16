@@ -1,8 +1,11 @@
 use skia_safe::Image;
 use slotmap::DefaultKey;
 use taffy::{prelude::Size, style::Style};
+use winit::event::WindowEvent;
 
 mod text;
+use crate::ElementRef;
+
 pub use self::text::Text;
 
 mod view;
@@ -16,20 +19,8 @@ pub trait Element: Send {
     /// Get the layout style of this element.
     fn layout(&mut self) -> Style;
 
+    fn handle(&mut self, key: DefaultKey, event: WindowEvent);
+
     /// Render the element to an image with the given size.
     fn render(&mut self, size: Size<f32>) -> Option<Image>;
-}
-
-impl Element for () {
-    fn children(&self) -> Option<Vec<DefaultKey>> {
-        None
-    }
-
-    fn layout(&mut self) -> Style {
-        Style::default()
-    }
-
-    fn render(&mut self, _size: Size<f32>) -> Option<Image> {
-        None
-    }
 }
