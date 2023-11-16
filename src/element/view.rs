@@ -46,6 +46,10 @@ impl View {
         self.is_changed = true;
     }
 
+    pub fn add_child(&mut self, key: DefaultKey) {
+        self.children.push(key);
+    }
+
     pub fn remove_child(&mut self, key: DefaultKey) {
         let idx = self
             .children
@@ -68,7 +72,7 @@ impl Element for View {
         }
     }
 
-    fn render(&mut self, size: Size<f32>) -> Image {
+    fn render(&mut self, size: Size<f32>) -> Option<Image> {
         let mut surface = surfaces::raster_n32_premul((
             size.width.floor() as i32 + 1,
             size.height.floor() as i32 + 1,
@@ -89,6 +93,6 @@ impl Element for View {
             );
         }
 
-        surface.image_snapshot()
+        Some(surface.image_snapshot())
     }
 }

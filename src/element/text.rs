@@ -80,7 +80,7 @@ impl Element for Text {
         }
     }
 
-    fn render(&mut self, size: taffy::prelude::Size<f32>) -> Image {
+    fn render(&mut self, size: taffy::prelude::Size<f32>) -> Option<Image> {
         let mut surface = surfaces::raster_n32_premul((
             size.width.floor() as i32 + 1,
             size.height.floor() as i32 + 1,
@@ -120,6 +120,6 @@ impl Element for Text {
         paragraph.layout(size.width);
         paragraph.paint(canvas, (0, 0));
 
-        surface.image_snapshot()
+        Some(surface.image_snapshot())
     }
 }

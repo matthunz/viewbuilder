@@ -17,5 +17,19 @@ pub trait Element: Send {
     fn layout(&mut self) -> Style;
 
     /// Render the element to an image with the given size.
-    fn render(&mut self, size: Size<f32>) -> Image;
+    fn render(&mut self, size: Size<f32>) -> Option<Image>;
+}
+
+impl Element for () {
+    fn children(&self) -> Option<Vec<DefaultKey>> {
+        None
+    }
+
+    fn layout(&mut self) -> Style {
+        Style::default()
+    }
+
+    fn render(&mut self, size: Size<f32>) -> Option<Image> {
+        None
+    }
 }
