@@ -8,7 +8,7 @@ mod element_ref;
 pub use element_ref::ElementRef;
 
 mod renderer;
-pub use renderer::run;
+pub use renderer::Renderer;
 
 mod transaction;
 pub use transaction::Transaction;
@@ -19,7 +19,7 @@ pub use user_interface::UserInterface;
 mod view;
 pub use view::View;
 
-pub trait Element {
+pub trait Element: Send {
     fn children(&self) -> Option<Vec<DefaultKey>>;
 
     fn layout(&mut self) -> Style;

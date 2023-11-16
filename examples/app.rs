@@ -1,9 +1,10 @@
 use skia_safe::Color4f;
-use viewbuilder::{UserInterface, View};
+use viewbuilder::{Renderer, View};
 
 #[tokio::main]
 async fn main() {
-    let ui = UserInterface::new();
+    let renderer = Renderer::new();
+    let ui = renderer.ui();
 
     ui.transaction(move |tx| {
         let child = tx.insert(
@@ -20,5 +21,5 @@ async fn main() {
         );
     });
 
-    viewbuilder::run(ui);
+    renderer.run();
 }

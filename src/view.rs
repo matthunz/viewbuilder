@@ -1,8 +1,7 @@
-use std::mem;
-
 use crate::Element;
 use skia_safe::{Color4f, Image, Paint, Rect, Surface};
 use slotmap::DefaultKey;
+use std::mem;
 use taffy::{prelude::Size, style::Style};
 
 #[derive(Default)]
