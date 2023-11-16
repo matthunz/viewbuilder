@@ -22,14 +22,35 @@ impl Builder {
         self
     }
 
+    pub fn color(&mut self, color: Color4f) -> &mut Self {
+        self.text.color = color;
+        self
+    }
+
+    pub fn font_size(&mut self, font_size: f32) -> &mut Self {
+        self.text.font_size = font_size;
+        self
+    }
+
     pub fn build(&mut self) -> Text {
         mem::take(&mut self.text)
     }
 }
 
-#[derive(Default)]
 pub struct Text {
     parts: Vec<Part>,
+    font_size: f32,
+    color: Color4f,
+}
+
+impl Default for Text {
+    fn default() -> Self {
+        Self {
+            parts: Vec::new(),
+            font_size: 24.,
+            color: Color4f::new(0., 0., 0., 1.),
+        }
+    }
 }
 
 impl Text {
@@ -51,7 +72,6 @@ impl Element for Text {
     }
 
     fn render(&mut self, size: taffy::prelude::Size<f32>) -> Image {
-        dbg!(size);
         let mut surface = surfaces::raster_n32_premul((
             size.width.floor() as i32 + 1,
             size.height.floor() as i32 + 1,
@@ -60,8 +80,8 @@ impl Element for Text {
         let canvas = surface.canvas();
 
         let mut text_style = TextStyle::new();
-        let paint = Paint::new(Color4f::new(0., 0., 0., 1.), None);
-        text_style.set_font_size(100.);
+        let paint = Paint::new(self.color, None);
+        text_style.set_font_size(self.font_size);
         text_style.set_font_style(FontStyle::default());
         text_style.set_font_families(&["monospace"]);
         text_style.set_foreground_paint(&paint);

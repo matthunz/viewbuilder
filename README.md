@@ -35,6 +35,14 @@ async fn main() {
         );
 
         ui.insert(
+            Text::builder()
+                .font_size(100.)
+                .color(Color4f::new(1., 0., 0., 1.))
+                .content("Hello World!")
+                .build(),
+        );
+
+        ui.insert(
             View::builder()
                 .background_color(Color4f::new(0., 1., 0., 1.))
                 .on_click(move || {
