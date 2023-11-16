@@ -7,6 +7,9 @@ mod any_element;
 mod element_ref;
 pub use element_ref::ElementRef;
 
+mod renderer;
+pub use renderer::run;
+
 mod transaction;
 pub use transaction::Transaction;
 

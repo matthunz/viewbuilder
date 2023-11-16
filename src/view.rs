@@ -1,5 +1,5 @@
 use crate::Element;
-use skia_safe::{Image, Surface};
+use skia_safe::{Color4f, Image, Paint, Rect, Surface};
 use slotmap::DefaultKey;
 use taffy::style::Style;
 
@@ -36,6 +36,17 @@ impl Element for View {
     fn render(&mut self) -> Image {
         let mut surface = Surface::new_raster_n32_premul((300, 300)).unwrap();
         let mut canvas = surface.canvas();
+
+        let paint = Paint::new(Color4f::new(0., 1., 0., 1.), None);
+        canvas.draw_rect(
+            Rect {
+                left: 0.,
+                top: 0.,
+                right: 200.,
+                bottom: 200.,
+            },
+            &paint,
+        );
 
         surface.image_snapshot()
     }
