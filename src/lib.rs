@@ -1,5 +1,8 @@
 mod any_element;
 
+mod app;
+pub use app::App;
+
 mod element;
 pub use self::element::Element;
 
@@ -9,11 +12,11 @@ pub use element_ref::ElementRef;
 mod runtime;
 pub use runtime::Runtime;
 
+mod text;
+pub use self::text::Text;
+
 mod ui;
 pub use ui::UserInterface;
-
-mod app;
-pub use app::App;
 
 mod view;
 pub use view::View;
