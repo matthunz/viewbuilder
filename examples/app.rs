@@ -6,7 +6,7 @@ async fn main() {
     viewbuilder::transaction(|ui| {
         let child = ui.insert(
             View::builder()
-                .background_color(Color4f::new(0., 1., 0., 1.))
+                .background_color(Color4f::new(1., 0., 0., 1.))
                 .build(),
         );
 

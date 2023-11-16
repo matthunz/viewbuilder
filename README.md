@@ -25,20 +25,27 @@ Cross-platform user interface framework for Rust.
 This crate provides a moduler GUI library that can be used as an entire framework, or with individual parts.
 
 ```rust
-fn App(cx: Scope) -> Element {
-    let mut count = use_state(cx, || 0);
+#[tokio::main]
+async fn main() {
+    viewbuilder::transaction(|ui| {
+        let child = ui.insert(
+            View::builder()
+                .background_color(Color4f::new(1., 0., 0., 1.))
+                .build(),
+        );
 
-    cx.render(rsx! {
-        view {
-            flex_direction: FlexDirection::Column,
-            "High five count: {count}",
-            view {
-                flex_direction: FlexDirection::Row,
-                view { onclick: move |_| count += 1, "Up high!" },
-                view { onclick: move |_| count -= 1, "Down low!" }
-            }
-        }
-    })
+        ui.insert(
+            View::builder()
+                .background_color(Color4f::new(0., 1., 0., 1.))
+                .on_click(move || {
+                    viewbuilder::transaction(move |ui| ui[child].set_background_color(None))
+                })
+                .child(child.key)
+                .build(),
+        );
+    });
+
+    viewbuilder::run();
 }
 ```
 
