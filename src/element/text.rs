@@ -1,8 +1,8 @@
-use std::borrow::Cow;
-use std::mem;
 use crate::Element;
 use skia_safe::textlayout::{FontCollection, ParagraphBuilder, ParagraphStyle, TextStyle};
 use skia_safe::{surfaces, Color4f, FontMgr, FontStyle, Image, Paint};
+use std::borrow::Cow;
+use std::mem;
 use taffy::prelude::Size;
 use taffy::style::Style;
 

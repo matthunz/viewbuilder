@@ -2,6 +2,12 @@ use skia_safe::Image;
 use slotmap::DefaultKey;
 use taffy::{prelude::Size, style::Style};
 
+mod text;
+pub use self::text::Text;
+
+mod view;
+pub use self::view::View;
+
 /// An element of a user interface.
 pub trait Element: Send {
     /// Optional keys of this element's children.
