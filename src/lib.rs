@@ -13,5 +13,3 @@ mod view;
 pub use view::View;
 
 pub trait Element {}
-
-impl Element for () {}
