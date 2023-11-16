@@ -1,7 +1,3 @@
-use std::{
-    sync::{Arc, Mutex},
-    thread,
-};
 use viewbuilder::{UserInterface, View};
 
 #[tokio::main]

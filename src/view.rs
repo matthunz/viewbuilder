@@ -1,7 +1,7 @@
 use crate::Element;
 use skia_safe::{Color4f, Image, Paint, Rect, Surface};
 use slotmap::DefaultKey;
-use taffy::style::Style;
+use taffy::{prelude::Size, style::Style};
 
 #[derive(Default)]
 pub struct View {
@@ -30,12 +30,19 @@ impl Element for View {
     }
 
     fn layout(&mut self) -> Style {
-        Style::default()
+        Style {
+            size: Size::from_points(200., 200.),
+            ..Default::default()
+        }
     }
 
-    fn render(&mut self) -> Image {
-        let mut surface = Surface::new_raster_n32_premul((300, 300)).unwrap();
-        let mut canvas = surface.canvas();
+    fn render(&mut self, size: Size<f32>) -> Image {
+        let mut surface = Surface::new_raster_n32_premul((
+            size.width.floor() as i32 + 1,
+            size.height.floor() as i32 + 1,
+        ))
+        .unwrap();
+        let canvas = surface.canvas();
 
         let paint = Paint::new(Color4f::new(0., 1., 0., 1.), None);
         canvas.draw_rect(

@@ -1,6 +1,6 @@
-use skia_safe::{Canvas, Image};
+use skia_safe::Image;
 use slotmap::DefaultKey;
-use taffy::style::Style;
+use taffy::{prelude::Size, style::Style};
 
 mod any_element;
 
@@ -24,5 +24,5 @@ pub trait Element {
 
     fn layout(&mut self) -> Style;
 
-    fn render(&mut self) -> Image;
+    fn render(&mut self, size: Size<f32>) -> Image;
 }

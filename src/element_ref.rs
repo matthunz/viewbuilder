@@ -17,14 +17,14 @@ impl<T> Copy for ElementRef<T> {}
 
 impl<T: 'static> ElementRef<T> {
     pub fn get(self, tx: &Transaction) -> Option<&T> {
-        tx.elements
+        tx.nodes
             .get(self.key)
-            .map(|any| any.as_any().downcast_ref().unwrap())
+            .map(|node| node.element.as_any().downcast_ref().unwrap())
     }
 
     pub fn get_mut(self, tx: &mut Transaction) -> Option<&mut T> {
-        tx.elements
+        tx.nodes
             .get_mut(self.key)
-            .map(|any| any.as_any_mut().downcast_mut().unwrap())
+            .map(|node| node.element.as_any_mut().downcast_mut().unwrap())
     }
 }
