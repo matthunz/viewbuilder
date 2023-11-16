@@ -10,7 +10,7 @@ pub struct App {
 }
 
 impl App {
-    pub(crate) fn new() -> (Self, mpsc::UnboundedReceiver<Image>) {
+    pub(crate) fn new(size: Size<i32>) -> (Self, mpsc::UnboundedReceiver<Image>) {
         let (tx, mut rx) = mpsc::unbounded_channel::<Box<dyn FnOnce(&mut UserInterface) + Send>>();
         let (image_tx, image_rx) = mpsc::unbounded_channel();
 
@@ -25,7 +25,7 @@ impl App {
                     .compute_layout(transaction.root, Size::max_content())
                     .unwrap();
 
-                let mut surface = surfaces::raster_n32_premul((300, 300)).unwrap();
+                let mut surface = surfaces::raster_n32_premul((size.width, size.height)).unwrap();
                 let canvas = surface.canvas();
 
                 for (key, node) in &mut transaction.nodes {

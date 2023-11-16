@@ -11,6 +11,7 @@ pub struct Node {
     pub(crate) layout: Layout,
 }
 
+/// Graphical user interface.
 pub struct UserInterface {
     pub(crate) nodes: SparseSecondaryMap<DefaultKey, Node>,
     pub(crate) taffy: Taffy,
@@ -29,6 +30,7 @@ impl UserInterface {
         }
     }
 
+    /// Insert an element into the user interface.
     pub fn insert<T>(&mut self, mut element: T) -> ElementRef<T>
     where
         T: Element + 'static,

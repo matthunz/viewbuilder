@@ -36,7 +36,10 @@ pub struct Runtime {
 
 impl Runtime {
     pub fn new() -> Self {
-        let (ui, images) = App::new();
+        let (ui, images) = App::new(taffy::prelude::Size {
+            width: 1000,
+            height: 500,
+        });
         Self {
             ui,
             images: Arc::new(Mutex::new(images)),
@@ -85,7 +88,7 @@ impl Runtime {
                     .unwrap()
             })
             .unwrap();
-        println!("Picked a config with {} samples", gl_config.num_samples());
+
         let window = window.expect("Could not create window with OpenGL context");
         let raw_window_handle = window.raw_window_handle();
 
