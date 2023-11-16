@@ -3,7 +3,7 @@ use slotmap::DefaultKey;
 use std::marker::PhantomData;
 
 pub struct ElementRef<T> {
-    pub(crate) key: DefaultKey,
+    pub key: DefaultKey,
     pub(crate) _marker: PhantomData<T>,
 }
 
