@@ -1,17 +1,40 @@
+use std::mem;
+
 use crate::Element;
 use skia_safe::{Color4f, Image, Paint, Rect, Surface};
 use slotmap::DefaultKey;
 use taffy::{prelude::Size, style::Style};
 
 #[derive(Default)]
+pub struct Builder {
+    view: View,
+}
+
+impl Builder {
+    pub fn child(&mut self, key: DefaultKey) -> &mut Self {
+        self.view.children.push(key);
+        self
+    }
+
+    pub fn background_color(&mut self, color: impl Into<Option<Color4f>>) -> &mut Self {
+        self.view.background_color = color.into();
+        self
+    }
+
+    pub fn build(&mut self) -> View {
+        mem::take(&mut self.view)
+    }
+}
+
+#[derive(Default)]
 pub struct View {
     children: Vec<DefaultKey>,
+    background_color: Option<Color4f>,
 }
 
 impl View {
-    pub fn with_child(&mut self, key: DefaultKey) -> &mut Self {
-        self.children.push(key);
-        self
+    pub fn builder() -> Builder {
+        Builder::default()
     }
 
     pub fn remove_child(&mut self, key: DefaultKey) {
@@ -44,16 +67,18 @@ impl Element for View {
         .unwrap();
         let canvas = surface.canvas();
 
-        let paint = Paint::new(Color4f::new(0., 1., 0., 1.), None);
-        canvas.draw_rect(
-            Rect {
-                left: 0.,
-                top: 0.,
-                right: 200.,
-                bottom: 200.,
-            },
-            &paint,
-        );
+        if let Some(background_color) = self.background_color {
+            let paint = Paint::new(background_color, None);
+            canvas.draw_rect(
+                Rect {
+                    left: 0.,
+                    top: 0.,
+                    right: size.width,
+                    bottom: size.height,
+                },
+                &paint,
+            );
+        }
 
         surface.image_snapshot()
     }
