@@ -1,4 +1,4 @@
-use crate::UserInterface;
+use crate::App;
 use gl::types::*;
 use glutin::{
     config::{ConfigTemplateBuilder, GlConfig},
@@ -30,13 +30,13 @@ use winit::{
 
 #[derive(Clone)]
 pub struct Runtime {
-    ui: UserInterface,
+    ui: App,
     images: Arc<Mutex<mpsc::UnboundedReceiver<Image>>>,
 }
 
 impl Runtime {
     pub fn new() -> Self {
-        let (ui, images) = UserInterface::new();
+        let (ui, images) = App::new();
         Self {
             ui,
             images: Arc::new(Mutex::new(images)),
@@ -50,7 +50,7 @@ impl Runtime {
         CURRENT.clone()
     }
 
-    pub fn ui(&self) -> UserInterface {
+    pub fn ui(&self) -> App {
         self.ui.clone()
     }
 

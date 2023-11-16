@@ -1,20 +1,21 @@
-use crate::Transaction;
+use crate::UserInterface;
 use skia_safe::{surfaces, Image};
+
 use taffy::prelude::Size;
 use tokio::{sync::mpsc, task};
 
 #[derive(Clone)]
-pub struct UserInterface {
-    pub(crate) tx: mpsc::UnboundedSender<Box<dyn FnOnce(&mut Transaction) + Send>>,
+pub struct App {
+    pub(crate) tx: mpsc::UnboundedSender<Box<dyn FnOnce(&mut UserInterface) + Send>>,
 }
 
-impl UserInterface {
+impl App {
     pub(crate) fn new() -> (Self, mpsc::UnboundedReceiver<Image>) {
-        let (tx, mut rx) = mpsc::unbounded_channel::<Box<dyn FnOnce(&mut Transaction) + Send>>();
+        let (tx, mut rx) = mpsc::unbounded_channel::<Box<dyn FnOnce(&mut UserInterface) + Send>>();
         let (image_tx, image_rx) = mpsc::unbounded_channel();
 
         task::spawn(async move {
-            let mut transaction = Transaction::new();
+            let mut transaction = UserInterface::new();
 
             while let Some(f) = rx.recv().await {
                 f(&mut transaction);
@@ -49,7 +50,7 @@ impl UserInterface {
         (Self { tx }, image_rx)
     }
 
-    pub fn transaction(&self, f: impl FnOnce(&mut Transaction) + Send + 'static) {
+    pub fn transaction(&self, f: impl FnOnce(&mut UserInterface) + Send + 'static) {
         self.tx.send(Box::new(f)).unwrap();
     }
 }

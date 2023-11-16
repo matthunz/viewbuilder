@@ -14,9 +14,7 @@ async fn main() {
             View::builder()
                 .background_color(Color4f::new(0., 1., 0., 1.))
                 .on_click(move || {
-                    viewbuilder::transaction(move |ui| {
-                        child.get_mut(ui).unwrap().set_background_color(None)
-                    })
+                    viewbuilder::transaction(move |ui| ui[child].set_background_color(None))
                 })
                 .child(child.key)
                 .build(),

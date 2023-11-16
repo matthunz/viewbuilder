@@ -1,5 +1,5 @@
 use crate::Element;
-use skia_safe::{Color4f, Image, Paint, Rect, Surface};
+use skia_safe::{surfaces, Color4f, Image, Paint, Rect};
 use slotmap::DefaultKey;
 use std::mem;
 use taffy::{prelude::Size, style::Style};
@@ -20,7 +20,7 @@ impl Builder {
         self
     }
 
-    pub fn on_click(&mut self, handler: impl FnMut() + 'static) -> &mut Self {
+    pub fn on_click(&mut self, _handler: impl FnMut() + 'static) -> &mut Self {
         self
     }
 
@@ -69,7 +69,7 @@ impl Element for View {
     }
 
     fn render(&mut self, size: Size<f32>) -> Image {
-        let mut surface = Surface::new_raster_n32_premul((
+        let mut surface = surfaces::raster_n32_premul((
             size.width.floor() as i32 + 1,
             size.height.floor() as i32 + 1,
         ))

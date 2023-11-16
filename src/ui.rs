@@ -1,6 +1,9 @@
 use crate::{any_element::AnyElement, Element, ElementRef};
 use slotmap::{DefaultKey, SparseSecondaryMap};
-use std::marker::PhantomData;
+use std::{
+    marker::PhantomData,
+    ops::{Index, IndexMut},
+};
 use taffy::{prelude::Layout, style::Style, Taffy};
 
 pub struct Node {
@@ -8,13 +11,13 @@ pub struct Node {
     pub(crate) layout: Layout,
 }
 
-pub struct Transaction {
+pub struct UserInterface {
     pub(crate) nodes: SparseSecondaryMap<DefaultKey, Node>,
     pub(crate) taffy: Taffy,
     pub(crate) root: DefaultKey,
 }
 
-impl Transaction {
+impl UserInterface {
     pub(crate) fn new() -> Self {
         let mut taffy = Taffy::new();
         let root = taffy.new_leaf(Style::default()).unwrap();
@@ -47,5 +50,19 @@ impl Transaction {
             key,
             _marker: PhantomData,
         }
+    }
+}
+
+impl<T: 'static> Index<ElementRef<T>> for UserInterface {
+    type Output = T;
+
+    fn index(&self, index: ElementRef<T>) -> &Self::Output {
+        index.get(self).unwrap()
+    }
+}
+
+impl<T: 'static> IndexMut<ElementRef<T>> for UserInterface {
+    fn index_mut(&mut self, index: ElementRef<T>) -> &mut Self::Output {
+        index.get_mut(self).unwrap()
     }
 }

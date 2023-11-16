@@ -10,11 +10,11 @@ pub use element_ref::ElementRef;
 mod runtime;
 pub use runtime::Runtime;
 
-mod transaction;
-pub use transaction::Transaction;
+mod ui;
+pub use ui::UserInterface;
 
-mod user_interface;
-pub use user_interface::UserInterface;
+mod app;
+pub use app::App;
 
 mod view;
 pub use view::View;
@@ -31,6 +31,6 @@ pub fn run() {
     Runtime::current().run()
 }
 
-pub fn transaction(f: impl FnOnce(&mut Transaction) + Send + 'static) {
+pub fn transaction(f: impl FnOnce(&mut UserInterface) + Send + 'static) {
     Runtime::current().ui().tx.send(Box::new(f)).unwrap();
 }

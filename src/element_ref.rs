@@ -1,4 +1,4 @@
-use crate::Transaction;
+use crate::UserInterface;
 use slotmap::DefaultKey;
 use std::marker::PhantomData;
 
@@ -16,14 +16,14 @@ impl<T> Clone for ElementRef<T> {
 impl<T> Copy for ElementRef<T> {}
 
 impl<T: 'static> ElementRef<T> {
-    pub fn get(self, tx: &Transaction) -> Option<&T> {
-        tx.nodes
+    pub fn get(self, ui: &UserInterface) -> Option<&T> {
+        ui.nodes
             .get(self.key)
             .map(|node| node.element.as_any().downcast_ref().unwrap())
     }
 
-    pub fn get_mut(self, tx: &mut Transaction) -> Option<&mut T> {
-        tx.nodes
+    pub fn get_mut(self, ui: &mut UserInterface) -> Option<&mut T> {
+        ui.nodes
             .get_mut(self.key)
             .map(|node| node.element.as_any_mut().downcast_mut().unwrap())
     }
