@@ -1,5 +1,5 @@
 use skia_safe::Color4f;
-use viewbuilder::element::{Text, View};
+use viewbuilder::element::Text;
 
 #[tokio::main]
 async fn main() {

@@ -1,10 +1,15 @@
 use crate::{any_element::AnyElement, element::View, Element, ElementRef};
+use skia_safe::Canvas;
 use slotmap::{DefaultKey, SparseSecondaryMap};
 use std::{
     marker::PhantomData,
     ops::{Index, IndexMut},
 };
-use taffy::{prelude::Layout, style::Style, Taffy};
+use taffy::{
+    prelude::{Layout, Size},
+    style::Style,
+    Taffy,
+};
 
 pub struct Node {
     pub(crate) element: Box<dyn AnyElement>,
@@ -66,6 +71,47 @@ impl UserInterface {
         LevelsMut {
             stack: vec![Item::Push(self.root)],
             ui: self,
+        }
+    }
+
+    /// Compute the layout of the tree.
+    pub fn layout(&mut self) {
+        self.taffy
+            .compute_layout(self.root, Size::max_content())
+            .unwrap();
+
+        let mut parents: Vec<Layout> = Vec::new();
+        let mut levels = self.levels_mut();
+        while let Some(item) = levels.next() {
+            match item {
+                Item::Push(key) => {
+                    let mut layout = levels.ui.taffy.layout(key).unwrap().clone();
+                    if let Some(parent_layout) = parents.last() {
+                        layout.location.x += parent_layout.location.x;
+                        layout.location.x += parent_layout.location.x;
+                    }
+                    levels.ui.nodes[key].layout = layout;
+                    parents.push(layout);
+                }
+                Item::Pop => {
+                    parents.pop();
+                }
+            }
+        }
+    }
+
+    pub fn render(&mut self, canvas: &mut Canvas) {
+        for node in self.nodes.values_mut() {
+            if let Some(image) = node.element.as_element_mut().render(node.layout.size) {
+                canvas.draw_image(
+                    image,
+                    (
+                        node.layout.location.x.floor(),
+                        node.layout.location.y.floor(),
+                    ),
+                    None,
+                );
+            }
         }
     }
 }

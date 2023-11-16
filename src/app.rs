@@ -1,7 +1,6 @@
-use crate::{ui::Item, UserInterface};
+use crate::UserInterface;
 use skia_safe::{surfaces, Image};
-
-use taffy::prelude::{Layout, Size};
+use taffy::prelude::Size;
 use tokio::{sync::mpsc, task};
 
 #[derive(Clone)]
@@ -20,45 +19,11 @@ impl App {
             while let Some(f) = rx.recv().await {
                 f(&mut ui);
 
-                ui.taffy
-                    .compute_layout(ui.root, Size::max_content())
-                    .unwrap();
-
-                let mut parents: Vec<Layout> = Vec::new();
-                let mut levels = ui.levels_mut();
-                while let Some(item) = levels.next() {
-                    match item {
-                        Item::Push(key) => {
-                            let mut layout = levels.ui.taffy.layout(key).unwrap().clone();
-                            if let Some(parent_layout) = parents.last() {
-                                layout.location.x += parent_layout.location.x;
-                                layout.location.x += parent_layout.location.x;
-                            }
-                            dbg!(layout);
-                            levels.ui.nodes[key].layout = layout;
-                            parents.push(layout);
-                        }
-                        Item::Pop => {
-                            parents.pop();
-                        }
-                    }
-                }
+                ui.layout();
 
                 let mut surface = surfaces::raster_n32_premul((size.width, size.height)).unwrap();
                 let canvas = surface.canvas();
-
-                for node in ui.nodes.values_mut() {
-                    if let Some(image) = node.element.as_element_mut().render(node.layout.size) {
-                        canvas.draw_image(
-                            image,
-                            (
-                                node.layout.location.x.floor(),
-                                node.layout.location.y.floor(),
-                            ),
-                            None,
-                        );
-                    }
-                }
+                ui.render(canvas);
 
                 let image = surface.image_snapshot();
                 image_tx.send(image).unwrap();

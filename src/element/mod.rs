@@ -29,7 +29,7 @@ impl Element for () {
         Style::default()
     }
 
-    fn render(&mut self, size: Size<f32>) -> Option<Image> {
+    fn render(&mut self, _size: Size<f32>) -> Option<Image> {
         None
     }
 }
