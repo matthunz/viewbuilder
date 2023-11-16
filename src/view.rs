@@ -20,6 +20,10 @@ impl Builder {
         self
     }
 
+    pub fn on_click(&mut self, handler: impl FnMut() + 'static) -> &mut Self {
+        self
+    }
+
     pub fn build(&mut self) -> View {
         mem::take(&mut self.view)
     }
@@ -29,11 +33,17 @@ impl Builder {
 pub struct View {
     children: Vec<DefaultKey>,
     background_color: Option<Color4f>,
+    is_changed: bool,
 }
 
 impl View {
     pub fn builder() -> Builder {
         Builder::default()
+    }
+
+    pub fn set_background_color(&mut self, color: impl Into<Option<Color4f>>) {
+        self.background_color = color.into();
+        self.is_changed = true;
     }
 
     pub fn remove_child(&mut self, key: DefaultKey) {

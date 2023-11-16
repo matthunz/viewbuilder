@@ -54,7 +54,7 @@ impl Runtime {
         self.ui.clone()
     }
 
-    pub fn run(mut self) {
+    pub fn run(self) {
         let el = EventLoop::new().expect("Failed to create event loop");
         let winit_window_builder = WindowBuilder::new()
             .with_title("rust-skia-gl-window")

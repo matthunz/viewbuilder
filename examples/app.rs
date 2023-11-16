@@ -1,18 +1,23 @@
 use skia_safe::Color4f;
-use viewbuilder::{Runtime, View};
+use viewbuilder::View;
 
 #[tokio::main]
 async fn main() {
-    viewbuilder::transaction(|tx| {
-        let child = tx.insert(
+    viewbuilder::transaction(|ui| {
+        let child = ui.insert(
             View::builder()
                 .background_color(Color4f::new(0., 1., 0., 1.))
                 .build(),
         );
 
-        tx.insert(
+        ui.insert(
             View::builder()
                 .background_color(Color4f::new(0., 1., 0., 1.))
+                .on_click(move || {
+                    viewbuilder::transaction(move |ui| {
+                        child.get_mut(ui).unwrap().set_background_color(None)
+                    })
+                })
                 .child(child.key)
                 .build(),
         );
