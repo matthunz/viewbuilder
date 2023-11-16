@@ -8,6 +8,7 @@ use glutin::{
     surface::{Surface as GlutinSurface, SurfaceAttributesBuilder, WindowSurface},
 };
 use glutin_winit::DisplayBuilder;
+use lazy_static::lazy_static;
 use raw_window_handle::HasRawWindowHandle;
 use skia_safe::{
     gpu::{self, backend_render_targets, gl::FramebufferInfo, SurfaceOrigin},
@@ -16,10 +17,10 @@ use skia_safe::{
 use std::{
     ffi::CString,
     num::NonZeroU32,
-    sync::{Arc, Mutex},
+    sync::Arc,
     time::{Duration, Instant},
 };
-use tokio::sync::mpsc;
+use tokio::sync::{mpsc, Mutex};
 use winit::{
     dpi::LogicalSize,
     event::{Event, KeyEvent, Modifiers, WindowEvent},
@@ -27,15 +28,26 @@ use winit::{
     window::{Window, WindowBuilder},
 };
 
-pub struct Renderer {
+#[derive(Clone)]
+pub struct Runtime {
     ui: UserInterface,
-    images: mpsc::UnboundedReceiver<Image>,
+    images: Arc<Mutex<mpsc::UnboundedReceiver<Image>>>,
 }
 
-impl Renderer {
+impl Runtime {
     pub fn new() -> Self {
         let (ui, images) = UserInterface::new();
-        Self { ui, images }
+        Self {
+            ui,
+            images: Arc::new(Mutex::new(images)),
+        }
+    }
+
+    pub fn current() -> Self {
+        lazy_static! {
+            static ref CURRENT: Runtime = Runtime::new();
+        }
+        CURRENT.clone()
     }
 
     pub fn ui(&self) -> UserInterface {
@@ -201,11 +213,11 @@ impl Renderer {
         let mut previous_frame_start = Instant::now();
         let mut modifiers = Modifiers::default();
 
-        let image = Arc::new(Mutex::new(None));
+        let image = Arc::new(std::sync::Mutex::new(None));
         let image_clone = image.clone();
         tokio::task::spawn(async move {
             loop {
-                let new_image = self.images.recv().await.unwrap();
+                let new_image = self.images.lock().await.recv().await.unwrap();
                 *image_clone.lock().unwrap() = Some(new_image);
             }
         });

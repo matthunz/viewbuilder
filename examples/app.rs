@@ -1,12 +1,9 @@
 use skia_safe::Color4f;
-use viewbuilder::{Renderer, View};
+use viewbuilder::{Runtime, View};
 
 #[tokio::main]
 async fn main() {
-    let renderer = Renderer::new();
-    let ui = renderer.ui();
-
-    ui.transaction(move |tx| {
+    viewbuilder::transaction(|tx| {
         let child = tx.insert(
             View::builder()
                 .background_color(Color4f::new(0., 1., 0., 1.))
@@ -21,5 +18,5 @@ async fn main() {
         );
     });
 
-    renderer.run();
+    viewbuilder::run();
 }

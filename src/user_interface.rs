@@ -5,7 +5,7 @@ use tokio::{sync::mpsc, task};
 
 #[derive(Clone)]
 pub struct UserInterface {
-    tx: mpsc::UnboundedSender<Box<dyn FnOnce(&mut Transaction) + Send>>,
+    pub(crate) tx: mpsc::UnboundedSender<Box<dyn FnOnce(&mut Transaction) + Send>>,
 }
 
 impl UserInterface {

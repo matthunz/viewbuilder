@@ -2469,6 +2469,7 @@ dependencies = [
  "glutin-winit",
  "interpolation",
  "kurbo",
+ "lazy_static",
  "quadtree_rs",
  "raw-window-handle 0.5.2",
  "rustc-hash",

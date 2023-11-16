@@ -7,8 +7,8 @@ mod any_element;
 mod element_ref;
 pub use element_ref::ElementRef;
 
-mod renderer;
-pub use renderer::Renderer;
+mod runtime;
+pub use runtime::Runtime;
 
 mod transaction;
 pub use transaction::Transaction;
@@ -25,4 +25,12 @@ pub trait Element: Send {
     fn layout(&mut self) -> Style;
 
     fn render(&mut self, size: Size<f32>) -> Image;
+}
+
+pub fn run() {
+    Runtime::current().run()
+}
+
+pub fn transaction(f: impl FnOnce(&mut Transaction) + Send + 'static) {
+    Runtime::current().ui().tx.send(Box::new(f)).unwrap();
 }
