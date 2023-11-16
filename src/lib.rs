@@ -1,18 +1,84 @@
 use slotmap::{DefaultKey, SlotMap};
-use std::sync::{mpsc, Arc, Mutex};
+use std::{any::Any, marker::PhantomData, sync::mpsc};
 use tokio::task;
 
 pub trait Element {}
 
+impl Element for () {}
+
+pub struct ElementRef<T> {
+    key: DefaultKey,
+    _marker: PhantomData<T>,
+}
+
+impl<T> Clone for ElementRef<T> {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+impl<T> Copy for ElementRef<T> {}
+
+impl<T: 'static> ElementRef<T> {
+    pub fn get(self, tx: &Transaction) -> Option<&T> {
+        tx.elements
+            .get(self.key)
+            .map(|any| any.as_any().downcast_ref().unwrap())
+    }
+
+    pub fn get_mut(self, tx: &mut Transaction) -> Option<&mut T> {
+        tx.elements
+            .get_mut(self.key)
+            .map(|any| any.as_any_mut().downcast_mut().unwrap())
+    }
+}
 
 #[derive(Default)]
 pub struct Transaction {
-    elements: SlotMap<DefaultKey, Box<dyn Element>>,
+    elements: SlotMap<DefaultKey, Box<dyn AnyElement>>,
 }
 
 impl Transaction {
-    pub fn insert(&mut self, element: impl Element + 'static) -> DefaultKey {
-        self.elements.insert(Box::new(element))
+    pub fn insert<T>(&mut self, element: T) -> ElementRef<T>
+    where
+        T: Element + 'static,
+    {
+        let key = self.elements.insert(Box::new(element));
+        ElementRef {
+            key,
+            _marker: PhantomData,
+        }
+    }
+}
+
+trait AnyElement {
+    fn as_any(&self) -> &dyn Any;
+
+    fn as_any_mut(&mut self) -> &mut dyn Any;
+
+    fn as_element(&self) -> &dyn Element;
+
+    fn as_element_mut(&mut self) -> &mut dyn Element;
+}
+
+impl<T> AnyElement for T
+where
+    T: Element + 'static,
+{
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    fn as_any_mut(&mut self) -> &mut dyn Any {
+        self
+    }
+
+    fn as_element(&self) -> &dyn Element {
+        self
+    }
+
+    fn as_element_mut(&mut self) -> &mut dyn Element {
+        self
     }
 }
 

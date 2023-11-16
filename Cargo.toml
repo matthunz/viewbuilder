@@ -52,5 +52,5 @@ features = ["full"]
 rustdoc-args = ["--cfg", "docsrs"]
 
 [[example]]
-name = "counter"
+name = "app"
 required-features = ["full"]
