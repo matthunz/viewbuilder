@@ -9,6 +9,7 @@ pub use transaction::Transaction;
 mod user_interface;
 pub use user_interface::UserInterface;
 
-pub trait Element {}
+mod view;
+pub use view::View;
 
-impl Element for () {}
+pub trait Element {}
