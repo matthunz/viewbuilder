@@ -46,6 +46,8 @@ pub struct Text {
     parts: Vec<Part>,
     font_size: f32,
     color: Color4f,
+    image: Option<Image>,
+    is_changed: bool,
 }
 
 impl Default for Text {
@@ -54,6 +56,8 @@ impl Default for Text {
             parts: Vec::new(),
             font_size: 24.,
             color: Color4f::new(0., 0., 0., 1.),
+            image: None,
+            is_changed: false,
         }
     }
 }
@@ -81,6 +85,12 @@ impl Element for Text {
     }
 
     fn render(&mut self, size: taffy::prelude::Size<f32>) -> Option<Image> {
+        if let Some(image) = self.image.clone() {
+            if !self.is_changed {
+                return Some(image);
+            }
+        }
+
         let mut surface = surfaces::raster_n32_premul((
             size.width.floor() as i32 + 1,
             size.height.floor() as i32 + 1,
@@ -120,6 +130,9 @@ impl Element for Text {
         paragraph.layout(size.width);
         paragraph.paint(canvas, (0, 0));
 
-        Some(surface.image_snapshot())
+        let image = surface.image_snapshot();
+        self.is_changed = false;
+        self.image = Some(image.clone());
+        Some(image)
     }
 }

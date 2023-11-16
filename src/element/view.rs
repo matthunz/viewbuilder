@@ -34,6 +34,7 @@ pub struct View {
     children: Vec<DefaultKey>,
     background_color: Option<Color4f>,
     is_changed: bool,
+    image: Option<Image>,
 }
 
 impl View {
@@ -48,6 +49,7 @@ impl View {
 
     pub fn add_child(&mut self, key: DefaultKey) {
         self.children.push(key);
+        self.is_changed = true;
     }
 
     pub fn remove_child(&mut self, key: DefaultKey) {
@@ -57,6 +59,7 @@ impl View {
             .position(|child_key| key == *child_key)
             .unwrap();
         self.children.remove(idx);
+        self.is_changed = true;
     }
 }
 
@@ -73,6 +76,12 @@ impl Element for View {
     }
 
     fn render(&mut self, size: Size<f32>) -> Option<Image> {
+        if let Some(image) = self.image.clone() {
+            if !self.is_changed {
+                return Some(image);
+            }
+        }
+
         let mut surface = surfaces::raster_n32_premul((
             size.width.floor() as i32 + 1,
             size.height.floor() as i32 + 1,
@@ -93,6 +102,9 @@ impl Element for View {
             );
         }
 
-        Some(surface.image_snapshot())
+        let image = surface.image_snapshot();
+        self.is_changed = false;
+        self.image = Some(image.clone());
+        Some(image)
     }
 }
