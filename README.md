@@ -28,27 +28,14 @@ This crate provides a moduler GUI library that can be used as an entire framewor
 #[tokio::main]
 async fn main() {
     viewbuilder::transaction(|ui| {
-        let child = ui.insert(
-            View::builder()
-                .background_color(Color4f::new(1., 0., 0., 1.))
-                .build(),
-        );
-
         ui.insert(
             Text::builder()
                 .font_size(100.)
                 .color(Color4f::new(1., 0., 0., 1.))
-                .content("Hello World!")
-                .build(),
-        );
-
-        ui.insert(
-            View::builder()
-                .background_color(Color4f::new(0., 1., 0., 1.))
-                .on_click(move || {
-                    viewbuilder::transaction(move |ui| ui[child].set_background_color(None))
+                .on_click(|text| {
+                    viewbuilder::transaction(move |ui| ui[text].set_content(0, "Clicked!"))
                 })
-                .child(child.key)
+                .content("Hello World!")
                 .build(),
         );
     });

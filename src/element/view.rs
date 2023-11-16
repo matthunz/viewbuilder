@@ -1,4 +1,4 @@
-use crate::Element;
+use crate::{Element, ElementRef};
 use skia_safe::{surfaces, Color4f, Image, Paint, Rect};
 use slotmap::DefaultKey;
 use std::mem;
@@ -20,7 +20,7 @@ impl Builder {
         self
     }
 
-    pub fn on_click(&mut self, _handler: impl FnMut() + 'static) -> &mut Self {
+    pub fn on_click(&mut self, _handler: impl FnMut(ElementRef<Self>) + 'static) -> &mut Self {
         self
     }
 

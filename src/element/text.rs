@@ -1,6 +1,7 @@
-use crate::Element;
+use crate::{Element, ElementRef};
 use skia_safe::textlayout::{FontCollection, ParagraphBuilder, ParagraphStyle, TextStyle};
 use skia_safe::{surfaces, Color4f, FontMgr, FontStyle, Image, Paint};
+use slotmap::DefaultKey;
 use std::borrow::Cow;
 use std::mem;
 use taffy::prelude::Size;
@@ -32,6 +33,10 @@ impl Builder {
         self
     }
 
+    pub fn on_click(&mut self, _handler: impl FnMut(ElementRef<Text>) + 'static) -> &mut Self {
+        self
+    }
+
     pub fn build(&mut self) -> Text {
         mem::take(&mut self.text)
     }
@@ -56,6 +61,10 @@ impl Default for Text {
 impl Text {
     pub fn builder() -> Builder {
         Builder::default()
+    }
+
+    pub fn set_content(&mut self, index: usize, text: impl Into<Cow<'static, str>>) {
+        self.parts[index] = Part::Text(text.into());
     }
 }
 
