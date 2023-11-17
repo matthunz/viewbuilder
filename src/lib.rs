@@ -96,79 +96,14 @@ pub mod prelude {
 
 #[cfg(feature = "dioxus")]
 pub fn launch(app: dioxus::prelude::Component) {
+    use crate::virtual_tree::VirtualTree;
     use tokio::task::LocalSet;
-    use virtual_tree::Message;
 
     tokio::task::spawn_blocking(move || {
         let local_set = LocalSet::new();
         local_set.block_on(&tokio::runtime::Runtime::new().unwrap(), async move {
-            let (mut virtual_tree, mut rx) = virtual_tree::VirtualTree::new(app);
-
-            tokio::spawn(async move {
-                while let Some(msg) = rx.recv().await {
-                    match msg {
-                        Message::Insert { element, tx } => transaction(move |ui| {
-                            let key = ui.insert_boxed(element);
-                            tx.send(key).unwrap();
-                        }),
-                        Message::SetAttribute {
-                            tag: _,
-                            key,
-                            name,
-                            value,
-                            virtual_element,
-                        } => transaction(move |ui| {
-                            let element = &mut *ui.nodes[key].element;
-                            virtual_element
-                                .lock()
-                                .unwrap()
-                                .set_attribute(&name, value, element);
-                        }),
-                        Message::SetHandler {
-                            name,
-                            handler,
-                            key,
-                            virtual_element,
-                        } => transaction(move |ui| {
-                            let element = &mut *ui.nodes[key].element;
-                            virtual_element
-                                .lock()
-                                .unwrap()
-                                .set_handler(&name, handler, element);
-                        }),
-                        Message::HydrateText {
-                            key,
-                            path,
-                            value,
-                            virtual_element,
-                        } => transaction(move |ui| {
-                            let element = &mut *ui.nodes[key].element;
-                            virtual_element
-                                .lock()
-                                .unwrap()
-                                .hydrate_text(path, value, element);
-                        }),
-                        Message::SetText {
-                            key,
-                            value,
-                            virtual_element,
-                        } => transaction(move |ui| {
-                            let element = &mut *ui.nodes[key].element;
-                            virtual_element.lock().unwrap().set_text(value, element);
-                        }),
-                    }
-                }
-            });
-
-            virtual_tree.rebuild().await;
-
-            dbg!("start");
-            loop {
-                dbg!("loop");
-                virtual_tree.wait().await;
-                dbg!("run");
-                virtual_tree.run().await;
-            }
+            let mut virtual_tree = VirtualTree::new(app);
+            virtual_tree.run().await;
         })
     });
 

@@ -7,7 +7,7 @@ pub use self::text::VirtualText;
 mod view;
 pub use self::view::VirtualView;
 
-pub trait VirtualElement: Send {
+pub trait VirtualElement: Send + Sync {
     fn from_vnode(&self, node: &VirtualNode) -> Box<dyn AnyElement>;
 
     fn set_attribute(&self, name: &str, value: Box<dyn Any>, element: &mut dyn AnyElement);

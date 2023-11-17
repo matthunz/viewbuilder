@@ -1,11 +1,7 @@
 use crate::{any_element::AnyElement, virtual_element::VirtualElement};
-
 use futures::channel::oneshot;
 use slotmap::DefaultKey;
-use std::{
-    any::Any,
-    sync::{Arc, Mutex},
-};
+use std::{any::Any, sync::Arc};
 
 pub enum Message {
     Insert {
@@ -17,23 +13,23 @@ pub enum Message {
         key: DefaultKey,
         name: String,
         value: Box<dyn Any + Send>,
-        virtual_element: Arc<Mutex<Box<dyn VirtualElement>>>,
+        virtual_element: Arc<dyn VirtualElement>,
     },
     SetHandler {
         name: String,
         handler: Box<dyn FnMut() + Send>,
         key: DefaultKey,
-        virtual_element: Arc<Mutex<Box<dyn VirtualElement>>>,
+        virtual_element: Arc<dyn VirtualElement>,
     },
     HydrateText {
         key: DefaultKey,
         path: usize,
         value: String,
-        virtual_element: Arc<Mutex<Box<dyn VirtualElement>>>,
+        virtual_element: Arc<dyn VirtualElement>,
     },
     SetText {
         key: DefaultKey,
         value: String,
-        virtual_element: Arc<Mutex<Box<dyn VirtualElement>>>,
+        virtual_element: Arc<dyn VirtualElement>,
     },
 }

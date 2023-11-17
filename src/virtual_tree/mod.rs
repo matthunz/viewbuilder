@@ -1,4 +1,5 @@
 use crate::{
+    transaction,
     virtual_element::{VirtualElement, VirtualText, VirtualView},
     ClickEvent,
 };
@@ -8,11 +9,7 @@ use dioxus::{
 };
 use futures::channel::oneshot;
 use slotmap::DefaultKey;
-use std::{
-    collections::HashMap,
-    rc::Rc,
-    sync::{Arc, Mutex},
-};
+use std::{collections::HashMap, rc::Rc, sync::Arc};
 use tokio::sync::mpsc;
 
 mod message;
@@ -31,30 +28,82 @@ pub struct VirtualTree {
 }
 
 impl VirtualTree {
-    pub fn new(app: Component) -> (Self, mpsc::UnboundedReceiver<Message>) {
-        let mut virtual_elements: HashMap<&str, Arc<Mutex<Box<dyn VirtualElement>>>> =
-            HashMap::new();
-        virtual_elements.insert("text", Arc::new(Mutex::new(Box::new(VirtualText {}))));
-        virtual_elements.insert("view", Arc::new(Mutex::new(Box::new(VirtualView {}))));
+    pub fn new(app: Component) -> Self {
+        let mut virtual_elements: HashMap<&str, Arc<dyn VirtualElement>> = HashMap::new();
+        virtual_elements.insert("text", Arc::new(VirtualText {}));
+        virtual_elements.insert("view", Arc::new(VirtualView {}));
 
         let (tx, rx) = mpsc::unbounded_channel();
-        let (message_tx, message_rx) = mpsc::unbounded_channel();
+        let (message_tx, mut message_rx) = mpsc::unbounded_channel();
 
-        (
-            Self {
-                vdom: VirtualDom::new(app),
-                inner: Inner {
-                    templates: HashMap::new(),
-                    elements: HashMap::new(),
-                    virtual_elements,
-                    tx,
-                    rx,
-                    message_tx,
-                    text_elements: HashMap::new(),
-                },
+        tokio::spawn(async move {
+            while let Some(msg) = message_rx.recv().await {
+                match msg {
+                    Message::Insert { element, tx } => transaction(move |ui| {
+                        let key = ui.insert_boxed(element);
+                        tx.send(key).unwrap();
+                    }),
+                    Message::SetAttribute {
+                        tag: _,
+                        key,
+                        name,
+                        value,
+                        virtual_element,
+                    } => transaction(move |ui| {
+                        let element = &mut *ui.nodes[key].element;
+                        virtual_element.set_attribute(&name, value, element);
+                    }),
+                    Message::SetHandler {
+                        name,
+                        handler,
+                        key,
+                        virtual_element,
+                    } => transaction(move |ui| {
+                        let element = &mut *ui.nodes[key].element;
+                        virtual_element.set_handler(&name, handler, element);
+                    }),
+                    Message::HydrateText {
+                        key,
+                        path,
+                        value,
+                        virtual_element,
+                    } => transaction(move |ui| {
+                        let element = &mut *ui.nodes[key].element;
+                        virtual_element.hydrate_text(path, value, element);
+                    }),
+                    Message::SetText {
+                        key,
+                        value,
+                        virtual_element,
+                    } => transaction(move |ui| {
+                        let element = &mut *ui.nodes[key].element;
+                        virtual_element.set_text(value, element);
+                    }),
+                }
+            }
+        });
+
+        Self {
+            vdom: VirtualDom::new(app),
+            inner: Inner {
+                templates: HashMap::new(),
+                elements: HashMap::new(),
+                virtual_elements,
+                tx,
+                rx,
+                message_tx,
+                text_elements: HashMap::new(),
             },
-            message_rx,
-        )
+        }
+    }
+
+    pub async fn run(&mut self) {
+        self.rebuild().await;
+
+        loop {
+            self.wait().await;
+            self.step().await;
+        }
     }
 
     pub async fn rebuild(&mut self) {
@@ -71,7 +120,7 @@ impl VirtualTree {
         self.vdom.process_events();
     }
 
-    pub async fn run(&mut self) {
+    pub async fn step(&mut self) {
         let mutations = self.vdom.render_immediate();
         dbg!(&mutations);
         self.inner.update(mutations).await;
@@ -85,10 +134,11 @@ impl VirtualTree {
 struct Inner {
     templates: HashMap<String, Template>,
     elements: HashMap<ElementId, (String, DefaultKey)>,
-    pub(crate) virtual_elements: HashMap<&'static str, Arc<Mutex<Box<dyn VirtualElement>>>>,
+    pub(crate) virtual_elements: HashMap<&'static str, Arc<dyn VirtualElement>>,
     tx: mpsc::UnboundedSender<ElementId>,
     rx: mpsc::UnboundedReceiver<ElementId>,
     message_tx: mpsc::UnboundedSender<Message>,
+
     text_elements: HashMap<ElementId, ElementId>,
 }
 
@@ -116,10 +166,7 @@ impl Inner {
                         children: _,
                     } = root
                     {
-                        let element = self.virtual_elements[&**tag]
-                            .lock()
-                            .unwrap()
-                            .from_vnode(root);
+                        let element = self.virtual_elements[&**tag].from_vnode(root);
 
                         let (tx, rx) = oneshot::channel();
                         self.message_tx
