@@ -95,11 +95,31 @@ pub fn launch(app: dioxus::prelude::Component) {
                                 .unwrap()
                                 .set_attribute(&name, value, element);
                         }),
+                        Message::SetHandler {
+                            name,
+                            handler,
+                            key,
+                            virtual_element,
+                        } => transaction(move |ui| {
+                            let element = &mut *ui.nodes[key].element;
+                            virtual_element
+                                .lock()
+                                .unwrap()
+                                .set_handler(&name, handler, element);
+                        }),
                     }
                 }
             });
 
             virtual_tree.rebuild().await;
+
+            dbg!("start");
+            loop {
+                dbg!("loop");
+                virtual_tree.wait().await;
+                dbg!("run");
+                virtual_tree.run().await;
+            }
         })
     });
 

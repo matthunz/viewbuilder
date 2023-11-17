@@ -2,7 +2,7 @@ use crate::{
     any_element::AnyElement,
     element::Text,
     virtual_element::{VirtualElement, VirtualText},
-    Element,
+    Element, ClickEvent,
 };
 use dioxus::{
     core::{ElementId, Mutation, Mutations},
@@ -76,6 +76,12 @@ pub enum Message {
         value: Box<dyn Any + Send>,
         virtual_element: Arc<Mutex<Box<dyn VirtualElement>>>,
     },
+    SetHandler {
+        name: String,
+        handler: Box<dyn FnMut() + Send>,
+        key: DefaultKey,
+        virtual_element: Arc<Mutex<Box<dyn VirtualElement>>>,
+    },
 }
 
 pub struct VirtualTree {
@@ -127,7 +133,9 @@ impl VirtualTree {
 
     pub async fn wait(&mut self) {
         let id = self.rx.recv().await.unwrap();
-        self.vdom.handle_event("click", Rc::new(()), id, false);
+        dbg!("event");
+        self.vdom.handle_event("click", Rc::new(ClickEvent {}), id, true);
+        self.vdom.process_events();
     }
 
     pub async fn run(&mut self) {
@@ -225,15 +233,21 @@ async fn update(
                     })
                     .unwrap();
             }
-            Mutation::NewEventListener { name: _, id } => {
+            Mutation::NewEventListener { name, id } => {
                 let tx = tx.clone();
-                let _handler = Box::new(move || {
+                let handler = Box::new(move || {
                     tx.send(id).unwrap();
                 });
 
-                let (_tag, _key) = &elements[&id];
-                // let element = &mut *ui.nodes[*key].element;
-                //virtual_elements[&**tag].set_handler(name, handler, element);
+                let (tag, key) = &elements[&id];
+                message_tx
+                    .send(Message::SetHandler {
+                        name: name.to_string(),
+                        handler,
+                        key: *key,
+                        virtual_element: virtual_elements[&**tag].clone(),
+                    })
+                    .unwrap();
             }
             _ => {}
         }
