@@ -27,7 +27,7 @@ This crate provides a moduler GUI library that can be used as an entire framewor
 ## Dioxus support
 ```rust
 fn app(cx: Scope) -> Element {
-    cx.render(rsx! { text { "Hello World!" } })
+    cx.render(rsx! { text { font_size: 100., "Hello World!" } })
 }
 ```
 

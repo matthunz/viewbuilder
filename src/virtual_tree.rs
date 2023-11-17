@@ -1,45 +1,20 @@
+use crate::{
+    element::Text,
+    virtual_element::{VirtualElement, VirtualText},
+    UserInterface,
+};
 use dioxus::{
     core::{ElementId, Mutation},
     prelude::{Component, TemplateAttribute, TemplateNode, VirtualDom},
 };
-
 use slotmap::DefaultKey;
 use std::collections::HashMap;
 
-use crate::{element::Text, Element, UserInterface};
-
-pub trait VirtualElement {
-    fn from_vnode(&self, node: &Node) -> Box<dyn Element>;
-}
-
-pub struct VirtualText {}
-
-impl VirtualElement for VirtualText {
-    fn from_vnode(&self, node: &Node) -> Box<dyn Element> {
-        if let Node::Element {
-            tag: _,
-            attrs: _,
-            children,
-        } = node
-        {
-            let mut text = Text::builder();
-            for child in children {
-                if let Node::Text(s) = child {
-                    text.content(s.clone());
-                }
-            }
-            Box::new(text.build())
-        } else {
-            todo!()
-        }
-    }
-}
-
-enum Attribute {
+pub enum Attribute {
     Dynamic { id: usize },
 }
 
-pub enum Node {
+pub enum VirtualNode {
     Text(String),
     Element {
         tag: String,
@@ -48,10 +23,10 @@ pub enum Node {
     },
 }
 
-impl Node {
+impl VirtualNode {
     fn from_template(template_node: &TemplateNode) -> Self {
         match template_node {
-            TemplateNode::Text { text } => Node::Text(text.to_string()),
+            TemplateNode::Text { text } => VirtualNode::Text(text.to_string()),
             TemplateNode::Element {
                 tag,
                 namespace: _,
@@ -66,7 +41,7 @@ impl Node {
                         _ => todo!(),
                     })
                     .collect();
-                Node::Element {
+                VirtualNode::Element {
                     tag: tag.to_string(),
                     attrs,
                     children,
@@ -78,13 +53,13 @@ impl Node {
 }
 
 struct Template {
-    roots: Vec<Node>,
+    roots: Vec<VirtualNode>,
 }
 
 pub struct VirtualTree {
     pub(crate) vdom: VirtualDom,
     templates: HashMap<String, Template>,
-    elements: HashMap<ElementId, DefaultKey>,
+    elements: HashMap<ElementId, (String, DefaultKey)>,
     virtual_elements: HashMap<&'static str, Box<dyn VirtualElement>>,
 }
 
@@ -106,7 +81,11 @@ impl VirtualTree {
         dbg!(&mutations);
 
         for template in mutations.templates {
-            let roots = template.roots.iter().map(Node::from_template).collect();
+            let roots = template
+                .roots
+                .iter()
+                .map(VirtualNode::from_template)
+                .collect();
             self.templates
                 .insert(template.name.to_string(), Template { roots });
         }
@@ -117,23 +96,33 @@ impl VirtualTree {
                     let template = &self.templates[name];
                     let root = &template.roots[index];
                     match root {
-                        Node::Element {
-                            tag: _,
+                        VirtualNode::Element {
+                            tag,
                             attrs: _,
                             children,
                         } => {
                             let mut text = Text::builder();
                             for child in children {
-                                if let Node::Text(s) = child {
+                                if let VirtualNode::Text(s) = child {
                                     text.content(s.clone());
                                 }
                             }
 
                             let elem_ref = ui.insert(text.build());
-                            self.elements.insert(id, elem_ref.key);
+                            self.elements.insert(id, (tag.to_string(), elem_ref.key));
                         }
                         _ => {}
                     }
+                }
+                Mutation::SetAttribute {
+                    name,
+                    value,
+                    id,
+                    ns: _,
+                } => {
+                    let (tag, key) = &self.elements[&id];
+                    let element = &mut *ui.nodes[*key].element;
+                    self.virtual_elements[&**tag].set_attribute(name, value, element);
                 }
                 _ => {}
             }

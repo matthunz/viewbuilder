@@ -16,9 +16,10 @@ mod ui;
 pub use ui::UserInterface;
 
 #[cfg(feature = "dioxus")]
-mod virtual_tree;
+pub mod virtual_element;
+
 #[cfg(feature = "dioxus")]
-pub use virtual_tree::VirtualTree;
+pub mod virtual_tree;
 
 pub fn run() {
     Runtime::current().run()
@@ -41,6 +42,10 @@ pub mod prelude {
         impl text {
             pub const TAG_NAME: &'static str = "text";
             pub const NAME_SPACE: Option<&'static str> = None;
+
+            #[allow(non_upper_case_globals)]
+            pub const font_size: (&'static str, Option<&'static str>, bool) =
+                ("font_size", None, false);
         }
     }
 }
@@ -48,7 +53,7 @@ pub mod prelude {
 #[cfg(feature = "dioxus")]
 pub fn launch(app: dioxus::prelude::Component) {
     transaction(move |ui| {
-        let mut virtual_tree = VirtualTree::new(app);
+        let mut virtual_tree = virtual_tree::VirtualTree::new(app);
         virtual_tree.rebuild(ui);
     });
 

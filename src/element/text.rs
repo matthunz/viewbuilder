@@ -78,6 +78,11 @@ impl Text {
         self.parts[index] = Part::Text(text.into());
         self.is_changed = true;
     }
+
+    pub fn set_font_size(&mut self, font_size: f32) {
+        self.font_size = font_size;
+        self.is_changed = true;
+    }
 }
 
 impl Element for Text {
