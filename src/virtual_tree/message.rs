@@ -1,23 +1,11 @@
-use crate::{
-    any_element::AnyElement,
-    element::Text,
-    virtual_element::{VirtualElement, VirtualText},
-    ClickEvent,
-};
-use dioxus::{
-    core::{ElementId, Mutation, Mutations},
-    prelude::{Component, TemplateAttribute, TemplateNode, VirtualDom},
-};
+use crate::{any_element::AnyElement, virtual_element::VirtualElement};
+
 use futures::channel::oneshot;
 use slotmap::DefaultKey;
 use std::{
     any::Any,
-    collections::HashMap,
-    rc::Rc,
     sync::{Arc, Mutex},
 };
-use tokio::sync::mpsc;
-
 
 pub enum Message {
     Insert {

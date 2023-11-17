@@ -1,17 +1,14 @@
 use crate::{
-    any_element::AnyElement,
-    element::Text,
     virtual_element::{VirtualElement, VirtualText},
     ClickEvent,
 };
 use dioxus::{
     core::{ElementId, Mutation, Mutations},
-    prelude::{Component, TemplateAttribute, TemplateNode, VirtualDom},
+    prelude::{Component, VirtualDom},
 };
 use futures::channel::oneshot;
 use slotmap::DefaultKey;
 use std::{
-    any::Any,
     collections::HashMap,
     rc::Rc,
     sync::{Arc, Mutex},
@@ -112,32 +109,25 @@ impl Inner {
                 Mutation::LoadTemplate { name, index, id } => {
                     let template = &self.templates[name];
                     let root = &template.roots[index];
-                    match root {
-                        VirtualNode::Element {
-                            tag,
-                            attrs: _,
-                            children,
-                        } => {
-                            let mut text = Text::builder();
-                            for child in children {
-                                if let VirtualNode::Text(s) = child {
-                                    text.content(s.clone());
-                                }
-                            }
+                    if let VirtualNode::Element {
+                        tag,
+                        attrs: _,
+                        children: _,
+                    } = root
+                    {
+                        let element = self.virtual_elements[&**tag]
+                            .lock()
+                            .unwrap()
+                            .from_vnode(root);
 
-                            let (tx, rx) = oneshot::channel();
-                            self.message_tx
-                                .send(Message::Insert {
-                                    element: Box::new(text.build()),
-                                    tx,
-                                })
-                                .unwrap();
-                            let key = rx.await.ok().unwrap();
+                        let (tx, rx) = oneshot::channel();
+                        self.message_tx
+                            .send(Message::Insert { element, tx })
+                            .unwrap();
+                        let key = rx.await.ok().unwrap();
 
-                            stack.push(id);
-                            self.elements.insert(id, (tag.to_string(), key));
-                        }
-                        _ => {}
+                        stack.push(id);
+                        self.elements.insert(id, (tag.to_string(), key));
                     }
                 }
                 Mutation::SetAttribute {

@@ -1,23 +1,4 @@
-use crate::{
-    any_element::AnyElement,
-    element::Text,
-    virtual_element::{VirtualElement, VirtualText},
-    ClickEvent,
-};
-use dioxus::{
-    core::{ElementId, Mutation, Mutations},
-    prelude::{Component, TemplateAttribute, TemplateNode, VirtualDom},
-};
-use futures::channel::oneshot;
-use slotmap::DefaultKey;
-use std::{
-    any::Any,
-    collections::HashMap,
-    rc::Rc,
-    sync::{Arc, Mutex},
-};
-use tokio::sync::mpsc;
-
+use dioxus::prelude::{TemplateAttribute, TemplateNode};
 
 pub enum Attribute {
     Dynamic { id: usize },
