@@ -18,7 +18,7 @@ gl = [
 layout = ["dep:taffy"]
 semantics = ["dep:accesskit"]
 element = ["dep:skia-safe"]
-full = ["gl", "layout", "semantics", "element", "dioxus"]
+full = ["gl", "layout", "semantics", "element", "dioxus", "dioxus-signals"]
 default = ["full"]
 
 [dependencies]
@@ -26,6 +26,7 @@ kurbo = "0.9.5"
 slotmap = "1.0.6"
 
 dioxus = { git = "https://github.com/DioxusLabs/dioxus", optional = true }
+dioxus-signals = { git = "https://github.com/DioxusLabs/dioxus", optional = true }
 
 accesskit = { version = "0.11.2", optional = true }
 taffy = { version = "0.3.13", optional = true }

@@ -1,7 +1,7 @@
 mod text;
 use std::any::Any;
 
-use crate::{any_element::AnyElement, virtual_tree::VirtualNode, Element};
+use crate::{any_element::AnyElement, virtual_tree::VirtualNode};
 
 pub use self::text::VirtualText;
 

@@ -2,7 +2,7 @@ use crate::{
     any_element::AnyElement,
     element::Text,
     virtual_element::{VirtualElement, VirtualText},
-    Element, ClickEvent,
+    ClickEvent,
 };
 use dioxus::{
     core::{ElementId, Mutation, Mutations},
@@ -55,6 +55,7 @@ impl VirtualNode {
                     children,
                 }
             }
+
             _ => todo!(),
         }
     }
@@ -134,7 +135,8 @@ impl VirtualTree {
     pub async fn wait(&mut self) {
         let id = self.rx.recv().await.unwrap();
         dbg!("event");
-        self.vdom.handle_event("click", Rc::new(ClickEvent {}), id, true);
+        self.vdom
+            .handle_event("click", Rc::new(ClickEvent {}), id, true);
         self.vdom.process_events();
     }
 

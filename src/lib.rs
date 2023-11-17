@@ -31,21 +31,48 @@ pub fn transaction(f: impl FnOnce(&mut UserInterface) + Send + 'static) {
 
 pub struct ClickEvent {}
 
+macro_rules! impl_event {
+    (
+        $data:ty;
+        $(
+            $( #[$attr:meta] )*
+            $name:ident
+        )*
+    ) => {
+        $(
+            $( #[$attr] )*
+            #[inline]
+            pub fn $name<'a, E: dioxus::prelude::EventReturn<T>, T>(_cx: &'a ::dioxus::core::ScopeState, mut _f: impl FnMut(::dioxus::core::Event<$data>) -> E + 'a) -> ::dioxus::core::Attribute<'a> {
+                ::dioxus::core::Attribute::new(
+                    stringify!($name),
+                    _cx.listener(move |e: ::dioxus::core::Event<$data>| {
+                        _f(e).spawn(_cx);
+                    }),
+                    None,
+                    false,
+                )
+            }
+        )*
+    };
+}
+
 #[cfg(feature = "dioxus")]
 pub mod prelude {
     pub use crate::ClickEvent;
-    use dioxus::core::Attribute;
-    pub use dioxus::prelude::{render, rsx, use_state, Element, Scope, ScopeState};
 
-    pub fn onclick<'a, E, T>(
-        _cx: &'a ScopeState,
-        _f: impl FnMut(ClickEvent) -> E + 'a,
-    ) -> Attribute<'a> {
-        todo!()
+    pub use dioxus::prelude::{render, rsx, use_state, Element, Scope, ScopeState};
+    pub use dioxus_signals::{use_signal, Signal};
+
+    pub mod events {
+        use dioxus::prelude::EventReturn;
+
+        use crate::ClickEvent;
+
+        impl_event!(ClickEvent; onclick);
     }
 
     pub mod dioxus_elements {
-        pub use dioxus::prelude::dioxus_elements::events;
+        pub use super::events;
 
         #[allow(non_camel_case_types)]
         pub struct text;
