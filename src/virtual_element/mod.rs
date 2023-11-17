@@ -17,4 +17,6 @@ pub trait VirtualElement: Send {
     );
 
     fn hydrate_text(&self, path: usize, value: String, element: &mut dyn AnyElement);
+
+    fn set_text(&self, value: String, element: &mut dyn AnyElement);
 }

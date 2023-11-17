@@ -89,6 +89,11 @@ pub enum Message {
         value: String,
         virtual_element: Arc<Mutex<Box<dyn VirtualElement>>>,
     },
+    SetText {
+        key: DefaultKey,
+        value: String,
+        virtual_element: Arc<Mutex<Box<dyn VirtualElement>>>,
+    },
 }
 
 pub struct VirtualTree {
@@ -99,6 +104,7 @@ pub struct VirtualTree {
     tx: mpsc::UnboundedSender<ElementId>,
     rx: mpsc::UnboundedReceiver<ElementId>,
     message_tx: mpsc::UnboundedSender<Message>,
+    text_elements: HashMap<ElementId, ElementId>,
 }
 
 impl VirtualTree {
@@ -119,6 +125,7 @@ impl VirtualTree {
                 tx,
                 rx,
                 message_tx,
+                text_elements: HashMap::new(),
             },
             message_rx,
         )
@@ -134,6 +141,7 @@ impl VirtualTree {
             &self.virtual_elements,
             mutations,
             &self.message_tx,
+            &mut self.text_elements,
         )
         .await
     }
@@ -156,6 +164,7 @@ impl VirtualTree {
             &self.virtual_elements,
             mutations,
             &self.message_tx,
+            &mut self.text_elements,
         )
         .await
     }
@@ -168,6 +177,7 @@ impl VirtualTree {
             &self.virtual_elements,
             mutations,
             &self.message_tx,
+            &mut self.text_elements,
         )
         .await
     }
@@ -180,6 +190,7 @@ async fn update(
     virtual_elements: &HashMap<&'static str, Arc<Mutex<Box<dyn VirtualElement>>>>,
     mutations: Mutations<'_>,
     message_tx: &mpsc::UnboundedSender<Message>,
+    text_elements: &mut HashMap<ElementId, ElementId>,
 ) {
     for template in mutations.templates {
         let roots = template
@@ -260,13 +271,26 @@ async fn update(
                     })
                     .unwrap();
             }
-            Mutation::HydrateText { path: _, value, id: _ } => {
+            Mutation::HydrateText { path: _, value, id } => {
                 let parent_id = stack.last().unwrap();
+                text_elements.insert(id, *parent_id);
+
                 let (tag, key) = &elements[&parent_id];
                 message_tx
                     .send(Message::HydrateText {
                         key: *key,
                         path: 0,
+                        value: value.to_string(),
+                        virtual_element: virtual_elements[&**tag].clone(),
+                    })
+                    .unwrap();
+            }
+            Mutation::SetText { value, id } => {
+                let parent_id = text_elements[&id];
+                let (tag, key) = &elements[&parent_id];
+                message_tx
+                    .send(Message::SetText {
+                        key: *key,
                         value: value.to_string(),
                         virtual_element: virtual_elements[&**tag].clone(),
                     })

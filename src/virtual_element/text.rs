@@ -54,4 +54,9 @@ impl VirtualElement for VirtualText {
         let text: &mut Text = element.as_any_mut().downcast_mut().unwrap();
         text.set_content(path, value);
     }
+
+    fn set_text(&self, value: String, element: &mut dyn AnyElement) {
+        let text: &mut Text = element.as_any_mut().downcast_mut().unwrap();
+        text.set_content(0, value);
+    }
 }
