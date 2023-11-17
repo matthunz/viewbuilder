@@ -5,6 +5,7 @@ fn app(cx: Scope) -> Element {
 
     cx.render(rsx! {
         text { font_size: 100., onclick: move |_| {
+            dbg!("click");
                 *count.write() += 1;
             }, "{count}" }
     })

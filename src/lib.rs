@@ -134,6 +134,18 @@ pub fn launch(app: dioxus::prelude::Component) {
                                 .unwrap()
                                 .set_handler(&name, handler, element);
                         }),
+                        Message::HydrateText {
+                            key,
+                            path,
+                            value,
+                            virtual_element,
+                        } => transaction(move |ui| {
+                            let element = &mut *ui.nodes[key].element;
+                            virtual_element
+                                .lock()
+                                .unwrap()
+                                .hydrate_text(path, value, element);
+                        }),
                     }
                 }
             });

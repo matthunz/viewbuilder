@@ -49,4 +49,9 @@ impl VirtualElement for VirtualText {
             _ => {}
         }
     }
+
+    fn hydrate_text(&self, path: usize, value: String, element: &mut dyn AnyElement) {
+        let text: &mut Text = element.as_any_mut().downcast_mut().unwrap();
+        text.set_content(path, value);
+    }
 }

@@ -4,7 +4,6 @@ use taffy::{prelude::Size, style::Style};
 use winit::event::WindowEvent;
 
 mod text;
-
 pub use self::text::Text;
 
 mod view;

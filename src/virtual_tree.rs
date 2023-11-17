@@ -55,7 +55,7 @@ impl VirtualNode {
                     children,
                 }
             }
-
+            TemplateNode::DynamicText { id: _ } => VirtualNode::Text(String::new()),
             _ => todo!(),
         }
     }
@@ -81,6 +81,12 @@ pub enum Message {
         name: String,
         handler: Box<dyn FnMut() + Send>,
         key: DefaultKey,
+        virtual_element: Arc<Mutex<Box<dyn VirtualElement>>>,
+    },
+    HydrateText {
+        key: DefaultKey,
+        path: usize,
+        value: String,
         virtual_element: Arc<Mutex<Box<dyn VirtualElement>>>,
     },
 }
@@ -142,7 +148,7 @@ impl VirtualTree {
 
     pub async fn run(&mut self) {
         let mutations = self.vdom.render_immediate();
-
+        dbg!(&mutations);
         update(
             &mut self.templates,
             &mut self.elements,
@@ -184,6 +190,7 @@ async fn update(
         templates.insert(template.name.to_string(), Template { roots });
     }
 
+    let mut stack = Vec::new();
     for edit in mutations.edits {
         match edit {
             Mutation::LoadTemplate { name, index, id } => {
@@ -210,6 +217,8 @@ async fn update(
                             })
                             .unwrap();
                         let key = rx.await.ok().unwrap();
+
+                        stack.push(id);
                         elements.insert(id, (tag.to_string(), key));
                     }
                     _ => {}
@@ -247,6 +256,18 @@ async fn update(
                         name: name.to_string(),
                         handler,
                         key: *key,
+                        virtual_element: virtual_elements[&**tag].clone(),
+                    })
+                    .unwrap();
+            }
+            Mutation::HydrateText { path: _, value, id: _ } => {
+                let parent_id = stack.last().unwrap();
+                let (tag, key) = &elements[&parent_id];
+                message_tx
+                    .send(Message::HydrateText {
+                        key: *key,
+                        path: 0,
+                        value: value.to_string(),
                         virtual_element: virtual_elements[&**tag].clone(),
                     })
                     .unwrap();
