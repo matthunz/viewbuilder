@@ -1,7 +1,5 @@
 mod any_element;
-
-mod app;
-pub use app::App;
+pub use any_element::AnyElement;
 
 pub mod element;
 pub use self::element::Element;
@@ -26,7 +24,7 @@ pub fn run() {
 }
 
 pub fn transaction(f: impl FnOnce(&mut UserInterface) + Send + 'static) {
-    Runtime::current().ui().tx.send(Box::new(f)).unwrap();
+    Runtime::current().transaction(f)
 }
 
 pub struct ClickEvent {}

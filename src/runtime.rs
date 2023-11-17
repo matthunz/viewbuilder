@@ -1,4 +1,4 @@
-use crate::{transaction, App};
+use crate::{transaction, UserInterface};
 use gl::types::*;
 use glutin::{
     config::{ConfigTemplateBuilder, GlConfig},
@@ -13,7 +13,7 @@ use lazy_static::lazy_static;
 use raw_window_handle::HasRawWindowHandle;
 use skia_safe::{
     gpu::{self, backend_render_targets, gl::FramebufferInfo, SurfaceOrigin},
-    Color, ColorType, Image, Surface,
+    surfaces, Color, ColorType, Image, Surface,
 };
 use std::{
     ffi::CString,
@@ -21,7 +21,10 @@ use std::{
     sync::Arc,
     time::{Duration, Instant},
 };
-use tokio::sync::{mpsc, Mutex};
+use tokio::{
+    sync::{mpsc, Mutex},
+    task,
+};
 use winit::{
     dpi::LogicalSize,
     event::{Event, KeyEvent, Modifiers, WindowEvent},
@@ -31,19 +34,36 @@ use winit::{
 
 #[derive(Clone)]
 pub struct Runtime {
-    ui: App,
+    tx: mpsc::UnboundedSender<Box<dyn FnOnce(&mut UserInterface) + Send>>,
     images: Arc<Mutex<mpsc::UnboundedReceiver<Image>>>,
 }
 
 impl Runtime {
     pub fn new() -> Self {
-        let (ui, images) = App::new(taffy::prelude::Size {
-            width: 1000,
-            height: 500,
+
+        let (tx, mut rx) = mpsc::unbounded_channel::<Box<dyn FnOnce(&mut UserInterface) + Send>>();
+        let (image_tx, image_rx) = mpsc::unbounded_channel();
+
+        task::spawn(async move {
+            let mut ui = UserInterface::new();
+
+            while let Some(f) = rx.recv().await {
+                f(&mut ui);
+
+                ui.layout();
+
+                let mut surface = surfaces::raster_n32_premul((1000, 1000)).unwrap();
+                let canvas = surface.canvas();
+                ui.render(canvas);
+
+                let image = surface.image_snapshot();
+                image_tx.send(image).unwrap();
+            }
         });
+
         Self {
-            ui,
-            images: Arc::new(Mutex::new(images)),
+            tx,
+            images: Arc::new(Mutex::new(image_rx)),
         }
     }
 
@@ -54,8 +74,8 @@ impl Runtime {
         CURRENT.clone()
     }
 
-    pub fn ui(&self) -> App {
-        self.ui.clone()
+    pub fn transaction(&self, f: impl FnOnce(&mut UserInterface) + Send + 'static) {
+        self.tx.send(Box::new(f)).unwrap();
     }
 
     pub fn run(self) {
