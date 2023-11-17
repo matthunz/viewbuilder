@@ -4,6 +4,9 @@ use std::any::Any;
 mod text;
 pub use self::text::VirtualText;
 
+mod view;
+pub use self::view::VirtualView;
+
 pub trait VirtualElement: Send {
     fn from_vnode(&self, node: &VirtualNode) -> Box<dyn AnyElement>;
 

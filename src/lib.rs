@@ -64,8 +64,6 @@ pub mod prelude {
     pub use dioxus_signals::{use_signal, Signal};
 
     pub mod events {
-        use dioxus::prelude::EventReturn;
-
         use crate::ClickEvent;
 
         impl_event!(ClickEvent; onclick);
@@ -85,6 +83,14 @@ pub mod prelude {
             pub const font_size: (&'static str, Option<&'static str>, bool) =
                 ("font_size", None, false);
         }
+
+        #[allow(non_camel_case_types)]
+        pub struct view;
+
+        impl view {
+            pub const TAG_NAME: &'static str = "view";
+            pub const NAME_SPACE: Option<&'static str> = None;
+        }
     }
 }
 
@@ -92,8 +98,6 @@ pub mod prelude {
 pub fn launch(app: dioxus::prelude::Component) {
     use tokio::task::LocalSet;
     use virtual_tree::Message;
-
-    use crate::{any_element::AnyElement, element::Text};
 
     tokio::task::spawn_blocking(move || {
         let local_set = LocalSet::new();
@@ -104,8 +108,6 @@ pub fn launch(app: dioxus::prelude::Component) {
                 while let Some(msg) = rx.recv().await {
                     match msg {
                         Message::Insert { element, tx } => transaction(move |ui| {
-                            element.as_any().downcast_ref::<Text>().unwrap();
-
                             let key = ui.insert_boxed(element);
                             tx.send(key).unwrap();
                         }),

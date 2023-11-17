@@ -1,5 +1,5 @@
 use crate::{
-    virtual_element::{VirtualElement, VirtualText},
+    virtual_element::{VirtualElement, VirtualText, VirtualView},
     ClickEvent,
 };
 use dioxus::{
@@ -35,6 +35,7 @@ impl VirtualTree {
         let mut virtual_elements: HashMap<&str, Arc<Mutex<Box<dyn VirtualElement>>>> =
             HashMap::new();
         virtual_elements.insert("text", Arc::new(Mutex::new(Box::new(VirtualText {}))));
+        virtual_elements.insert("view", Arc::new(Mutex::new(Box::new(VirtualView {}))));
 
         let (tx, rx) = mpsc::unbounded_channel();
         let (message_tx, message_rx) = mpsc::unbounded_channel();
