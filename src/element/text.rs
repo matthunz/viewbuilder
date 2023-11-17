@@ -84,10 +84,7 @@ impl Text {
         self.is_changed = true;
     }
 
-    pub fn set_on_click(
-        &mut self,
-        handler: impl FnMut(ElementRef<Text>) + Send + 'static,
-        )  {
+    pub fn set_on_click(&mut self, handler: impl FnMut(ElementRef<Text>) + Send + 'static) {
         self.on_click = Some(Box::new(handler));
         self.is_changed = true;
     }

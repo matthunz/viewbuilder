@@ -1,14 +1,20 @@
 use crate::{
     element::Text,
     virtual_element::{VirtualElement, VirtualText},
-    UserInterface,
+    Element,
 };
 use dioxus::{
     core::{ElementId, Mutation, Mutations},
     prelude::{Component, TemplateAttribute, TemplateNode, VirtualDom},
 };
+use futures::channel::oneshot;
 use slotmap::DefaultKey;
-use std::{collections::HashMap, rc::Rc};
+use std::{
+    any::Any,
+    collections::HashMap,
+    rc::Rc,
+    sync::{Arc, Mutex},
+};
 use tokio::sync::mpsc;
 
 pub enum Attribute {
@@ -57,43 +63,65 @@ struct Template {
     roots: Vec<VirtualNode>,
 }
 
+pub enum Message {
+    Insert {
+        element: Box<dyn Element>,
+        tx: oneshot::Sender<DefaultKey>,
+    },
+    SetAttribute {
+        tag: String,
+        key: DefaultKey,
+        name: String,
+        value: Box<dyn Any + Send>,
+        virtual_element: Arc<Mutex<Box<dyn VirtualElement>>>,
+    },
+}
+
 pub struct VirtualTree {
     pub(crate) vdom: VirtualDom,
     templates: HashMap<String, Template>,
     elements: HashMap<ElementId, (String, DefaultKey)>,
-    virtual_elements: HashMap<&'static str, Box<dyn VirtualElement>>,
+    pub(crate) virtual_elements: HashMap<&'static str, Arc<Mutex<Box<dyn VirtualElement>>>>,
     tx: mpsc::UnboundedSender<ElementId>,
     rx: mpsc::UnboundedReceiver<ElementId>,
+    message_tx: mpsc::UnboundedSender<Message>,
 }
 
 impl VirtualTree {
-    pub fn new(app: Component) -> Self {
-        let mut virtual_elements: HashMap<&str, Box<dyn VirtualElement>> = HashMap::new();
-        virtual_elements.insert("text", Box::new(VirtualText {}));
+    pub fn new(app: Component) -> (Self, mpsc::UnboundedReceiver<Message>) {
+        let mut virtual_elements: HashMap<&str, Arc<Mutex<Box<dyn VirtualElement>>>> =
+            HashMap::new();
+        virtual_elements.insert("text", Arc::new(Mutex::new(Box::new(VirtualText {}))));
 
         let (tx, rx) = mpsc::unbounded_channel();
+        let (message_tx, message_rx) = mpsc::unbounded_channel();
 
-        Self {
-  vdom: VirtualDom::new(app),
-            templates: HashMap::new(),
-            elements: HashMap::new(),
-            virtual_elements,
-            tx,
-            rx,
-        }
+        (
+            Self {
+                vdom: VirtualDom::new(app),
+                templates: HashMap::new(),
+                elements: HashMap::new(),
+                virtual_elements,
+                tx,
+                rx,
+                message_tx,
+            },
+            message_rx,
+        )
     }
 
-    pub fn rebuild(&mut self, ui: &mut UserInterface) {
+    pub async fn rebuild(&mut self) {
         let mutations = self.vdom.rebuild();
         dbg!(&mutations);
         update(
             &mut self.templates,
             &mut self.elements,
-            &mut self.virtual_elements,
             &self.tx,
+            &self.virtual_elements,
             mutations,
-            ui,
+            &self.message_tx,
         )
+        .await
     }
 
     pub async fn wait(&mut self) {
@@ -101,38 +129,40 @@ impl VirtualTree {
         self.vdom.handle_event("click", Rc::new(()), id, false);
     }
 
-    pub fn run(&mut self, ui: &mut UserInterface) {
+    pub async fn run(&mut self) {
         let mutations = self.vdom.render_immediate();
 
         update(
             &mut self.templates,
             &mut self.elements,
-            &mut self.virtual_elements,
             &self.tx,
+            &self.virtual_elements,
             mutations,
-            ui,
+            &self.message_tx,
         )
+        .await
     }
 
-    pub fn update(&mut self, mutations: Mutations, ui: &mut UserInterface) {
+    pub async fn update(&mut self, mutations: Mutations<'_>) {
         update(
             &mut self.templates,
             &mut self.elements,
-            &mut self.virtual_elements,
             &self.tx,
+            &self.virtual_elements,
             mutations,
-            ui,
+            &self.message_tx,
         )
+        .await
     }
 }
 
-fn update(
+async fn update(
     templates: &mut HashMap<String, Template>,
     elements: &mut HashMap<ElementId, (String, DefaultKey)>,
-    virtual_elements: &mut HashMap<&'static str, Box<dyn VirtualElement>>,
     tx: &mpsc::UnboundedSender<ElementId>,
-    mutations: Mutations,
-    ui: &mut UserInterface,
+    virtual_elements: &HashMap<&'static str, Arc<Mutex<Box<dyn VirtualElement>>>>,
+    mutations: Mutations<'_>,
+    message_tx: &mpsc::UnboundedSender<Message>,
 ) {
     for template in mutations.templates {
         let roots = template
@@ -161,8 +191,15 @@ fn update(
                             }
                         }
 
-                        let elem_ref = ui.insert(text.build());
-                        elements.insert(id, (tag.to_string(), elem_ref.key));
+                        let (tx, rx) = oneshot::channel();
+                        message_tx
+                            .send(Message::Insert {
+                                element: Box::new(text.build()),
+                                tx,
+                            })
+                            .unwrap();
+                        let key = rx.await.ok().unwrap();
+                        elements.insert(id, (tag.to_string(), key));
                     }
                     _ => {}
                 }
@@ -174,19 +211,28 @@ fn update(
                 ns: _,
             } => {
                 let (tag, key) = &elements[&id];
-                let element = &mut *ui.nodes[*key].element;
-                virtual_elements[&**tag].set_attribute(name, value, element);
+                message_tx
+                    .send(Message::SetAttribute {
+                        key: *key,
+                        name: name.to_string(),
+                        tag: tag.clone(),
+                        value: match value {
+                            dioxus::core::BorrowedAttributeValue::Float(n) => Box::new(n),
+                            _ => todo!(),
+                        },
+                        virtual_element: virtual_elements[&**tag].clone(),
+                    })
+                    .unwrap();
             }
-            Mutation::NewEventListener { name, id } => {
+            Mutation::NewEventListener { name: _, id } => {
                 let tx = tx.clone();
-                let handler = Box::new(move || {
+                let _handler = Box::new(move || {
                     tx.send(id).unwrap();
                 });
 
-                let (tag, key) = &elements[&id];
-                let element = &mut *ui.nodes[*key].element;
-
-                virtual_elements[&**tag].set_handler(name, handler, element);
+                let (_tag, _key) = &elements[&id];
+                // let element = &mut *ui.nodes[*key].element;
+                //virtual_elements[&**tag].set_handler(name, handler, element);
             }
             _ => {}
         }

@@ -63,10 +63,39 @@ pub mod prelude {
 
 #[cfg(feature = "dioxus")]
 pub fn launch(app: dioxus::prelude::Component) {
-    tokio::spawn(async move {
-        transaction(move |ui| {
-            let mut virtual_tree = virtual_tree::VirtualTree::new(app);
-            virtual_tree.rebuild(ui);
+    use tokio::task::LocalSet;
+    use virtual_tree::Message;
+
+    tokio::task::spawn_blocking(move || {
+        let local_set = LocalSet::new();
+        local_set.block_on(&tokio::runtime::Runtime::new().unwrap(), async move {
+            let (mut virtual_tree, mut rx) = virtual_tree::VirtualTree::new(app);
+
+            tokio::spawn(async move {
+                while let Some(msg) = rx.recv().await {
+                    match msg {
+                        Message::Insert { element, tx } => transaction(move |ui| {
+                            let r = ui.insert(element);
+                            tx.send(r.key).unwrap();
+                        }),
+                        Message::SetAttribute {
+                            tag: _,
+                            key,
+                            name,
+                            value,
+                            virtual_element,
+                        } => transaction(move |ui| {
+                            let element = &mut *ui.nodes[key].element;
+                            virtual_element
+                                .lock()
+                                .unwrap()
+                                .set_attribute(&name, value, element);
+                        }),
+                    }
+                }
+            });
+
+            virtual_tree.rebuild().await;
         })
     });
 

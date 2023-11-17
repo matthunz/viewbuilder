@@ -1,4 +1,4 @@
-use dioxus::core::BorrowedAttributeValue;
+use std::any::Any;
 
 use super::VirtualElement;
 use crate::{any_element::AnyElement, element::Text, virtual_tree::VirtualNode, Element};
@@ -29,22 +29,10 @@ impl VirtualElement for VirtualText {
         }
     }
 
-    fn set_attribute(
-        &self,
-        name: &str,
-        value: BorrowedAttributeValue,
-        element: &mut dyn AnyElement,
-    ) {
+    fn set_attribute(&self, name: &str, value: Box<dyn Any>, element: &mut dyn AnyElement) {
         let text: &mut Text = element.as_any_mut().downcast_mut().unwrap();
         match name {
-            "font_size" => {
-                let font_size = if let BorrowedAttributeValue::Float(n) = value {
-                    n
-                } else {
-                    todo!()
-                };
-                text.set_font_size(font_size as _)
-            }
+            "font_size" => text.set_font_size(*value.downcast().unwrap()),
             _ => {}
         }
     }
