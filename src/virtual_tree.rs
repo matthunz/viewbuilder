@@ -1,4 +1,5 @@
 use crate::{
+    any_element::AnyElement,
     element::Text,
     virtual_element::{VirtualElement, VirtualText},
     Element,
@@ -65,7 +66,7 @@ struct Template {
 
 pub enum Message {
     Insert {
-        element: Box<dyn Element>,
+        element: Box<dyn AnyElement>,
         tx: oneshot::Sender<DefaultKey>,
     },
     SetAttribute {

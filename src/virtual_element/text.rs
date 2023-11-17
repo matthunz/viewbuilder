@@ -1,11 +1,11 @@
 use super::VirtualElement;
 use crate::{any_element::AnyElement, element::Text, virtual_tree::VirtualNode, Element};
-use std::any::Any;
+use std::any::{Any, TypeId};
 
 pub struct VirtualText {}
 
 impl VirtualElement for VirtualText {
-    fn from_vnode(&self, node: &VirtualNode) -> Box<dyn Element> {
+    fn from_vnode(&self, node: &VirtualNode) -> Box<dyn AnyElement> {
         if let VirtualNode::Element {
             tag: _,
             attrs,

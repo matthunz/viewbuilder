@@ -29,7 +29,7 @@ impl Builder {
         self
     }
 
-    pub fn font_size(&mut self, font_size: f32) -> &mut Self {
+    pub fn font_size(&mut self, font_size: f64) -> &mut Self {
         self.text.font_size = font_size;
         self
     }
@@ -49,7 +49,7 @@ impl Builder {
 
 pub struct Text {
     parts: Vec<Part>,
-    font_size: f32,
+    font_size: f64,
     color: Color4f,
     image: Option<Image>,
     is_changed: bool,
@@ -79,7 +79,7 @@ impl Text {
         self.is_changed = true;
     }
 
-    pub fn set_font_size(&mut self, font_size: f32) {
+    pub fn set_font_size(&mut self, font_size: f64) {
         self.font_size = font_size;
         self.is_changed = true;
     }
@@ -127,7 +127,7 @@ impl Element for Text {
 
         let mut text_style = TextStyle::new();
         let paint = Paint::new(self.color, None);
-        text_style.set_font_size(self.font_size);
+        text_style.set_font_size(self.font_size as _);
         text_style.set_font_style(FontStyle::default());
         text_style.set_font_families(&["monospace"]);
         text_style.set_foreground_paint(&paint);

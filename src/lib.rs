@@ -66,6 +66,8 @@ pub fn launch(app: dioxus::prelude::Component) {
     use tokio::task::LocalSet;
     use virtual_tree::Message;
 
+    use crate::{any_element::AnyElement, element::Text};
+
     tokio::task::spawn_blocking(move || {
         let local_set = LocalSet::new();
         local_set.block_on(&tokio::runtime::Runtime::new().unwrap(), async move {
@@ -75,6 +77,8 @@ pub fn launch(app: dioxus::prelude::Component) {
                 while let Some(msg) = rx.recv().await {
                     match msg {
                         Message::Insert { element, tx } => transaction(move |ui| {
+                            element.as_any().downcast_ref::<Text>().unwrap();
+
                             let key = ui.insert_boxed(element);
                             tx.send(key).unwrap();
                         }),
