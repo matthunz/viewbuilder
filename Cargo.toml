@@ -22,11 +22,12 @@ full = ["gl", "layout", "semantics", "element"]
 default = ["full"]
 
 [dependencies]
-accesskit = { version = "0.11.2", optional = true }
-
 kurbo = "0.9.5"
 slotmap = "1.0.6"
 
+dioxus = { git = "https://github.com/DioxusLabs/dioxus" }
+
+accesskit = { version = "0.11.2", optional = true }
 taffy = { version = "0.3.13", optional = true }
 gl = { version = "0.14.0", optional = true }
 glutin = { version = "0.31", optional = true }
