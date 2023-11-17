@@ -1,9 +1,11 @@
 use dioxus::prelude::{TemplateAttribute, TemplateNode};
 
+#[derive(Clone)]
 pub enum Attribute {
     Dynamic { id: usize },
 }
 
+#[derive(Clone)]
 pub enum VirtualNode {
     Text(String),
     Element {

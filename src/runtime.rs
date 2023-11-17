@@ -40,7 +40,6 @@ pub struct Runtime {
 
 impl Runtime {
     pub fn new() -> Self {
-
         let (tx, mut rx) = mpsc::unbounded_channel::<Box<dyn FnOnce(&mut UserInterface) + Send>>();
         let (image_tx, image_rx) = mpsc::unbounded_channel();
 

@@ -138,7 +138,6 @@ struct Inner {
     tx: mpsc::UnboundedSender<ElementId>,
     rx: mpsc::UnboundedReceiver<ElementId>,
     message_tx: mpsc::UnboundedSender<Message>,
-
     text_elements: HashMap<ElementId, ElementId>,
 }
 
@@ -155,6 +154,7 @@ impl Inner {
         }
 
         let mut stack = Vec::new();
+        let mut child_stack = Vec::new();
         for edit in mutations.edits {
             match edit {
                 Mutation::LoadTemplate { name, index, id } => {
@@ -163,10 +163,12 @@ impl Inner {
                     if let VirtualNode::Element {
                         tag,
                         attrs: _,
-                        children: _,
+                        children,
                     } = root
                     {
                         let element = self.virtual_elements[&**tag].from_vnode(root);
+
+                        child_stack.extend_from_slice(&children);
 
                         let (tx, rx) = oneshot::channel();
                         self.message_tx
@@ -238,6 +240,26 @@ impl Inner {
                             virtual_element: self.virtual_elements[&**tag].clone(),
                         })
                         .unwrap();
+                }
+                Mutation::AssignId { path, id } => {
+                    let node = &child_stack[path[0] as usize];
+                    if let VirtualNode::Element {
+                        tag,
+                        attrs: _,
+                        children,
+                    } = node
+                    {
+                        let element = self.virtual_elements[&**tag].from_vnode(node);
+
+                        let (tx, rx) = oneshot::channel();
+                        self.message_tx
+                            .send(Message::Insert { element, tx })
+                            .unwrap();
+                        let key = rx.await.ok().unwrap();
+
+                        stack.push(id);
+                        self.elements.insert(id, (tag.to_string(), key));
+                    }
                 }
                 _ => {}
             }
