@@ -14,4 +14,11 @@ pub trait VirtualElement {
         value: BorrowedAttributeValue,
         element: &mut dyn AnyElement,
     );
+
+    fn set_handler(
+        &self,
+        name: &str,
+        handler: Box<dyn FnMut() + Send>,
+        element: &mut dyn AnyElement,
+        );
 }

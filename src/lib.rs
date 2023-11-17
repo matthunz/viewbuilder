@@ -29,9 +29,20 @@ pub fn transaction(f: impl FnOnce(&mut UserInterface) + Send + 'static) {
     Runtime::current().ui().tx.send(Box::new(f)).unwrap();
 }
 
+pub struct ClickEvent {}
+
 #[cfg(feature = "dioxus")]
 pub mod prelude {
-    pub use dioxus::prelude::{render, rsx, use_state, Element, Scope};
+    pub use crate::ClickEvent;
+    use dioxus::core::Attribute;
+    pub use dioxus::prelude::{render, rsx, use_state, Element, Scope, ScopeState};
+
+    pub fn onclick<'a, E, T>(
+        _cx: &'a ScopeState,
+        _f: impl FnMut(ClickEvent) -> E + 'a,
+    ) -> Attribute<'a> {
+        todo!()
+    }
 
     pub mod dioxus_elements {
         pub use dioxus::prelude::dioxus_elements::events;
@@ -52,9 +63,11 @@ pub mod prelude {
 
 #[cfg(feature = "dioxus")]
 pub fn launch(app: dioxus::prelude::Component) {
-    transaction(move |ui| {
-        let mut virtual_tree = virtual_tree::VirtualTree::new(app);
-        virtual_tree.rebuild(ui);
+    tokio::spawn(async move {
+        transaction(move |ui| {
+            let mut virtual_tree = virtual_tree::VirtualTree::new(app);
+            virtual_tree.rebuild(ui);
+        })
     });
 
     run()

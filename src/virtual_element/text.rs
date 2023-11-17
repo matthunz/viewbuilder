@@ -48,4 +48,18 @@ impl VirtualElement for VirtualText {
             _ => {}
         }
     }
+
+    fn set_handler(
+        &self,
+        name: &str,
+        mut handler: Box<dyn FnMut() + Send>,
+        element: &mut dyn AnyElement,
+    ) {
+        let text: &mut Text = element.as_any_mut().downcast_mut().unwrap();
+
+        match name {
+            "click" => text.set_on_click(move |_| handler()),
+            _ => {}
+        }
+    }
 }

@@ -83,6 +83,14 @@ impl Text {
         self.font_size = font_size;
         self.is_changed = true;
     }
+
+    pub fn set_on_click(
+        &mut self,
+        handler: impl FnMut(ElementRef<Text>) + Send + 'static,
+        )  {
+        self.on_click = Some(Box::new(handler));
+        self.is_changed = true;
+    }
 }
 
 impl Element for Text {
