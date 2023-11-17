@@ -47,8 +47,10 @@ pub mod prelude {
 
 #[cfg(feature = "dioxus")]
 pub fn launch(app: dioxus::prelude::Component) {
-    let mut virtual_tree = VirtualTree::new(app);
-    virtual_tree.rebuild();
+    transaction(move |ui| {
+        let mut virtual_tree = VirtualTree::new(app);
+        virtual_tree.rebuild(ui);
+    });
 
     run()
 }

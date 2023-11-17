@@ -119,14 +119,14 @@ impl UserInterface {
     pub fn target(&self, point: Point) -> Option<DefaultKey> {
         self.nodes
             .iter()
-            .filter(move |(key, node)| {
+            .filter(move |(_key, node)| {
                 point.x >= node.layout.location.x as _
                     && point.x <= (node.layout.location.x + node.layout.size.width) as _
                     && point.y >= node.layout.location.y as _
                     && point.y <= (node.layout.location.y + node.layout.size.height) as _
             })
-            .max_by_key(|(key, node)| node.layout.order)
-            .map(|(key, node)| key)
+            .max_by_key(|(_key, node)| node.layout.order)
+            .map(|(key, _node)| key)
     }
 }
 

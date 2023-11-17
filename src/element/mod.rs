@@ -4,7 +4,6 @@ use taffy::{prelude::Size, style::Style};
 use winit::event::WindowEvent;
 
 mod text;
-use crate::ElementRef;
 
 pub use self::text::Text;
 

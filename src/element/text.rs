@@ -92,7 +92,7 @@ impl Element for Text {
         }
     }
 
-    fn handle(&mut self, key: DefaultKey, event: winit::event::WindowEvent) {
+    fn handle(&mut self, key: DefaultKey, _event: winit::event::WindowEvent) {
         if let Some(ref mut handler) = self.on_click {
             handler(ElementRef {
                 key,

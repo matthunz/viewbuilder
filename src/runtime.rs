@@ -270,7 +270,7 @@ impl Runtime {
                         draw_frame = true;
                     }
                     WindowEvent::CursorMoved {
-                        device_id,
+                        device_id: _,
                         position,
                     } => {
                         cursor = Some(position);
