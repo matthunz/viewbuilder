@@ -75,8 +75,8 @@ pub fn launch(app: dioxus::prelude::Component) {
                 while let Some(msg) = rx.recv().await {
                     match msg {
                         Message::Insert { element, tx } => transaction(move |ui| {
-                            let r = ui.insert(element);
-                            tx.send(r.key).unwrap();
+                            let key = ui.insert_boxed(element);
+                            tx.send(key).unwrap();
                         }),
                         Message::SetAttribute {
                             tag: _,

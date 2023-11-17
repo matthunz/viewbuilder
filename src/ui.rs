@@ -39,10 +39,19 @@ impl UserInterface {
     }
 
     /// Insert an element into the user interface.
-    pub fn insert<T>(&mut self, mut element: T) -> ElementRef<T>
+    pub fn insert<T>(&mut self, element: T) -> ElementRef<T>
     where
         T: Element + 'static,
     {
+        let key = self.insert_boxed(Box::new(element));
+        ElementRef {
+            key,
+            _marker: PhantomData,
+        }
+    }
+
+    /// Insert a boxed element into the user interface.
+    pub fn insert_boxed(&mut self, mut element: Box<dyn Element>) -> DefaultKey {
         let key = self.taffy.new_leaf(element.layout()).unwrap();
         if let Some(children) = element.children() {
             self.taffy.set_children(key, &children).unwrap();
@@ -62,10 +71,7 @@ impl UserInterface {
         };
         self.nodes.insert(key, node);
 
-        ElementRef {
-            key,
-            _marker: PhantomData,
-        }
+        key
     }
 
     pub fn levels_mut(&mut self) -> LevelsMut {

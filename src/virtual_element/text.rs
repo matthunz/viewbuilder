@@ -1,7 +1,6 @@
-use std::any::Any;
-
 use super::VirtualElement;
 use crate::{any_element::AnyElement, element::Text, virtual_tree::VirtualNode, Element};
+use std::any::Any;
 
 pub struct VirtualText {}
 
