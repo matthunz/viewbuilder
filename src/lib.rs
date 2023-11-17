@@ -2,7 +2,6 @@ mod any_element;
 
 mod app;
 pub use app::App;
-use dioxus::prelude::Component;
 
 pub mod element;
 pub use self::element::Element;
@@ -16,7 +15,9 @@ pub use runtime::Runtime;
 mod ui;
 pub use ui::UserInterface;
 
+#[cfg(feature = "dioxus")]
 mod virtual_tree;
+#[cfg(feature = "dioxus")]
 pub use virtual_tree::VirtualTree;
 
 pub fn run() {
@@ -27,7 +28,25 @@ pub fn transaction(f: impl FnOnce(&mut UserInterface) + Send + 'static) {
     Runtime::current().ui().tx.send(Box::new(f)).unwrap();
 }
 
-pub fn launch(app: Component) {
+#[cfg(feature = "dioxus")]
+pub mod prelude {
+    pub use dioxus::prelude::{render, rsx, use_state, Element, Scope};
+
+    pub mod dioxus_elements {
+        pub use dioxus::prelude::dioxus_elements::events;
+
+        #[allow(non_camel_case_types)]
+        pub struct text;
+
+        impl text {
+            pub const TAG_NAME: &'static str = "text";
+            pub const NAME_SPACE: Option<&'static str> = None;
+        }
+    }
+}
+
+#[cfg(feature = "dioxus")]
+pub fn launch(app: dioxus::prelude::Component) {
     let mut virtual_tree = VirtualTree::new(app);
     virtual_tree.rebuild();
 

@@ -1,9 +1,7 @@
-use dioxus::prelude::*;
-use skia_safe::Color4f;
-use viewbuilder::element::View;
+use viewbuilder::prelude::*;
 
 fn app(cx: Scope) -> Element {
-    render!("")
+    cx.render(rsx! { text { "Hello World!" } })
 }
 
 #[tokio::main]
