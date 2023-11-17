@@ -24,24 +24,29 @@ Cross-platform user interface framework for Rust.
 
 This crate provides a moduler GUI library that can be used as an entire framework, or with individual parts.
 
+## Dioxus support
 ```rust
-#[tokio::main]
-async fn main() {
-    viewbuilder::transaction(|ui| {
-        ui.insert(
-            Text::builder()
-                .font_size(100.)
-                .color(Color4f::new(1., 0., 0., 1.))
-                .on_click(|text| {
-                    viewbuilder::transaction(move |ui| ui[text].set_content(0, "Clicked!"))
-                })
-                .content("Hello World!")
-                .build(),
-        );
-    });
-
-    viewbuilder::run();
+fn app(cx: Scope) -> Element {
+    cx.render(rsx! { text { "Hello World!" } })
 }
+```
+
+## HTML-like API
+```rust
+viewbuilder::transaction(|ui| {
+    ui.insert(
+        Text::builder()
+            .font_size(100.)
+            .color(Color4f::new(1., 0., 0., 1.))
+            .on_click(|text| {
+                viewbuilder::transaction(move |ui| ui[text].set_content(0, "Clicked!"))
+            })
+            .content("Hello World!")
+            .build(),
+    );
+});
+
+viewbuilder::run();
 ```
 
 ## Features
