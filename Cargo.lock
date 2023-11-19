@@ -645,6 +645,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9ea835d29036a4087793836fa931b08837ad5e957da9e23886b29586fb9b6650"
 
 [[package]]
+name = "dyn-hash"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b54549406f7f33b20da0ff78f1b37114b4e7ac9bec49bf6fca67b0ffb96d8082"
+
+[[package]]
 name = "either"
 version = "1.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2330,6 +2336,7 @@ dependencies = [
  "accesskit",
  "dioxus",
  "dioxus-signals",
+ "dyn-hash",
  "futures",
  "gl",
  "glutin",
