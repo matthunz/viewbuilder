@@ -20,8 +20,7 @@ use winit::{
     event_loop::{ControlFlow, EventLoop},
     window::{Window, WindowBuilder},
 };
-
-use crate::{App, Component, Element};
+use crate::{App, Component};
 use skia_safe::{
     gpu::{self, backend_render_targets, gl::FramebufferInfo, SurfaceOrigin},
     Color, ColorType, Surface,

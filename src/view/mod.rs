@@ -12,8 +12,6 @@ pub trait View<'a, M> {
     fn build(&'a mut self) -> Self::Element;
 
     fn rebuild(&'a mut self, element: &mut Self::Element);
-
-   
 }
 
 impl<'a, M> View<'a, M> for &'a str
@@ -31,6 +29,4 @@ where
             element.set_content(self.to_string());
         }
     }
-
-    
 }

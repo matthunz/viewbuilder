@@ -43,6 +43,4 @@ impl<'a, M, V: ViewGroup<'a, M>> View<'a, M> for LinearLayout<V> {
     fn rebuild(&'a mut self, element: &mut Self::Element) {
         self.view.rebuild(&mut element.nodes)
     }
-
-   
 }

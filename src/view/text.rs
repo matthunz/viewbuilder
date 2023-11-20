@@ -36,6 +36,4 @@ where
             element.set_content(self.content.to_string());
         }
     }
-
-    
 }
