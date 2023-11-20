@@ -13,7 +13,7 @@ pub trait View<'a, M> {
 
     fn rebuild(&'a mut self, element: &mut Self::Element);
 
-    fn handle(&'a mut self, msg: M);
+   
 }
 
 impl<'a, M> View<'a, M> for &'a str
@@ -32,5 +32,5 @@ where
         }
     }
 
-    fn handle(&'a mut self, _msg: M) {}
+    
 }

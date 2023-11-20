@@ -37,5 +37,5 @@ where
         }
     }
 
-    fn handle(&'a mut self, _msg: M) {}
+    
 }
