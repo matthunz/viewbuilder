@@ -2334,6 +2334,7 @@ name = "viewbuilder"
 version = "0.6.0-alpha.3"
 dependencies = [
  "accesskit",
+ "bumpalo",
  "dioxus",
  "dioxus-signals",
  "dyn-hash",
