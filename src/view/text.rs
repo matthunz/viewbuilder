@@ -24,7 +24,7 @@ impl<'a, M> View<'a, M> for Text<'a, M> {
     type Element = TextElement;
 
     fn build(&'a mut self) -> Self::Element {
-        TextElement::new(self.content.to_string())
+        TextElement::new(&self.content)
     }
 
     fn rebuild(&'a mut self, _element: &mut Self::Element) {}
