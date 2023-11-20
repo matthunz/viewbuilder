@@ -10,6 +10,9 @@ pub use any_element::AnyElement;
 mod element;
 pub use element::Element;
 
+mod node;
+pub use node::Node;
+
 mod view;
 use kurbo::Point;
 
@@ -46,18 +49,6 @@ pub trait Component {
 pub fn run(component: impl Component) {
     let mut app = App::new(component);
     app.run();
-}
-
-pub struct Node {
-    element: Box<dyn AnyElement>,
-}
-
-impl Node {
-    pub fn new(element: impl Element + 'static) -> Self {
-        Self {
-            element: Box::new(element),
-        }
-    }
 }
 
 #[derive(Clone)]

@@ -59,7 +59,7 @@ impl<M: 'static> Element for TextElement<M> {
         }
     }
 
-    fn render(&mut self, canvas: &mut skia_safe::Canvas) {
+    fn paint(&mut self, canvas: &mut skia_safe::Canvas) {
         let paint = Paint::new(Color4f::new(1., 0., 0., 1.), None);
         canvas.draw_text_blob(
             &self.text_blob,

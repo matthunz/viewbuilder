@@ -1,6 +1,6 @@
 use crate::{Direction, Element, Node, WindowMessage};
 use kurbo::Point;
-use skia_safe::surfaces;
+
 use taffy::geometry::Size;
 
 pub struct LinearLayoutElement {
@@ -67,15 +67,9 @@ impl Element for LinearLayoutElement {
         }
     }
 
-    fn render(&mut self, canvas: &mut skia_safe::Canvas) {
+    fn paint(&mut self, canvas: &mut skia_safe::Canvas) {
         for (node, (point, size)) in &mut self.nodes.iter_mut().zip(self.points.iter()) {
-            let mut surface = surfaces::raster_n32_premul(skia_safe::ISize::new(
-                size.width.floor() as _,
-                size.height.floor() as _,
-            ))
-            .unwrap();
-            node.element.as_element_mut().render(surface.canvas());
-            let image = surface.image_snapshot();
+            let image = node.paint(*size);
             canvas.draw_image(
                 image,
                 skia_safe::Point::new(point.x as _, point.y as _),

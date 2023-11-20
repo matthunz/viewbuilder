@@ -1,3 +1,4 @@
+use crate::{App, Component};
 use gl::types::*;
 use glutin::{
     config::{ConfigTemplateBuilder, GlConfig},
@@ -9,6 +10,10 @@ use glutin::{
 use glutin_winit::DisplayBuilder;
 use kurbo::Point;
 use raw_window_handle::HasRawWindowHandle;
+use skia_safe::{
+    gpu::{self, backend_render_targets, gl::FramebufferInfo, SurfaceOrigin},
+    Color, ColorType, Surface,
+};
 use std::{
     ffi::CString,
     num::NonZeroU32,
@@ -19,11 +24,6 @@ use winit::{
     event::{Event, KeyEvent, Modifiers, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
     window::{Window, WindowBuilder},
-};
-use crate::{App, Component};
-use skia_safe::{
-    gpu::{self, backend_render_targets, gl::FramebufferInfo, SurfaceOrigin},
-    Color, ColorType, Surface,
 };
 
 pub fn run<C: Component>(app: &mut App<C>) {
@@ -273,11 +273,7 @@ pub fn run<C: Component>(app: &mut App<C>) {
 
             app.element.as_mut().unwrap().as_element_mut().layout();
 
-            app.element
-                .as_mut()
-                .unwrap()
-                .as_element_mut()
-                .render(canvas);
+            app.element.as_mut().unwrap().as_element_mut().paint(canvas);
 
             env.gr_context.flush_and_submit();
             env.gl_surface.swap_buffers(&env.gl_context).unwrap();

@@ -14,7 +14,7 @@ pub trait Element {
 
     fn handle(&mut self, msg: WindowMessage, output: &mut Vec<Box<dyn Any>>);
 
-    fn render(&mut self, canvas: &mut Canvas);
+    fn paint(&mut self, canvas: &mut Canvas);
 }
 
 impl<T: Element + ?Sized> Element for &mut T {
@@ -26,7 +26,7 @@ impl<T: Element + ?Sized> Element for &mut T {
         (**self).handle(msg, output)
     }
 
-    fn render(&mut self, canvas: &mut Canvas) {
-        (**self).render(canvas)
+    fn paint(&mut self, canvas: &mut Canvas) {
+        (**self).paint(canvas)
     }
 }
