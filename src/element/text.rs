@@ -1,8 +1,7 @@
-use std::borrow::Cow;
-
 use crate::{Element, WindowMessage};
 use kurbo::Point;
 use skia_safe::{Color4f, Font, FontStyle, Paint, TextBlob, Typeface};
+use std::borrow::Cow;
 use taffy::geometry::Size;
 
 pub struct TextElement<M> {
@@ -51,7 +50,6 @@ impl<M: 'static> Element for TextElement<M> {
     }
 
     fn handle(&mut self, msg: WindowMessage, output: &mut Vec<Box<dyn std::any::Any>>) {
-        dbg!(&self.content);
         match msg {
             WindowMessage::Click { position } => {
                 if let Some(ref mut f) = self.on_click {

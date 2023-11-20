@@ -35,7 +35,7 @@ impl<C> App<C> {
         }
     }
 
-    pub fn handle<'a>(&mut self, msg: C::Message)
+    pub fn handle(&mut self, msg: C::Message)
     where
         C: Component,
     {

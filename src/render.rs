@@ -230,7 +230,7 @@ pub fn run<C: Component>(app: &mut App<C>) {
                     draw_frame = true;
                 }
                 WindowEvent::CursorMoved {
-                    device_id,
+                    device_id: _,
                     position,
                 } => {
                     cursor = Some(position);

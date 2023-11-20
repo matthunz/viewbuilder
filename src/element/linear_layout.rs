@@ -1,8 +1,7 @@
+use crate::{Element, Node, WindowMessage};
 use kurbo::Point;
 use skia_safe::surfaces;
 use taffy::geometry::Size;
-
-use crate::{Element, Node, WindowMessage};
 
 pub struct LinearLayoutElement {
     pub(crate) nodes: Vec<Node>,

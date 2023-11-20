@@ -1,15 +1,13 @@
-use std::any::Any;
-
+use crate::WindowMessage;
 use skia_safe::Canvas;
+use std::any::Any;
+use taffy::geometry::Size;
 
 mod linear_layout;
 pub use linear_layout::LinearLayoutElement;
 
 mod text;
-use taffy::geometry::Size;
 pub use text::TextElement;
-
-use crate::WindowMessage;
 
 pub trait Element {
     fn layout(&mut self) -> Size<f64>;
@@ -21,14 +19,14 @@ pub trait Element {
 
 impl<T: Element + ?Sized> Element for &mut T {
     fn layout(&mut self) -> Size<f64> {
-        (&mut **self).layout()
+        (**self).layout()
     }
 
     fn handle(&mut self, msg: WindowMessage, output: &mut Vec<Box<dyn Any>>) {
-        (&mut **self).handle(msg, output)
+        (**self).handle(msg, output)
     }
 
     fn render(&mut self, canvas: &mut Canvas) {
-        (&mut **self).render(canvas)
+        (**self).render(canvas)
     }
 }
