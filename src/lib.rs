@@ -4,6 +4,12 @@ use std::any::Any;
 mod app;
 pub use app::App;
 
+mod any_element;
+pub use any_element::AnyElement;
+
+mod element;
+pub use element::Element;
+
 mod view;
 pub use view::{LinearLayout, Text, View};
 

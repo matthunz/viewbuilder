@@ -1,4 +1,4 @@
-use crate::{View, ViewGroup};
+use crate::{element::LinearLayoutElement, View, ViewGroup};
 
 pub struct LinearLayout<V> {
     view: V,
@@ -11,7 +11,7 @@ impl<V> LinearLayout<V> {
 }
 
 impl<'a, M, V: ViewGroup<'a, M>> View<'a, M> for LinearLayout<V> {
-    type Element = ();
+    type Element = LinearLayoutElement;
 
     fn build(&'a mut self) -> Self::Element {
         todo!()

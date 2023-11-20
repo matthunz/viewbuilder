@@ -1,4 +1,4 @@
-use crate::View;
+use crate::{element::TextElement, View};
 use std::borrow::Cow;
 
 pub struct Text<'a, M> {
@@ -21,7 +21,7 @@ impl<'a, M> Text<'a, M> {
 }
 
 impl<'a, M> View<'a, M> for Text<'a, M> {
-    type Element = ();
+    type Element = TextElement;
 
     fn build(&'a mut self) -> Self::Element {
         todo!()

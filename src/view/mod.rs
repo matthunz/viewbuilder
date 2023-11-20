@@ -1,3 +1,5 @@
+use crate::{element::TextElement, Element};
+
 mod linear_layout;
 pub use linear_layout::LinearLayout;
 
@@ -5,7 +7,7 @@ mod text;
 pub use text::Text;
 
 pub trait View<'a, M> {
-    type Element;
+    type Element: Element;
 
     fn build(&'a mut self) -> Self::Element;
 
@@ -15,10 +17,11 @@ pub trait View<'a, M> {
 }
 
 impl<'a, M> View<'a, M> for &'a str {
-    type Element = ();
+    type Element = TextElement;
 
     fn build(&'a mut self) -> Self::Element {
         dbg!(self);
+        todo!()
     }
 
     fn rebuild(&'a mut self, _element: &mut Self::Element) {
