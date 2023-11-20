@@ -1,6 +1,6 @@
 use bumpalo::Bump;
 use slotmap::{DefaultKey, SlotMap};
-use std::{any::Any, mem};
+use std::{any::Any, borrow::Cow, mem};
 
 pub use bumpalo::collections::String as BumpString;
 
@@ -75,7 +75,7 @@ impl<'a, M> View<'a, M> for &'a str {
 }
 
 #[macro_export]
-macro_rules! fmt {
+macro_rules! format_in {
     ($bump:expr, $($arg:tt)*) => {
         {
             use std::fmt::Write;
@@ -87,4 +87,65 @@ macro_rules! fmt {
             &**$bump.alloc(s)
         }
     };
+}
+
+pub struct Text<'a, M> {
+    content: Cow<'a, str>,
+    on_click: Option<M>,
+}
+
+impl<'a, M> Text<'a, M> {
+    pub fn new(content: impl Into<Cow<'a, str>>) -> Self {
+        Self {
+            content: content.into(),
+            on_click: None,
+        }
+    }
+
+    pub fn on_click(mut self, msg: M) -> Self {
+        self.on_click = Some(msg);
+        self
+    }
+}
+
+impl<'a, M> View<'a, M> for Text<'a, M> {
+    type Element = ();
+
+    fn build(&'a mut self) -> Self::Element {
+        todo!()
+    }
+
+    fn rebuild(&'a mut self, element: &mut Self::Element) {
+        todo!()
+    }
+
+    fn handle(&'a mut self, msg: M) {
+        todo!()
+    }
+}
+
+pub struct Flex<V> {
+    view: V,
+}
+
+impl<V> Flex<V> {
+    pub fn new(view: V) -> Self {
+        Self { view }
+    }
+}
+
+impl<'a, M, V> View<'a, M> for Flex<V> {
+    type Element = ();
+
+    fn build(&'a mut self) -> Self::Element {
+        todo!()
+    }
+
+    fn rebuild(&'a mut self, element: &mut Self::Element) {
+        todo!()
+    }
+
+    fn handle(&'a mut self, msg: M) {
+        todo!()
+    }
 }
