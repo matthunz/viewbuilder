@@ -21,7 +21,7 @@ impl<'a, M> View<'a, M> for &'a str {
 
     fn build(&'a mut self) -> Self::Element {
         dbg!(self);
-        todo!()
+      TextElement {}
     }
 
     fn rebuild(&'a mut self, _element: &mut Self::Element) {

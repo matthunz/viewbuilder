@@ -21,7 +21,5 @@ fn main() {
         Message::Increment => *count += 1,
         Message::Decrement => *count -= 1,
     });
-    app.view();
-    app.handle(Message::Increment);
-    app.view();
+    app.run();
 }

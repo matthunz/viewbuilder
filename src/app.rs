@@ -1,5 +1,6 @@
-use crate::{render, View};
+use crate::{render, Element, Node, View};
 use bumpalo::Bump;
+use slotmap::{DefaultKey, SlotMap};
 use std::mem;
 
 pub struct App<V, S, E, F> {
@@ -47,7 +48,14 @@ impl<V, S, E, F> App<V, S, E, F> {
         (self.handler)(&mut self.state, msg);
     }
 
-    pub fn run() {
-        render::run()
+    pub fn run<'a, M>(&mut self)
+    where
+        V: View<'a, M, Element = E> + 'a,
+        E: Element,
+        F: FnMut(&mut S, M),
+    {
+        self.view();
+
+        render::run(self.element.as_mut().unwrap());
     }
 }

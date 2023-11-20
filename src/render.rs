@@ -24,8 +24,9 @@ use skia_safe::{
     gpu::{self, backend_render_targets, gl::FramebufferInfo, SurfaceOrigin},
     Color, ColorType, Surface,
 };
+use crate::Element;
 
-pub fn run() {
+pub fn run(element: &mut impl Element) {
     let el = EventLoop::new().expect("Failed to create event loop");
     let winit_window_builder = WindowBuilder::new()
         .with_title("rust-skia-gl-window")
@@ -239,7 +240,9 @@ pub fn run() {
             frame += 1;
             let canvas = env.surface.canvas();
             canvas.clear(Color::WHITE);
-            //renderer::render_frame(frame % 360, 12, 60, canvas);
+            
+            element.render(canvas);
+
             env.gr_context.flush_and_submit();
             env.gl_surface.swap_buffers(&env.gl_context).unwrap();
         }
