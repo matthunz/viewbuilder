@@ -1,5 +1,5 @@
 use bumpalo::Bump;
-use viewbuilder::{format_in, App, LinearLayout, Text, View};
+use viewbuilder::{format_in, LinearLayout, Text, View};
 
 enum Message {
     Increment,
@@ -17,9 +17,8 @@ fn app<'a>(bump: &'a Bump, count: &mut i32) -> impl View<'a, Message> {
 }
 
 fn main() {
-    let mut app = App::new(0, app, |count: &mut i32, msg| match msg {
+    viewbuilder::run(0, app, |count: &mut i32, msg| match msg {
         Message::Increment => *count += 1,
         Message::Decrement => *count -= 1,
-    });
-    app.run();
+    })
 }

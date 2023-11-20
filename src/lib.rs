@@ -1,4 +1,5 @@
 pub use bumpalo::collections::String as BumpString;
+use bumpalo::Bump;
 
 mod app;
 pub use app::App;
@@ -30,6 +31,16 @@ macro_rules! format_in {
             &**$bump.alloc(s)
         }
     };
+}
+
+pub fn run<'a, S, V, F, E, M>(state: S, component: fn(&'a Bump, &mut S) -> V, handler: F)
+where
+    V: View<'a, M, Element = E> + 'a,
+    E: Element,
+    F: FnMut(&mut S, M),
+{
+    let mut app = App::new(state, component, handler);
+    app.run();
 }
 
 pub struct Node {
