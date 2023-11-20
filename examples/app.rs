@@ -26,7 +26,7 @@ impl Component for Counter {
             format_in!(bump, "High five count: {}", self.count),
             LinearLayout::new((
                 Text::new("Up high!").on_click(|_| Message::Increment),
-                Text::new("Down low!"),
+                Text::new("Down low!").on_click(|_| Message::Decrement),
             )),
         ))
     }

@@ -16,7 +16,10 @@ impl<'a, M, V: ViewGroup<'a, M>> View<'a, M> for LinearLayout<V> {
     fn build(&'a mut self) -> Self::Element {
         let mut nodes = Vec::new();
         self.view.build(&mut nodes);
-        LinearLayoutElement { nodes }
+        LinearLayoutElement {
+            nodes,
+            points: Vec::new(),
+        }
     }
 
     fn rebuild(&'a mut self, element: &mut Self::Element) {

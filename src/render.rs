@@ -186,6 +186,8 @@ pub fn run<C: Component>(app: &mut App<C>) {
     let mut previous_frame_start = Instant::now();
     let mut modifiers = Modifiers::default();
 
+    let mut cursor = None;
+
     el.run(move |event, window_target| {
         let frame_start = Instant::now();
         let mut draw_frame = false;
@@ -227,24 +229,32 @@ pub fn run<C: Component>(app: &mut App<C>) {
                 WindowEvent::RedrawRequested => {
                     draw_frame = true;
                 }
+                WindowEvent::CursorMoved {
+                    device_id,
+                    position,
+                } => {
+                    cursor = Some(position);
+                }
                 WindowEvent::MouseInput {
                     device_id: _,
                     state: _,
                     button: _,
                 } => {
-                    let mut outputs = Vec::new();
-                    app.element.as_mut().unwrap().as_element_mut().handle(
-                        crate::WindowMessage::Click {
-                            position: Point::default(),
-                        },
-                        &mut outputs,
-                    );
-                    let is_empty = outputs.is_empty();
-                    for output in outputs {
-                        app.handle(*output.downcast().unwrap());
-                    }
-                    if !is_empty {
-                        app.view();
+                    if let Some(position) = cursor {
+                        let mut outputs = Vec::new();
+                        app.element.as_mut().unwrap().as_element_mut().handle(
+                            crate::WindowMessage::Click {
+                                position: Point::new(position.x, position.y),
+                            },
+                            &mut outputs,
+                        );
+                        let is_empty = outputs.is_empty();
+                        for output in outputs {
+                            app.handle(*output.downcast().unwrap());
+                        }
+                        if !is_empty {
+                            app.view();
+                        }
                     }
                 }
                 _ => (),
@@ -261,6 +271,8 @@ pub fn run<C: Component>(app: &mut App<C>) {
             frame += 1;
             let canvas = env.surface.canvas();
             canvas.clear(Color::WHITE);
+
+            app.element.as_mut().unwrap().as_element_mut().layout();
 
             app.element
                 .as_mut()

@@ -51,6 +51,7 @@ impl<M: 'static> Element for TextElement<M> {
     }
 
     fn handle(&mut self, msg: WindowMessage, output: &mut Vec<Box<dyn std::any::Any>>) {
+        dbg!(&self.content);
         match msg {
             WindowMessage::Click { position } => {
                 if let Some(ref mut f) = self.on_click {
