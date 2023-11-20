@@ -1,10 +1,10 @@
-use crate::{render, Component, Element, View, AnyElement};
+use crate::{render, AnyElement, Component, View};
 use bumpalo::Bump;
 use std::mem;
 
 pub struct App<C> {
     component: C,
-    element: Option<Box<dyn AnyElement>>,
+    pub(crate) element: Option<Box<dyn AnyElement>>,
     bump: Bump,
 }
 
@@ -25,7 +25,7 @@ impl<C> App<C> {
     where
         C: Component,
     {
-        let mut view = self.component.view(&self.bump);
+        let view = self.component.view(&self.bump);
         let view = self.bump.alloc(view);
 
         if let Some(ref mut element) = self.element {
@@ -48,6 +48,6 @@ impl<C> App<C> {
     {
         self.view();
 
-        render::run(self.element.as_mut().unwrap().as_element_mut());
+        render::run(self);
     }
 }

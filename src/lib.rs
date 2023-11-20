@@ -11,6 +11,8 @@ mod element;
 pub use element::Element;
 
 mod view;
+use kurbo::Point;
+
 pub use view::{LinearLayout, Text, View};
 
 mod view_group;
@@ -33,15 +35,13 @@ macro_rules! format_in {
     };
 }
 
-
 pub trait Component {
-    type Message;
+    type Message: 'static;
 
     fn update(&mut self, msg: Self::Message);
 
-    fn view<'a>(&mut self, bump: &'a Bump) -> impl View<'a, Self::Message> ;
+    fn view<'a>(&mut self, bump: &'a Bump) -> impl View<'a, Self::Message>;
 }
-
 
 pub fn run(component: impl Component) {
     let mut app = App::new(component);
@@ -58,4 +58,9 @@ impl Node {
             element: Box::new(element),
         }
     }
+}
+
+#[derive(Clone)]
+pub enum WindowMessage {
+    Click { position: Point },
 }

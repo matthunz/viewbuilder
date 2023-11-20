@@ -16,11 +16,14 @@ pub trait View<'a, M> {
     fn handle(&'a mut self, msg: M);
 }
 
-impl<'a, M> View<'a, M> for &'a str {
-    type Element = TextElement;
+impl<'a, M> View<'a, M> for &'a str
+where
+    M: 'static,
+{
+    type Element = TextElement<M>;
 
     fn build(&'a mut self) -> Self::Element {
-        TextElement::new(self)
+        TextElement::new(self, None)
     }
 
     fn rebuild(&'a mut self, _element: &mut Self::Element) {

@@ -7,6 +7,7 @@ use glutin::{
     surface::{Surface as GlutinSurface, SurfaceAttributesBuilder, WindowSurface},
 };
 use glutin_winit::DisplayBuilder;
+use kurbo::Point;
 use raw_window_handle::HasRawWindowHandle;
 use std::{
     ffi::CString,
@@ -20,13 +21,13 @@ use winit::{
     window::{Window, WindowBuilder},
 };
 
-use crate::Element;
+use crate::{App, Component, Element};
 use skia_safe::{
     gpu::{self, backend_render_targets, gl::FramebufferInfo, SurfaceOrigin},
     Color, ColorType, Surface,
 };
 
-pub fn run(element: &mut (impl Element + ?Sized)) {
+pub fn run<C: Component>(app: &mut App<C>) {
     let el = EventLoop::new().expect("Failed to create event loop");
     let winit_window_builder = WindowBuilder::new()
         .with_title("rust-skia-gl-window")
@@ -226,6 +227,26 @@ pub fn run(element: &mut (impl Element + ?Sized)) {
                 WindowEvent::RedrawRequested => {
                     draw_frame = true;
                 }
+                WindowEvent::MouseInput {
+                    device_id: _,
+                    state: _,
+                    button: _,
+                } => {
+                    let mut outputs = Vec::new();
+                    app.element.as_mut().unwrap().as_element_mut().handle(
+                        crate::WindowMessage::Click {
+                            position: Point::default(),
+                        },
+                        &mut outputs,
+                    );
+                    let is_empty = outputs.is_empty();
+                    for output in outputs {
+                        app.handle(*output.downcast().unwrap());
+                    }
+                    if !is_empty {
+                        app.view();
+                    }
+                }
                 _ => (),
             }
         }
@@ -241,7 +262,11 @@ pub fn run(element: &mut (impl Element + ?Sized)) {
             let canvas = env.surface.canvas();
             canvas.clear(Color::WHITE);
 
-            element.render(canvas);
+            app.element
+                .as_mut()
+                .unwrap()
+                .as_element_mut()
+                .render(canvas);
 
             env.gr_context.flush_and_submit();
             env.gl_surface.swap_buffers(&env.gl_context).unwrap();

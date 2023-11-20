@@ -22,11 +22,13 @@ impl Component for Counter {
     }
 
     fn view<'a>(&mut self, bump: &'a Bump) -> impl View<'a, Self::Message> {
+        dbg!(self.count);
+
         LinearLayout::new((
             format_in!(bump, "High five count: {}", self.count),
             LinearLayout::new((
-                Text::new("Up high!").on_click(Message::Increment),
-                Text::new("Down low!").on_click(Message::Decrement),
+                Text::new("Up high!").on_click(|_| Message::Increment),
+                Text::new("Down low!"),
             )),
         ))
     }
