@@ -1,12 +1,29 @@
 use crate::{element::LinearLayoutElement, View, ViewGroup};
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Direction {
+    Row,
+    RowReverse,
+    Column,
+    ColumnReverse,
+}
+
 pub struct LinearLayout<V> {
     view: V,
+    direction: Direction,
 }
 
 impl<V> LinearLayout<V> {
-    pub fn new(view: V) -> Self {
-        Self { view }
+    pub fn new(direction: Direction, view: V) -> Self {
+        Self { view, direction }
+    }
+
+    pub fn row(view: V) -> Self {
+        Self::new(Direction::Row, view)
+    }
+
+    pub fn column(view: V) -> Self {
+        Self::new(Direction::Column, view)
     }
 }
 
@@ -19,6 +36,7 @@ impl<'a, M, V: ViewGroup<'a, M>> View<'a, M> for LinearLayout<V> {
         LinearLayoutElement {
             nodes,
             points: Vec::new(),
+            direction: self.direction,
         }
     }
 

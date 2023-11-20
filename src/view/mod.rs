@@ -1,7 +1,7 @@
 use crate::{element::TextElement, Element};
 
 mod linear_layout;
-pub use linear_layout::LinearLayout;
+pub use linear_layout::{Direction, LinearLayout};
 
 mod text;
 pub use text::Text;

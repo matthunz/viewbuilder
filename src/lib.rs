@@ -13,7 +13,7 @@ pub use element::Element;
 mod view;
 use kurbo::Point;
 
-pub use view::{LinearLayout, Text, View};
+pub use view::{Direction, LinearLayout, Text, View};
 
 mod view_group;
 pub use view_group::ViewGroup;
