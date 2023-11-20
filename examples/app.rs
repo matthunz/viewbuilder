@@ -22,8 +22,6 @@ impl Component for Counter {
     }
 
     fn view<'a>(&mut self, bump: &'a Bump) -> impl View<'a, Self::Message> {
-        dbg!(self.count);
-
         LinearLayout::new((
             format_in!(bump, "High five count: {}", self.count),
             LinearLayout::new((

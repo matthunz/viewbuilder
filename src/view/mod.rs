@@ -23,11 +23,13 @@ where
     type Element = TextElement<M>;
 
     fn build(&'a mut self) -> Self::Element {
-        TextElement::new(self, None)
+        TextElement::new(self.to_string(), None)
     }
 
-    fn rebuild(&'a mut self, _element: &mut Self::Element) {
-        dbg!(self);
+    fn rebuild(&'a mut self, element: &mut Self::Element) {
+        if *self != element.content() {
+            element.set_content(self.to_string());
+        }
     }
 
     fn handle(&'a mut self, _msg: M) {}

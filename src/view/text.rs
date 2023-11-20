@@ -1,6 +1,5 @@
-use kurbo::Point;
-
 use crate::{element::TextElement, View};
+use kurbo::Point;
 use std::borrow::Cow;
 
 pub struct Text<'a, M> {
@@ -29,10 +28,14 @@ where
     type Element = TextElement<M>;
 
     fn build(&'a mut self) -> Self::Element {
-        TextElement::new(&self.content, self.on_click.take())
+        TextElement::new(self.content.to_string(), self.on_click.take())
     }
 
-    fn rebuild(&'a mut self, _element: &mut Self::Element) {}
+    fn rebuild(&'a mut self, element: &mut Self::Element) {
+        if self.content != element.content() {
+            element.set_content(self.content.to_string());
+        }
+    }
 
     fn handle(&'a mut self, _msg: M) {}
 }

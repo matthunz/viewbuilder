@@ -1,23 +1,44 @@
+use std::borrow::Cow;
+
 use crate::{Element, WindowMessage};
 use kurbo::Point;
 use skia_safe::{Color4f, Font, FontStyle, Paint, TextBlob, Typeface};
 use taffy::geometry::Size;
 
 pub struct TextElement<M> {
+    content: Cow<'static, str>,
     text_blob: TextBlob,
     on_click: Option<Box<dyn FnMut(Point) -> M>>,
 }
 
 impl<M> TextElement<M> {
-    pub fn new(content: &str, on_click: Option<Box<dyn FnMut(Point) -> M>>) -> Self {
+    pub fn new(
+        content: impl Into<Cow<'static, str>>,
+        on_click: Option<Box<dyn FnMut(Point) -> M>>,
+    ) -> Self {
+        let content = content.into();
         let typeface = Typeface::new("monospace", FontStyle::default()).unwrap();
         let font = Font::new(typeface, 100.);
-        let text_blob = TextBlob::new(content, &font).unwrap();
+        let text_blob = TextBlob::new(&content, &font).unwrap();
 
         Self {
+            content,
             text_blob,
             on_click,
         }
+    }
+
+    pub fn content(&self) -> &str {
+        &self.content
+    }
+
+    pub fn set_content(&mut self, content: impl Into<Cow<'static, str>>) {
+        let content = content.into();
+        let typeface = Typeface::new("monospace", FontStyle::default()).unwrap();
+        let font = Font::new(typeface, 100.);
+        let text_blob = TextBlob::new(&content, &font).unwrap();
+        self.text_blob = text_blob;
+        self.content = content;
     }
 }
 

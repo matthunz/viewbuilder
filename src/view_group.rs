@@ -21,8 +21,11 @@ where
         nodes.push(Node::new(self.1.build()));
     }
 
-    fn rebuild(&'a mut self, _nodes: &mut Vec<Node>) {
-        todo!()
+    fn rebuild(&'a mut self, nodes: &mut Vec<Node>) {
+        self.0
+            .rebuild(nodes[0].element.as_any_mut().downcast_mut().unwrap());
+        self.1
+            .rebuild(nodes[1].element.as_any_mut().downcast_mut().unwrap());
     }
 
     fn handle(&'a mut self, _msg: M) {
