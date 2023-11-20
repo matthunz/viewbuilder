@@ -24,29 +24,28 @@ Cross-platform user interface framework for Rust.
 
 This crate provides a moduler GUI library that can be used as an entire framework, or with individual parts.
 
-## Dioxus support
 ```rust
-fn app(cx: Scope) -> Element {
-    cx.render(rsx! { text { font_size: 100., "Hello World!" } })
+enum Message {
+    Increment,
+    Decrement,
 }
-```
 
-## HTML-like API
-```rust
-viewbuilder::transaction(|ui| {
-    ui.insert(
-        Text::builder()
-            .font_size(100.)
-            .color(Color4f::new(1., 0., 0., 1.))
-            .on_click(|text| {
-                viewbuilder::transaction(move |ui| ui[text].set_content(0, "Clicked!"))
-            })
-            .content("Hello World!")
-            .build(),
-    );
-});
+fn app<'a>(bump: &'a Bump, count: &mut i32) -> impl View<'a, Message> {
+    LinearLayout::new((
+        format_in!(bump, "High five count: {}", *count),
+        LinearLayout::new((
+            Text::new("Up high!").on_click(Message::Increment),
+            Text::new("Down low!").on_click(Message::Decrement),
+        )),
+    ))
+}
 
-viewbuilder::run();
+fn main() {
+    viewbuilder::run(0, app, |count: &mut i32, msg| match msg {
+        Message::Increment => *count += 1,
+        Message::Decrement => *count -= 1,
+    })
+}
 ```
 
 ## Features
