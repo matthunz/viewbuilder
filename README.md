@@ -30,21 +30,30 @@ enum Message {
     Decrement,
 }
 
-fn app<'a>(bump: &'a Bump, count: &mut i32) -> impl View<'a, Message> {
-    LinearLayout::new((
-        format_in!(bump, "High five count: {}", *count),
-        LinearLayout::new((
-            Text::new("Up high!").on_click(Message::Increment),
-            Text::new("Down low!").on_click(Message::Decrement),
-        )),
-    ))
+#[derive(Default)]
+struct Counter {
+    count: i32,
 }
 
-fn main() {
-    viewbuilder::run(0, app, |count: &mut i32, msg| match msg {
-        Message::Increment => *count += 1,
-        Message::Decrement => *count -= 1,
-    })
+impl Component for Counter {
+    type Message = Message;
+
+    fn update(&mut self, msg: Self::Message) {
+        match msg {
+            Message::Increment => self.count += 1,
+            Message::Decrement => self.count -= 1,
+        }
+    }
+
+    fn view<'a>(&mut self, bump: &'a Bump) -> impl View<'a, Self::Message> {
+        LinearLayout::new((
+            format_in!(bump, "High five count: {}", self.count),
+            LinearLayout::new((
+                Text::new("Up high!").on_click(Message::Increment),
+                Text::new("Down low!").on_click(Message::Decrement),
+            )),
+        ))
+    }
 }
 ```
 
