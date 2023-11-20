@@ -20,11 +20,11 @@ use winit::{
     window::{Window, WindowBuilder},
 };
 
+use crate::Element;
 use skia_safe::{
     gpu::{self, backend_render_targets, gl::FramebufferInfo, SurfaceOrigin},
     Color, ColorType, Surface,
 };
-use crate::Element;
 
 pub fn run(element: &mut impl Element) {
     let el = EventLoop::new().expect("Failed to create event loop");
@@ -240,7 +240,7 @@ pub fn run(element: &mut impl Element) {
             frame += 1;
             let canvas = env.surface.canvas();
             canvas.clear(Color::WHITE);
-            
+
             element.render(canvas);
 
             env.gr_context.flush_and_submit();

@@ -1,6 +1,6 @@
-use crate::{render, Element, Node, View};
+use crate::{render, Element, View};
 use bumpalo::Bump;
-use slotmap::{DefaultKey, SlotMap};
+
 use std::mem;
 
 pub struct App<V, S, E, F> {

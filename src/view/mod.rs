@@ -20,8 +20,7 @@ impl<'a, M> View<'a, M> for &'a str {
     type Element = TextElement;
 
     fn build(&'a mut self) -> Self::Element {
-        dbg!(self);
-      TextElement {}
+        TextElement::new(self.to_string())
     }
 
     fn rebuild(&'a mut self, _element: &mut Self::Element) {

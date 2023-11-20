@@ -1,11 +1,11 @@
 use bumpalo::Bump;
-use viewbuilder::{format_in, App, LinearLayout, Text, View};
+use viewbuilder::{App, View};
 
-fn app<'a>(bump: &'a Bump, count: &mut ()) -> impl View<'a, ()> {
+fn app<'a>(_bump: &'a Bump, _count: &mut ()) -> impl View<'a, ()> {
     "Hello World!"
 }
 
 fn main() {
-    let mut app = App::new((), app, |count: &mut (), _| {});
+    let mut app = App::new((), app, |_count: &mut (), _| {});
     app.run();
 }

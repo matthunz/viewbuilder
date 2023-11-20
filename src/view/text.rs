@@ -24,14 +24,10 @@ impl<'a, M> View<'a, M> for Text<'a, M> {
     type Element = TextElement;
 
     fn build(&'a mut self) -> Self::Element {
-        todo!()
+        TextElement::new(self.content.to_string())
     }
 
-    fn rebuild(&'a mut self, _element: &mut Self::Element) {
-        todo!()
-    }
+    fn rebuild(&'a mut self, _element: &mut Self::Element) {}
 
-    fn handle(&'a mut self, _msg: M) {
-        todo!()
-    }
+    fn handle(&'a mut self, _msg: M) {}
 }
