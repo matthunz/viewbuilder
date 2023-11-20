@@ -26,7 +26,7 @@ use skia_safe::{
     Color, ColorType, Surface,
 };
 
-pub fn run(element: &mut impl Element) {
+pub fn run(element: &mut (impl Element + ?Sized)) {
     let el = EventLoop::new().expect("Failed to create event loop");
     let winit_window_builder = WindowBuilder::new()
         .with_title("rust-skia-gl-window")

@@ -12,3 +12,13 @@ pub trait Element {
 
     fn render(&mut self, canvas: &mut Canvas);
 }
+
+impl<T: Element + ?Sized> Element for &mut T{
+    fn layout(&mut self) -> Size<f64> {
+        (&mut **self).layout()
+    }
+
+    fn render(&mut self, canvas: &mut Canvas) {
+        (&mut **self).render(canvas)
+    }
+}

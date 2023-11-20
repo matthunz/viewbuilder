@@ -7,7 +7,7 @@ mod text;
 pub use text::Text;
 
 pub trait View<'a, M> {
-    type Element: Element;
+    type Element: Element + 'static;
 
     fn build(&'a mut self) -> Self::Element;
 

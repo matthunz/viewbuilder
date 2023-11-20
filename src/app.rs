@@ -1,61 +1,53 @@
-use crate::{render, Element, View};
+use crate::{render, Component, Element, View, AnyElement};
 use bumpalo::Bump;
-
 use std::mem;
 
-pub struct App<V, S, E, F> {
-    component: fn(&Bump, &mut S) -> V,
-    state: S,
-    element: Option<E>,
-    handler: F,
+pub struct App<C> {
+    component: C,
+    element: Option<Box<dyn AnyElement>>,
     bump: Bump,
 }
 
-impl<V, S, E, F> App<V, S, E, F> {
-    pub fn new<'a, M>(state: S, component: fn(&'a Bump, &mut S) -> V, handler: F) -> Self
+impl<C> App<C> {
+    pub fn new(component: C) -> Self
     where
-        V: View<'a, M, Element = E> + 'a,
+        C: Component,
     {
         let component = unsafe { mem::transmute(component) };
         Self {
             component,
-            handler,
-            state,
             element: None,
             bump: Bump::new(),
         }
     }
 
-    pub fn view<'a, M>(&mut self)
+    pub fn view(&mut self)
     where
-        V: View<'a, M, Element = E> + 'a,
+        C: Component,
     {
-        let bump: &'a Bump = unsafe { mem::transmute(&self.bump) };
+        let mut view = self.component.view(&self.bump);
+        let view = self.bump.alloc(view);
 
-        let view = bump.alloc((self.component)(bump, &mut self.state));
         if let Some(ref mut element) = self.element {
-            view.rebuild(element);
+            view.rebuild(element.as_any_mut().downcast_mut().unwrap());
         } else {
-            self.element = Some(view.build());
+            self.element = Some(Box::new(view.build()));
         }
     }
 
-    pub fn handle<'a, M>(&mut self, msg: M)
+    pub fn handle<'a>(&mut self, msg: C::Message)
     where
-        V: View<'a, M> + 'a,
-        F: FnMut(&mut S, M),
+        C: Component,
     {
-        (self.handler)(&mut self.state, msg);
+        self.component.update(msg);
     }
 
-    pub fn run<'a, M>(&mut self)
+    pub fn run(&mut self)
     where
-        V: View<'a, M, Element = E> + 'a,
-        E: Element,
-        F: FnMut(&mut S, M),
+        C: Component,
     {
         self.view();
 
-        render::run(self.element.as_mut().unwrap());
+        render::run(self.element.as_mut().unwrap().as_element_mut());
     }
 }

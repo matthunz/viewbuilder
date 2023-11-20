@@ -33,13 +33,18 @@ macro_rules! format_in {
     };
 }
 
-pub fn run<'a, S, V, F, E, M>(state: S, component: fn(&'a Bump, &mut S) -> V, handler: F)
-where
-    V: View<'a, M, Element = E> + 'a,
-    E: Element,
-    F: FnMut(&mut S, M),
-{
-    let mut app = App::new(state, component, handler);
+
+pub trait Component {
+    type Message;
+
+    fn update(&mut self, msg: Self::Message);
+
+    fn view<'a>(&mut self, bump: &'a Bump) -> impl View<'a, Self::Message> ;
+}
+
+
+pub fn run(component: impl Component) {
+    let mut app = App::new(component);
     app.run();
 }
 
