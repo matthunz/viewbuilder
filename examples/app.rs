@@ -1,5 +1,5 @@
 use bumpalo::Bump;
-use viewbuilder::{Tree, View};
+use viewbuilder::{fmt, Tree, View};
 
 enum Message {
     Increment,
@@ -7,7 +7,7 @@ enum Message {
 }
 
 fn app<'a>(bump: &'a Bump, count: &mut i32) -> impl View<'a, Message> {
-    &**bump.alloc(count.to_string())
+    fmt!(bump, "High five count: {}", *count)
 }
 
 fn main() {

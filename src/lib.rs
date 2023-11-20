@@ -1,5 +1,8 @@
 use bumpalo::Bump;
-use std::mem;
+use slotmap::{DefaultKey, SlotMap};
+use std::{any::Any, mem};
+
+pub use bumpalo::collections::String as BumpString;
 
 pub trait View<'a, M> {
     type Element;
@@ -11,46 +14,41 @@ pub trait View<'a, M> {
     fn handle(&'a mut self, msg: M);
 }
 
-pub struct Tree<V, S, F> {
+pub struct Tree<V, S, E, F> {
     component: fn(&Bump, &mut S) -> V,
     state: S,
+    element: Option<E>,
     handler: F,
-    frame_a: Bump,
-    frame_b: Bump,
-    is_frame_a: bool,
+    bump: Bump,
 }
 
-impl<V, S, F> Tree<V, S, F> {
+impl<V, S, E, F> Tree<V, S, E, F> {
     pub fn new<'a, M>(state: S, component: fn(&'a Bump, &mut S) -> V, handler: F) -> Self
     where
-        V: View<'a, M> + 'a,
+        V: View<'a, M, Element = E> + 'a,
     {
         let component = unsafe { mem::transmute(component) };
         Self {
             component,
             handler,
             state,
-            frame_a: Bump::new(),
-            frame_b: Bump::new(),
-            is_frame_a: true,
+            element: None,
+            bump: Bump::new(),
         }
     }
 
     pub fn view<'a, M>(&mut self)
     where
-        V: View<'a, M> + 'a,
+        V: View<'a, M, Element = E> + 'a,
     {
-        let bump = if self.is_frame_a {
-            self.is_frame_a = false;
-            &self.frame_a
-        } else {
-            self.is_frame_a = true;
-            &self.frame_b
-        };
-        let bump: &'a Bump = unsafe { mem::transmute(bump) };
+        let bump: &'a Bump = unsafe { mem::transmute(&self.bump) };
 
-        let view = (self.component)(bump, &mut self.state);
-        bump.alloc(view).build();
+        let view = bump.alloc((self.component)(bump, &mut self.state));
+        if let Some(ref mut element) = self.element {
+            view.rebuild(element);
+        } else {
+            self.element = Some(view.build());
+        }
     }
 
     pub fn handle<'a, M>(&mut self, msg: M)
@@ -74,4 +72,19 @@ impl<'a, M> View<'a, M> for &'a str {
     }
 
     fn handle(&'a mut self, _msg: M) {}
+}
+
+#[macro_export]
+macro_rules! fmt {
+    ($bump:expr, $($arg:tt)*) => {
+        {
+            use std::fmt::Write;
+
+            let mut s = viewbuilder::BumpString::new_in($bump);
+            write!(&mut s, $($arg)*).unwrap();
+
+            // TODO
+            &**$bump.alloc(s)
+        }
+    };
 }
