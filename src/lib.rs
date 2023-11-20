@@ -10,6 +10,8 @@ pub use view::{LinearLayout, Text, View};
 mod view_group;
 pub use view_group::ViewGroup;
 
+mod render;
+
 #[macro_export]
 macro_rules! format_in {
     ($bump:expr, $($arg:tt)*) => {

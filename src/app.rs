@@ -1,4 +1,4 @@
-use crate::View;
+use crate::{render, View};
 use bumpalo::Bump;
 use std::mem;
 
@@ -45,5 +45,9 @@ impl<V, S, E, F> App<V, S, E, F> {
         F: FnMut(&mut S, M),
     {
         (self.handler)(&mut self.state, msg);
+    }
+
+    pub fn run() {
+        render::run()
     }
 }
