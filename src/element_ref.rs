@@ -34,8 +34,7 @@ impl<E> ElementRef<E> {
     where
         E: Element + 'static,
     {
-        tree.elements[self.key].handle_any(Box::new(msg));
-        tree.tx.send(tree.key).unwrap();
+        tree.ui.send(tree.key, self.key, Box::new(msg));
     }
 
     pub fn push_child(self, tree: &mut LocalTree, key: DefaultKey) {

@@ -1,6 +1,7 @@
 use viewbuilder::{LocalTree, Text, UserInterface};
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let mut ui = UserInterface::new();
 
     let sub_tree = ui.insert(LocalTree::builder());
@@ -11,5 +12,8 @@ fn main() {
     tree.get_mut(&mut ui).insert(sub_tree);
 
     Text::set_content(text, sub_tree.get_mut(&mut ui), "B");
+
+    ui.process_events().await;
+
     dbg!(text.get(sub_tree.get_mut(&mut ui)).content());
 }

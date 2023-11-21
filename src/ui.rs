@@ -1,15 +1,26 @@
+use slotmap::{DefaultKey, SlotMap};
 use std::{any::Any, marker::PhantomData};
-
-use slotmap::SlotMap;
 use tokio::sync::mpsc;
-use vello::SceneBuilder;
 
-use crate::{tree::TreeBuilder, TreeKey, TreeRef};
+use crate::{
+    tree::{TreeBuilder, TreeMessage},
+    AnyElement, Element, TreeKey, TreeRef,
+};
+
+#[derive(Clone)]
+pub struct UserInterfaceRef {
+    tx: mpsc::UnboundedSender<(TreeKey, DefaultKey, Box<dyn Any>)>,
+}
+impl UserInterfaceRef {
+    pub fn send(&self, tree_key: TreeKey, key: DefaultKey, msg: Box<dyn Any>) {
+        self.tx.send((tree_key, key, msg)).unwrap();
+    }
+}
 
 pub struct UserInterface {
-    pub(crate) trees: SlotMap<TreeKey, Box<dyn Any>>,
-    tx: mpsc::UnboundedSender<TreeKey>,
-    rx: mpsc::UnboundedReceiver<TreeKey>,
+    pub(crate) trees: SlotMap<TreeKey, Box<dyn AnyElement>>,
+    tx: mpsc::UnboundedSender<(TreeKey, DefaultKey, Box<dyn Any>)>,
+    rx: mpsc::UnboundedReceiver<(TreeKey, DefaultKey, Box<dyn Any>)>,
 }
 
 impl UserInterface {
@@ -22,17 +33,24 @@ impl UserInterface {
         }
     }
 
-    pub fn insert<T: 'static>(&mut self, tree_builder: impl TreeBuilder<Tree = T>) -> TreeRef<T> {
+    pub fn insert<T: Element + 'static>(
+        &mut self,
+        tree_builder: impl TreeBuilder<Tree = T>,
+    ) -> TreeRef<T> {
+        let ui_ref = UserInterfaceRef {
+            tx: self.tx.clone(),
+        };
         let key = self
             .trees
-            .insert_with_key(|key| Box::new(tree_builder.insert_with_key(key, self.tx.clone())));
+            .insert_with_key(|key| Box::new(tree_builder.insert_with_key(key, ui_ref)));
         TreeRef {
             key,
             _marker: PhantomData,
         }
     }
 
-    pub async fn render(&mut self, _scene: SceneBuilder<'_>) {
-        let _key = self.rx.recv().await.unwrap();
+    pub async fn process_events(&mut self) {
+        let (tree_key, key, msg) = self.rx.recv().await.unwrap();
+        self.trees[tree_key].handle_any(Box::new(TreeMessage::Handle { key, msg }));
     }
 }

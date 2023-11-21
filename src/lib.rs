@@ -81,6 +81,6 @@ impl<T> Copy for TreeRef<T> {}
 
 impl<T: 'static> TreeRef<T> {
     pub fn get_mut(self, ui: &mut UserInterface) -> &mut T {
-        ui.trees[self.key].downcast_mut().unwrap()
+        ui.trees[self.key].as_any_mut().downcast_mut().unwrap()
     }
 }

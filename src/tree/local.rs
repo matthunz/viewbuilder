@@ -1,13 +1,12 @@
-use crate::{AnyElement, Element, ElementRef, TreeKey};
+use crate::{ui::UserInterfaceRef, AnyElement, Element, ElementRef, TreeKey};
 use slotmap::{DefaultKey, SlotMap, SparseSecondaryMap};
-use std::{any::Any, marker::PhantomData};
-use tokio::sync::mpsc::UnboundedSender;
+use std::marker::PhantomData;
 
-use super::TreeBuilder;
+use super::{TreeBuilder, TreeMessage};
 
 pub struct LocalTree {
     pub(crate) key: TreeKey,
-    pub(crate) tx: UnboundedSender<TreeKey>,
+    pub(crate) ui: UserInterfaceRef,
     pub(crate) elements: SlotMap<DefaultKey, Box<dyn AnyElement>>,
     pub(crate) children: SparseSecondaryMap<DefaultKey, Vec<DefaultKey>>,
     pub(crate) parents: SparseSecondaryMap<DefaultKey, DefaultKey>,
@@ -28,10 +27,6 @@ impl LocalTree {
     }
 }
 
-pub enum TreeMessage {
-    Handle { key: DefaultKey, msg: Box<dyn Any> },
-}
-
 impl Element for LocalTree {
     type Message = TreeMessage;
 
@@ -47,10 +42,10 @@ pub struct LocalTreeBuilder {}
 impl TreeBuilder for LocalTreeBuilder {
     type Tree = LocalTree;
 
-    fn insert_with_key(self, key: TreeKey, tx: UnboundedSender<TreeKey>) -> Self::Tree {
+    fn insert_with_key(self, key: TreeKey, ui: UserInterfaceRef) -> Self::Tree {
         LocalTree {
             key,
-            tx,
+            ui,
             elements: Default::default(),
             children: Default::default(),
             parents: Default::default(),
