@@ -1,12 +1,18 @@
 use slotmap::{DefaultKey, SlotMap, SparseSecondaryMap};
-use std::{any::Any, marker::PhantomData};
+use std::{any::Any, borrow::Cow, marker::PhantomData};
 
-pub trait Element {}
+pub trait Element {
+    type Message;
+
+    fn handle(&mut self, msg: Self::Message);
+}
 
 pub trait AnyElement {
     fn as_any(&self) -> &dyn Any;
 
     fn as_any_mut(&mut self) -> &mut dyn Any;
+
+    fn handle_any(&mut self, msg: Box<dyn Any>);
 }
 
 impl<E> AnyElement for E
@@ -20,12 +26,24 @@ where
     fn as_any_mut(&mut self) -> &mut dyn Any {
         self
     }
+
+    fn handle_any(&mut self, msg: Box<dyn Any>) {
+        self.handle(*msg.downcast().unwrap())
+    }
 }
 
 pub struct ElementRef<E> {
     key: DefaultKey,
     _marker: PhantomData<E>,
 }
+
+impl<E> Clone for ElementRef<E> {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+impl<E> Copy for ElementRef<E> {}
 
 impl<E> ElementRef<E> {
     pub fn get(self, tree: &Tree) -> &E
@@ -40,6 +58,13 @@ impl<E> ElementRef<E> {
         E: 'static,
     {
         tree.elements[self.key].as_any_mut().downcast_mut().unwrap()
+    }
+
+    pub fn send(self, tree: &mut Tree, msg: E::Message) 
+    where
+        E: Element + 'static,
+    {
+        tree.elements[self.key].handle_any(Box::new(msg))
     }
 
     pub fn push_child(self, tree: &mut Tree, key: DefaultKey) {
@@ -64,6 +89,7 @@ impl<E> ElementRef<E> {
     }
 }
 
+#[derive(Default)]
 pub struct Tree {
     elements: SlotMap<DefaultKey, Box<dyn AnyElement>>,
     children: SparseSecondaryMap<DefaultKey, Vec<DefaultKey>>,
@@ -71,16 +97,48 @@ pub struct Tree {
 }
 
 impl Tree {
-    pub fn insert<E: Element + 'static>(
-        &mut self,
-        element: E,
-        _parent: Option<DefaultKey>,
-    ) -> ElementRef<E> {
+    pub fn insert<E: Element + 'static>(&mut self, element: E) -> ElementRef<E> {
         let key = self.elements.insert(Box::new(element));
 
         ElementRef {
             key,
             _marker: PhantomData,
+        }
+    }
+}
+
+pub enum TextMessage {
+    SetContent(Cow<'static, str>)
+}
+
+pub struct Text {
+    content: Cow<'static, str>,
+}
+
+impl Text {
+    pub fn new(content: impl Into<Cow<'static, str>>) -> Self {
+        Self {
+            content: content.into(),
+        }
+    }
+
+    pub fn content(&self) -> &str {
+        &self.content
+    }
+
+    pub fn set_content(text: ElementRef<Self>, tree: &mut Tree, content: impl Into<Cow<'static, str>>) {
+        text.send(tree, TextMessage::SetContent(content.into()))
+    }
+}
+
+impl Element for Text {
+    type Message = TextMessage;
+
+    fn handle(&mut self, msg: Self::Message) {
+        match msg {
+            TextMessage::SetContent(content) => {
+                self.content = content;
+            }
         }
     }
 }
