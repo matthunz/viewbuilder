@@ -60,7 +60,7 @@ impl<E> ElementRef<E> {
         tree.elements[self.key].as_any_mut().downcast_mut().unwrap()
     }
 
-    pub fn send(self, tree: &mut Tree, msg: E::Message) 
+    pub fn send(self, tree: &mut Tree, msg: E::Message)
     where
         E: Element + 'static,
     {
@@ -107,8 +107,14 @@ impl Tree {
     }
 }
 
+impl Element for Tree {
+    type Message = ();
+
+    fn handle(&mut self, msg: Self::Message) {}
+}
+
 pub enum TextMessage {
-    SetContent(Cow<'static, str>)
+    SetContent(Cow<'static, str>),
 }
 
 pub struct Text {
@@ -126,7 +132,11 @@ impl Text {
         &self.content
     }
 
-    pub fn set_content(text: ElementRef<Self>, tree: &mut Tree, content: impl Into<Cow<'static, str>>) {
+    pub fn set_content(
+        text: ElementRef<Self>,
+        tree: &mut Tree,
+        content: impl Into<Cow<'static, str>>,
+    ) {
         text.send(tree, TextMessage::SetContent(content.into()))
     }
 }

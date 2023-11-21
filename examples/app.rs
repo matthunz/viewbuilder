@@ -3,9 +3,9 @@ use viewbuilder::{Text, Tree};
 fn main() {
     let mut tree = Tree::default();
 
-    let text = tree.insert(Text::new("A"));
-    dbg!(text.get(&tree).content());
-    
-    Text::set_content(text, &mut tree, "B");
-    dbg!(text.get(&tree).content());
+    let mut sub_tree = Tree::default();
+    let text = sub_tree.insert(Text::new("A"));
+
+    let sub_tree_ref = tree.insert(sub_tree);
+    dbg!(text.get(&sub_tree_ref.get(&tree)).content());
 }
