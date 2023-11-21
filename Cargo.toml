@@ -6,10 +6,16 @@ license = "MIT OR Apache-2.0"
 description = "Cross-platform UI framework"
 repository = "https://github.com/concoct-rs/viewbuilder"
 
+[features]
+full = []
+
 [dependencies]
 kurbo = "0.9.5"
 tokio = { version = "1.32.0", features = ["full"] }
 futures = "0.3.29"
+lazy_static = "1.4.0"
+slotmap = "1.0.6"
+vello = { git = "https://github.com/linebender/vello", version = "0.0.1" }
 
 [package.metadata.docs.rs]
 features = ["full"]
