@@ -1,6 +1,7 @@
 use super::{TreeBuilder, TreeMessage};
 use crate::{
-    element::LifecycleContext, AnyElement, Element, LocalElementRef, TreeKey, UserInterface,
+    element::{Lifecycle, LifecycleContext},
+    AnyElement, Element, LocalElementRef, TreeKey, UserInterface,
 };
 use slotmap::{DefaultKey, SlotMap, SparseSecondaryMap};
 use std::{cell::RefCell, marker::PhantomData, rc::Rc};
@@ -49,7 +50,7 @@ impl<E> LocalTree<E> {
                 tree_key: self.inner.borrow().key,
                 key,
             },
-            crate::element::Lifecycle::Build,
+            Lifecycle::Build,
         );
 
         LocalElementRef {
@@ -64,7 +65,7 @@ impl<E> LocalTree<E> {
 impl<E: Element> Element for LocalTree<E> {
     type Message = TreeMessage;
 
-    fn lifecycle(&mut self, _cx: LifecycleContext, _lifecycle: crate::element::Lifecycle) {}
+    fn lifecycle(&mut self, _cx: LifecycleContext, _lifecycle: Lifecycle) {}
 
     fn handle(&mut self, msg: Self::Message) {
         match msg {
@@ -101,10 +102,9 @@ impl<E: Element + 'static> TreeBuilder for LocalTreeBuilder<E> {
     fn insert_with_key(self, key: TreeKey, ui: UserInterface) -> Self::Tree {
         let mut me = LocalTree {
             root: None,
-            ui,
+            ui: ui.clone(),
             inner: Rc::new(RefCell::new(Inner {
                 key,
-
                 elements: SlotMap::new(),
                 children: Default::default(),
                 parents: Default::default(),

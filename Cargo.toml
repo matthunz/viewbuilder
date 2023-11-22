@@ -16,9 +16,11 @@ futures = "0.3.29"
 lazy_static = "1.4.0"
 slotmap = "1.0.6"
 vello = { git = "https://github.com/linebender/vello", version = "0.0.1" }
-winit = "0.29.3"
+winit = "0.28.1"
 anyhow = "1.0.75"
 clap = "4.4.8"
+raw-window-handle = "0.6.0"
+pollster = "0.3.0"
 
 [package.metadata.docs.rs]
 features = ["full"]

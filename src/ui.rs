@@ -3,6 +3,7 @@ use crate::{
     tree::{TreeBuilder, TreeMessage},
     AnyElement, Element, TreeKey,
 };
+
 use slotmap::{DefaultKey, SlotMap};
 use std::{
     any::Any,
@@ -12,12 +13,24 @@ use std::{
     rc::Rc,
 };
 use tokio::sync::mpsc;
-use vello::{Scene, SceneBuilder};
+use vello::{
+    kurbo::{Affine, Rect},
+    peniko::{Brush, Color},
+    util::{RenderContext, RenderSurface},
+    Renderer, RendererOptions, Scene, SceneBuilder,
+};
 use winit::{
     event::Event,
-    event_loop::{EventLoop, EventLoopBuilder, EventLoopProxy},
+    event_loop::{ControlFlow, EventLoop, EventLoopBuilder, EventLoopProxy},
     window::{Window, WindowBuilder, WindowId},
 };
+
+struct RenderState {
+    // TODO: We MUST drop the surface before the `window`, so the fields
+    // must be in this order
+    surface: RenderSurface,
+    window: Window,
+}
 
 #[derive(Clone)]
 pub struct UserInterfaceRef {
@@ -32,7 +45,7 @@ impl UserInterfaceRef {
 
 pub(crate) struct Inner {
     pub(crate) trees: SlotMap<TreeKey, Box<dyn AnyElement>>,
-    windows: HashMap<WindowId, (Window, TreeKey, DefaultKey)>,
+    windows: HashMap<WindowId, (TreeKey, DefaultKey)>,
     pub(crate) tx: mpsc::UnboundedSender<(TreeKey, DefaultKey, Box<dyn Any>)>,
     rx: mpsc::UnboundedReceiver<(TreeKey, DefaultKey, Box<dyn Any>)>,
     event_loop: Option<EventLoop<UserEvent>>,
@@ -76,7 +89,7 @@ pub struct UserInterface {
 impl UserInterface {
     pub fn new() -> Self {
         let (tx, rx) = mpsc::unbounded_channel();
-        let event_loop = EventLoopBuilder::with_user_event().build().unwrap();
+        let event_loop = EventLoopBuilder::with_user_event().build();
         let proxy = event_loop.create_proxy();
         Self {
             inner: Rc::new(RefCell::new(Inner {
@@ -168,9 +181,13 @@ impl UserInterface {
     pub fn run(self) {
         self.render_all();
         let event_loop = self.inner.borrow_mut().event_loop.take().unwrap();
+        let mut render_cx = RenderContext::new().unwrap();
+        let mut renderers: Vec<Option<Renderer>> = vec![];
+        let mut render_states = HashMap::new();
+        let mut scene = Scene::new();
 
-        event_loop
-            .run(|event, event_loop| match event {
+        event_loop.run(move |event, event_loop, control_flow| {
+            match event {
                 Event::UserEvent(user_event) => match user_event {
                     UserEvent::CreateWindow {
                         ui,
@@ -186,11 +203,87 @@ impl UserInterface {
                         ui.inner
                             .borrow_mut()
                             .windows
-                            .insert(window.id(), (window, tree_key, key));
+                            .insert(window.id(), (tree_key, key));
+
+                        let size = window.inner_size();
+                        let surface_future =
+                            render_cx.create_surface(&window, size.width, size.height);
+                        let surface =
+                            pollster::block_on(surface_future).expect("Error creating surface");
+                        render_states.insert(window.id(), {
+                            let render_state = RenderState { surface, window };
+                            renderers.resize_with(render_cx.devices.len(), || None);
+                            let id = render_state.surface.dev_id;
+                            renderers[id].get_or_insert_with(|| {
+                                Renderer::new(
+                                    &render_cx.devices[id].device,
+                                    RendererOptions {
+                                        surface_format: Some(render_state.surface.format),
+                                        timestamp_period: render_cx.devices[id]
+                                            .queue
+                                            .get_timestamp_period(),
+                                        antialiasing_support: vello::AaSupport::all(),
+                                        use_cpu: false,
+                                    },
+                                )
+                                .unwrap()
+                            });
+                            render_state
+                        });
+
+                        *control_flow = ControlFlow::Poll;
                     }
                 },
+                Event::RedrawRequested(_) => {
+                    for render_state in render_states.values_mut() {
+                        let width = render_state.surface.config.width;
+                        let height = render_state.surface.config.height;
+
+                        let device_handle = &render_cx.devices[render_state.surface.dev_id];
+                        let surface_texture =
+                            render_state.surface.surface.get_current_texture().unwrap();
+                        let render_params = vello::RenderParams {
+                            base_color: Color::PURPLE,
+                            width,
+                            height,
+                            antialiasing_method: vello::AaConfig::Msaa16,
+                        };
+
+                        let mut scene_builder = SceneBuilder::for_scene(&mut scene);
+                        scene_builder.fill(
+                            vello::peniko::Fill::EvenOdd,
+                            Affine::default(),
+                            &Brush::Solid(Color::ALICE_BLUE),
+                            Default::default(),
+                            &Rect::new(0., 0., 1000., 1000.),
+                        );
+
+                        {
+                            vello::block_on_wgpu(
+                                &device_handle.device,
+                                renderers[render_state.surface.dev_id]
+                                    .as_mut()
+                                    .unwrap()
+                                    .render_to_surface_async(
+                                        &device_handle.device,
+                                        &device_handle.queue,
+                                        &scene,
+                                        &surface_texture,
+                                        &render_params,
+                                    ),
+                            )
+                            .unwrap();
+                        }
+
+                        surface_texture.present();
+
+                        dbg!("rendered!");
+                    }
+                }
                 _ => {}
-            })
-            .unwrap();
+            }
+
+            *control_flow = ControlFlow::Poll;
+        });
     }
 }
