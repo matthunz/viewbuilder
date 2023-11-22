@@ -1,13 +1,13 @@
 use crate::{
     tree::{TreeBuilder, TreeMessage},
-    AnyElement, Element, TreeKey, TreeRef,
+    AnyElement, Element, TreeKey,
 };
 use slotmap::{DefaultKey, SlotMap};
 use std::{
     any::Any,
     cell::RefCell,
     collections::{HashMap, HashSet},
-    marker::PhantomData,
+    ops::{Deref, DerefMut},
     rc::Rc,
 };
 use tokio::sync::mpsc;
@@ -30,9 +30,29 @@ impl UserInterfaceRef {
 pub(crate) struct Inner {
     pub(crate) trees: SlotMap<TreeKey, Box<dyn AnyElement>>,
     windows: HashMap<WindowId, (Window, TreeKey, DefaultKey)>,
-    tx: mpsc::UnboundedSender<(TreeKey, DefaultKey, Box<dyn Any>)>,
+    pub(crate) tx: mpsc::UnboundedSender<(TreeKey, DefaultKey, Box<dyn Any>)>,
     rx: mpsc::UnboundedReceiver<(TreeKey, DefaultKey, Box<dyn Any>)>,
-    event_loop: EventLoop<()>,
+    event_loop: Option<EventLoop<()>>,
+}
+
+#[derive(Clone)]
+pub struct TreeRef<T> {
+    pub key: TreeKey,
+    pub tree: T,
+}
+
+impl<T> Deref for TreeRef<T> {
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        &self.tree
+    }
+}
+
+impl<T> DerefMut for TreeRef<T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.tree
+    }
 }
 
 #[derive(Clone)]
@@ -47,32 +67,36 @@ impl UserInterface {
             inner: Rc::new(RefCell::new(Inner {
                 trees: SlotMap::default(),
                 windows: HashMap::new(),
-                event_loop: EventLoop::new().unwrap(),
+                event_loop: Some(EventLoop::new().unwrap()),
                 tx,
                 rx,
             })),
         }
     }
 
-    pub fn insert<T: Element + 'static>(
+    pub fn insert<T: Element + Clone + 'static>(
         &self,
         tree_builder: impl TreeBuilder<Tree = T>,
     ) -> TreeRef<T> {
         let mut me = self.inner.borrow_mut();
-        let ui_ref = UserInterfaceRef { tx: me.tx.clone() };
-        let key = me
-            .trees
-            .insert_with_key(|key| Box::new(tree_builder.insert_with_key(key, ui_ref)));
+        let ui_ref = self.clone();
+        let mut tree_cell = None;
+        let key = me.trees.insert_with_key(|key| {
+            let tree = tree_builder.insert_with_key(key, ui_ref);
+            tree_cell = Some(tree.clone());
+            Box::new(tree)
+        });
         TreeRef {
-            ui: self.clone(),
             key,
-            _marker: PhantomData,
+            tree: tree_cell.unwrap(),
         }
     }
 
     pub fn insert_window(&self, tree_key: TreeKey, key: DefaultKey) {
         let mut me = self.inner.borrow_mut();
-        let window = WindowBuilder::new().build(&me.event_loop).unwrap();
+        let window = WindowBuilder::new()
+            .build(me.event_loop.as_ref().unwrap())
+            .unwrap();
         me.windows.insert(window.id(), (window, tree_key, key));
     }
 
@@ -118,6 +142,7 @@ impl UserInterface {
 
     pub fn run(self) {
         self.render_all();
-        //self.inner.borrow_mut().event_loop.run(|_, _| {}).unwrap();
+        let event_loop = self.inner.borrow_mut().event_loop.take().unwrap();
+        event_loop.run(|_, _| {}).unwrap();
     }
 }

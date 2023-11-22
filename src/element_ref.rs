@@ -6,14 +6,14 @@ use std::{
     rc::Rc,
 };
 
-pub struct LocalElementRef<E> {
+pub struct LocalElementRef<R, E> {
     pub(crate) element: Rc<RefCell<Box<dyn AnyElement>>>,
-    pub tree: LocalTree,
+    pub tree: LocalTree<R>,
     pub key: DefaultKey,
     pub(crate) _marker: PhantomData<E>,
 }
 
-impl<E> Clone for LocalElementRef<E> {
+impl<R, E> Clone for LocalElementRef<R, E> {
     fn clone(&self) -> Self {
         Self {
             element: self.element.clone(),
@@ -24,7 +24,7 @@ impl<E> Clone for LocalElementRef<E> {
     }
 }
 
-impl<E> LocalElementRef<E> {
+impl<R, E> LocalElementRef<R, E> {
     pub fn get_mut(&self) -> RefMut<E>
     where
         E: 'static,
@@ -38,8 +38,10 @@ impl<E> LocalElementRef<E> {
     where
         E: Element + 'static,
     {
-        let tree = self.tree.inner.borrow_mut();
-        tree.ui.send(tree.key, self.key, Box::new(msg));
+        let ui = self.tree.ui.inner.borrow();
+        ui.tx
+            .send((self.tree.inner.borrow().key, self.key, Box::new(msg)))
+            .unwrap();
     }
 
     pub fn push_child(&self, key: DefaultKey) {

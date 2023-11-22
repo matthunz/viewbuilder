@@ -1,18 +1,28 @@
-use viewbuilder::{LocalTree, Text, UserInterface};
+use viewbuilder::{element::Window, LocalTree, Text, UserInterface};
 
 #[tokio::main]
 async fn main() {
     let ui = UserInterface::new();
 
-    let tree = ui.insert(LocalTree::builder());
-    let a = tree.get_mut().insert(Text::new("Window A"));
-    ui.insert_window(tree.key, a.key);
+    // Window A
+    let tree = ui.insert(LocalTree::builder(Window::default()));
 
-    let sub_tree = ui.insert(LocalTree::builder());
-    tree.get_mut().insert(sub_tree.clone());
+    let a = tree.insert(Text::new("Window A"));
+    tree.root().push_child(a.key);
 
-    let b = tree.get_mut().insert(Text::new("Window B"));
-    ui.insert_window(sub_tree.key, b.key);
+    // Window B
+    let sub_tree = ui.insert(LocalTree::builder(Window::default()));
+    tree.insert(sub_tree.tree.clone());
+
+    let b = sub_tree.insert(Text::new("Window B"));
+    sub_tree.root().push_child(b.key);
+
+    // Window C
+    let window_c = sub_tree.insert(Window::default());
+    sub_tree.root().push_child(window_c.key);
+
+    let a = sub_tree.insert(Text::new("Window C"));
+    window_c.push_child(a.key);
 
     ui.run();
 }

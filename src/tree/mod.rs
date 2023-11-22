@@ -1,6 +1,6 @@
 use std::any::Any;
 
-use crate::{ui::UserInterfaceRef, Element, TreeKey};
+use crate::{Element, TreeKey, UserInterface};
 use slotmap::DefaultKey;
 
 mod local;
@@ -14,5 +14,5 @@ pub enum TreeMessage {
 pub trait TreeBuilder {
     type Tree: Element<Message = TreeMessage> + 'static;
 
-    fn insert_with_key(self, key: TreeKey, ui: UserInterfaceRef) -> Self::Tree;
+    fn insert_with_key(self, key: TreeKey, ui: UserInterface) -> Self::Tree;
 }

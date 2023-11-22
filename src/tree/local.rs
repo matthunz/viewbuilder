@@ -1,28 +1,42 @@
 use super::{TreeBuilder, TreeMessage};
-use crate::{ui::UserInterfaceRef, AnyElement, Element, LocalElementRef, TreeKey};
+use crate::{element::Window, AnyElement, Element, LocalElementRef, TreeKey, UserInterface};
 use slotmap::{DefaultKey, SlotMap, SparseSecondaryMap};
 use std::{cell::RefCell, marker::PhantomData, rc::Rc};
 use vello::{Scene, SceneBuilder};
 
 pub(crate) struct Inner {
     pub(crate) key: TreeKey,
-    pub(crate) ui: UserInterfaceRef,
     pub(crate) elements: SlotMap<DefaultKey, Rc<RefCell<Box<dyn AnyElement>>>>,
     pub(crate) children: SparseSecondaryMap<DefaultKey, Vec<DefaultKey>>,
     pub(crate) parents: SparseSecondaryMap<DefaultKey, DefaultKey>,
 }
 
-#[derive(Clone)]
-pub struct LocalTree {
+pub struct LocalTree<E> {
+    pub(crate) root: Option<Box<LocalElementRef<E, E>>>,
+    pub(crate) ui: UserInterface,
     pub(crate) inner: Rc<RefCell<Inner>>,
 }
 
-impl LocalTree {
-    pub fn builder() -> LocalTreeBuilder {
-        LocalTreeBuilder {}
+impl<E> Clone for LocalTree<E> {
+    fn clone(&self) -> Self {
+        Self {
+            root: self.root.clone(),
+            ui: self.ui.clone(),
+            inner: self.inner.clone(),
+        }
+    }
+}
+
+impl<E> LocalTree<E> {
+    pub fn builder(root: E) -> LocalTreeBuilder<E> {
+        LocalTreeBuilder { root }
     }
 
-    pub fn insert<E: Element + 'static>(&mut self, element: E) -> LocalElementRef<E> {
+    pub fn root(&self) -> LocalElementRef<E, E> {
+        self.root.as_deref().unwrap().clone()
+    }
+
+    pub fn insert<E2: Element + 'static>(&self, element: E2) -> LocalElementRef<E, E2> {
         let element: Rc<RefCell<Box<dyn AnyElement>>> = Rc::new(RefCell::new(Box::new(element)));
         let key = self.inner.borrow_mut().elements.insert(element.clone());
 
@@ -33,9 +47,15 @@ impl LocalTree {
             _marker: PhantomData,
         }
     }
+
+    pub fn insert_window(&self) -> LocalElementRef<E, Window> {
+        let window = self.insert(Window {});
+        self.ui.insert_window(self.inner.borrow().key, window.key);
+        window
+    }
 }
 
-impl Element for LocalTree {
+impl<E: Element> Element for LocalTree<E> {
     type Message = TreeMessage;
 
     fn handle(&mut self, msg: Self::Message) {
@@ -62,20 +82,27 @@ impl Element for LocalTree {
     }
 }
 
-pub struct LocalTreeBuilder {}
+pub struct LocalTreeBuilder<E> {
+    pub(crate) root: E,
+}
 
-impl TreeBuilder for LocalTreeBuilder {
-    type Tree = LocalTree;
+impl<E: Element + 'static> TreeBuilder for LocalTreeBuilder<E> {
+    type Tree = LocalTree<E>;
 
-    fn insert_with_key(self, key: TreeKey, ui: UserInterfaceRef) -> Self::Tree {
-        LocalTree {
+    fn insert_with_key(self, key: TreeKey, ui: UserInterface) -> Self::Tree {
+        let mut me = LocalTree {
+            root: None,
+            ui,
             inner: Rc::new(RefCell::new(Inner {
                 key,
-                ui,
-                elements: Default::default(),
+
+                elements: SlotMap::new(),
                 children: Default::default(),
                 parents: Default::default(),
             })),
-        }
+        };
+        let root = me.insert(self.root);
+        me.root = Some(Box::new(root));
+        me
     }
 }
