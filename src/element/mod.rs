@@ -1,5 +1,8 @@
 use vello::SceneBuilder;
 
+mod text;
+pub use text::{Text, TextMessage};
+
 pub trait Element {
     type Message;
 

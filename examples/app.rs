@@ -1,4 +1,7 @@
-use viewbuilder::{element::Window, LocalTree, Text, UserInterface};
+use viewbuilder::{
+    element::{Text, Window},
+    LocalTree, UserInterface,
+};
 
 #[tokio::main]
 async fn main() {

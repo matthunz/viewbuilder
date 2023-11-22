@@ -73,6 +73,7 @@ impl<E: Element> Element for LocalTree<E> {
     }
 
     fn render(&mut self, _scene: vello::SceneBuilder) {
+        dbg!("render tree");
         for element in self.inner.borrow_mut().elements.values_mut() {
             let mut scene = Scene::new();
             element

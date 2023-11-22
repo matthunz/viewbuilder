@@ -21,6 +21,7 @@ use winit::{
 pub struct UserInterfaceRef {
     tx: mpsc::UnboundedSender<(TreeKey, DefaultKey, Box<dyn Any>)>,
 }
+
 impl UserInterfaceRef {
     pub fn send(&self, tree_key: TreeKey, key: DefaultKey, msg: Box<dyn Any>) {
         self.tx.send((tree_key, key, msg)).unwrap();
