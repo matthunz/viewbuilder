@@ -54,6 +54,10 @@ impl Element for Text {
             }
         }
     }
+
+    fn render(&mut self, _scene: vello::SceneBuilder) {
+        dbg!(&self.content);
+    }
 }
 
 new_key_type! {
@@ -64,6 +68,8 @@ impl<T> Element for TreeRef<T> {
     type Message = ();
 
     fn handle(&mut self, _msg: Self::Message) {}
+
+    fn render(&mut self, _scene: vello::SceneBuilder) {}
 }
 
 pub struct TreeRef<T> {

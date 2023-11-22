@@ -8,6 +8,7 @@ pub use local::{LocalTree, LocalTreeBuilder};
 
 pub enum TreeMessage {
     Handle { key: DefaultKey, msg: Box<dyn Any> },
+    Render { key: DefaultKey },
 }
 
 pub trait TreeBuilder {

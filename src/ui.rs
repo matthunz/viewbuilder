@@ -1,6 +1,11 @@
 use slotmap::{DefaultKey, SlotMap};
-use std::{any::Any, collections::HashMap, marker::PhantomData};
+use std::{
+    any::Any,
+    collections::{HashMap, HashSet},
+    marker::PhantomData,
+};
 use tokio::sync::mpsc;
+use vello::{Scene, SceneBuilder};
 use winit::{
     event_loop::EventLoop,
     window::{Window, WindowBuilder, WindowId},
@@ -62,12 +67,45 @@ impl UserInterface {
         self.windows.insert(window.id(), (window, tree_key, key));
     }
 
-    pub async fn process_events(&mut self) {
+    pub async fn render(&mut self) {
+        let mut dirty = HashSet::new();
+
+        // Await the first event
         let (tree_key, key, msg) = self.rx.recv().await.unwrap();
         self.trees[tree_key].handle_any(Box::new(TreeMessage::Handle { key, msg }));
+        dirty.insert((tree_key, key));
+
+        // Process any remaining events
+        while let Ok((tree_key, key, msg)) = self.rx.try_recv() {
+            self.trees[tree_key].handle_any(Box::new(TreeMessage::Handle { key, msg }));
+            dirty.insert((tree_key, key));
+        }
+
+        let mut dirty_trees = HashSet::new();
+        for (tree_key, key) in dirty {
+            let tree = self.trees.get_mut(tree_key).unwrap();
+            tree.handle_any(Box::new(TreeMessage::Render { key }));
+
+            dirty_trees.insert(tree_key);
+        }
+
+        for tree_key in dirty_trees {
+            let mut scene = Scene::new();
+            let tree = self.trees.get_mut(tree_key).unwrap();
+            tree.handle_any(Box::new(TreeMessage::Render { key }));
+            tree.render_any(SceneBuilder::for_scene(&mut scene));
+        }
     }
 
-    pub fn run(self) {
+    pub fn render_all(&mut self) {
+        for tree in self.trees.values_mut() {
+            let mut scene = Scene::new();
+            tree.render_any(SceneBuilder::for_scene(&mut scene));
+        }
+    }
+
+    pub fn run(mut self) {
+        self.render_all();
         self.event_loop.run(|_, _| {}).unwrap();
     }
 }

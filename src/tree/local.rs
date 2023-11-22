@@ -1,6 +1,7 @@
 use crate::{ui::UserInterfaceRef, AnyElement, Element, ElementRef, TreeKey};
 use slotmap::{DefaultKey, SlotMap, SparseSecondaryMap};
 use std::marker::PhantomData;
+use vello::{Scene, SceneBuilder};
 
 use super::{TreeBuilder, TreeMessage};
 
@@ -33,6 +34,17 @@ impl Element for LocalTree {
     fn handle(&mut self, msg: Self::Message) {
         match msg {
             TreeMessage::Handle { key, msg } => self.elements[key].handle_any(msg),
+            TreeMessage::Render { key } => {
+                let mut scene = Scene::new();
+                self.elements[key].render_any(SceneBuilder::for_scene(&mut scene))
+            }
+        }
+    }
+
+    fn render(&mut self, _scene: vello::SceneBuilder) {
+        for element in self.elements.values_mut() {
+            let mut scene = Scene::new();
+            element.render_any(SceneBuilder::for_scene(&mut scene))
         }
     }
 }
