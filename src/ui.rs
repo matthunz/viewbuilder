@@ -13,8 +13,9 @@ use std::{
 use tokio::sync::mpsc;
 use vello::{Scene, SceneBuilder};
 use winit::{
-    event_loop::EventLoop,
-    window::{Window, WindowBuilder, WindowId},
+    event::Event,
+    event_loop::{EventLoop, EventLoopBuilder, EventLoopProxy},
+    window::{Window, WindowId},
 };
 
 #[derive(Clone)]
@@ -33,7 +34,7 @@ pub(crate) struct Inner {
     windows: HashMap<WindowId, (Window, TreeKey, DefaultKey)>,
     pub(crate) tx: mpsc::UnboundedSender<(TreeKey, DefaultKey, Box<dyn Any>)>,
     rx: mpsc::UnboundedReceiver<(TreeKey, DefaultKey, Box<dyn Any>)>,
-    event_loop: Option<EventLoop<()>>,
+    event_loop: Option<EventLoop<UserEvent>>,
 }
 
 #[derive(Clone)]
@@ -56,22 +57,34 @@ impl<T> DerefMut for TreeRef<T> {
     }
 }
 
+pub enum UserEvent {
+    CreateWindow {
+        ui: UserInterface,
+        tree_key: TreeKey,
+        key: DefaultKey,
+    },
+}
+
 #[derive(Clone)]
 pub struct UserInterface {
     pub(crate) inner: Rc<RefCell<Inner>>,
+    proxy: EventLoopProxy<UserEvent>,
 }
 
 impl UserInterface {
     pub fn new() -> Self {
         let (tx, rx) = mpsc::unbounded_channel();
+        let event_loop = EventLoopBuilder::with_user_event().build().unwrap();
+        let proxy = event_loop.create_proxy();
         Self {
             inner: Rc::new(RefCell::new(Inner {
                 trees: SlotMap::default(),
                 windows: HashMap::new(),
-                event_loop: Some(EventLoop::new().unwrap()),
+                event_loop: Some(event_loop),
                 tx,
                 rx,
             })),
+            proxy,
         }
     }
 
@@ -94,11 +107,14 @@ impl UserInterface {
     }
 
     pub fn insert_window(&self, tree_key: TreeKey, key: DefaultKey) {
-        let mut me = self.inner.borrow_mut();
-        let window = WindowBuilder::new()
-            .build(me.event_loop.as_ref().unwrap())
+        self.proxy
+            .send_event(UserEvent::CreateWindow {
+                ui: self.clone(),
+                tree_key,
+                key,
+            })
+            .ok()
             .unwrap();
-        me.windows.insert(window.id(), (window, tree_key, key));
     }
 
     pub async fn render(&self) {
@@ -144,6 +160,20 @@ impl UserInterface {
     pub fn run(self) {
         self.render_all();
         let event_loop = self.inner.borrow_mut().event_loop.take().unwrap();
-        event_loop.run(|_, _| {}).unwrap();
+
+        event_loop
+            .run(|event, event_loop| match event {
+                Event::UserEvent(user_event) => match user_event {
+                    UserEvent::CreateWindow { ui, tree_key, key } => {
+                        let window = Window::new(event_loop).unwrap();
+                        ui.inner
+                            .borrow_mut()
+                            .windows
+                            .insert(window.id(), (window, tree_key, key));
+                    }
+                },
+                _ => {}
+            })
+            .unwrap();
     }
 }

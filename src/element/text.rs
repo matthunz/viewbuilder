@@ -1,6 +1,5 @@
-use std::borrow::Cow;
-
 use crate::{Element, LocalElementRef};
+use std::borrow::Cow;
 
 pub enum TextMessage {
     SetContent(Cow<'static, str>),

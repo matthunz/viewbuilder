@@ -1,5 +1,7 @@
 use super::{TreeBuilder, TreeMessage};
-use crate::{element::Window, AnyElement, Element, LocalElementRef, TreeKey, UserInterface};
+use crate::{
+    element::LifecycleContext, AnyElement, Element, LocalElementRef, TreeKey, UserInterface,
+};
 use slotmap::{DefaultKey, SlotMap, SparseSecondaryMap};
 use std::{cell::RefCell, marker::PhantomData, rc::Rc};
 use vello::{Scene, SceneBuilder};
@@ -40,18 +42,21 @@ impl<E> LocalTree<E> {
         let element: Rc<RefCell<Box<dyn AnyElement>>> = Rc::new(RefCell::new(Box::new(element)));
         let key = self.inner.borrow_mut().elements.insert(element.clone());
 
+        // TODO
+        element.borrow_mut().lifecycle_any(
+            LifecycleContext {
+                tree_key: self.inner.borrow().key,
+                key,
+            },
+            crate::element::Lifecycle::Build,
+        );
+
         LocalElementRef {
             element,
             tree: self.clone(),
             key,
             _marker: PhantomData,
         }
-    }
-
-    pub fn insert_window(&self) -> LocalElementRef<E, Window> {
-        let window = self.insert(Window {});
-        self.ui.insert_window(self.inner.borrow().key, window.key);
-        window
     }
 }
 
