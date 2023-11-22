@@ -1,4 +1,5 @@
 use crate::{
+    element,
     tree::{TreeBuilder, TreeMessage},
     AnyElement, Element, TreeKey,
 };
@@ -15,7 +16,7 @@ use vello::{Scene, SceneBuilder};
 use winit::{
     event::Event,
     event_loop::{EventLoop, EventLoopBuilder, EventLoopProxy},
-    window::{Window, WindowId},
+    window::{Window, WindowBuilder, WindowId},
 };
 
 #[derive(Clone)]
@@ -62,6 +63,7 @@ pub enum UserEvent {
         ui: UserInterface,
         tree_key: TreeKey,
         key: DefaultKey,
+        window: element::Window,
     },
 }
 
@@ -106,12 +108,18 @@ impl UserInterface {
         }
     }
 
-    pub fn insert_window(&self, tree_key: TreeKey, key: DefaultKey) {
+    pub(crate) fn insert_window(
+        &self,
+        tree_key: TreeKey,
+        key: DefaultKey,
+        window: element::Window,
+    ) {
         self.proxy
             .send_event(UserEvent::CreateWindow {
                 ui: self.clone(),
                 tree_key,
                 key,
+                window,
             })
             .ok()
             .unwrap();
@@ -164,8 +172,17 @@ impl UserInterface {
         event_loop
             .run(|event, event_loop| match event {
                 Event::UserEvent(user_event) => match user_event {
-                    UserEvent::CreateWindow { ui, tree_key, key } => {
-                        let window = Window::new(event_loop).unwrap();
+                    UserEvent::CreateWindow {
+                        ui,
+                        tree_key,
+                        key,
+                        window,
+                    } => {
+                        let mut builder = WindowBuilder::new();
+                        if let Some(title) = window.title() {
+                            builder = builder.with_title(title);
+                        }
+                        let window = builder.build(event_loop).unwrap();
                         ui.inner
                             .borrow_mut()
                             .windows

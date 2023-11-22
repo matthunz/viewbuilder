@@ -7,9 +7,10 @@ pub use text::{Text, TextMessage};
 mod window;
 pub use window::Window;
 
-use crate::TreeKey;
+use crate::{TreeKey, UserInterface};
 
 pub struct LifecycleContext {
+    pub ui: UserInterface,
     pub tree_key: TreeKey,
     pub key: DefaultKey,
 }

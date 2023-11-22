@@ -45,6 +45,7 @@ impl<E> LocalTree<E> {
         // TODO
         element.borrow_mut().lifecycle_any(
             LifecycleContext {
+                ui: self.ui.clone(),
                 tree_key: self.inner.borrow().key,
                 key,
             },
