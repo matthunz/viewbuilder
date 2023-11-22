@@ -67,7 +67,7 @@ impl<T> Element for TreeRef<T> {
 }
 
 pub struct TreeRef<T> {
-    key: TreeKey,
+    pub key: TreeKey,
     _marker: PhantomData<T>,
 }
 

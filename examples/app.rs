@@ -4,16 +4,15 @@ use viewbuilder::{LocalTree, Text, UserInterface};
 async fn main() {
     let mut ui = UserInterface::new();
 
-    let sub_tree = ui.insert(LocalTree::builder());
-    let text = sub_tree.get_mut(&mut ui).insert(Text::new("A"));
-    dbg!(text.get(sub_tree.get_mut(&mut ui)).content());
-
     let tree = ui.insert(LocalTree::builder());
+    let a = tree.get_mut(&mut ui).insert(Text::new("Window A"));
+    ui.insert_window(tree.key, a.key);
+
+    let sub_tree = ui.insert(LocalTree::builder());
     tree.get_mut(&mut ui).insert(sub_tree);
 
-    Text::set_content(text, sub_tree.get_mut(&mut ui), "B");
+    let b = tree.get_mut(&mut ui).insert(Text::new("Window B"));
+    ui.insert_window(sub_tree.key, b.key);
 
-    ui.process_events().await;
-
-    dbg!(text.get(sub_tree.get_mut(&mut ui)).content());
+    ui.run();
 }
