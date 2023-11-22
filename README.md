@@ -25,36 +25,29 @@ Cross-platform user interface framework for Rust.
 This crate provides a moduler GUI library that can be used as an entire framework, or with individual parts.
 
 ```rust
-enum Message {
-    Increment,
-    Decrement,
-}
+let ui = UserInterface::new();
 
-#[derive(Default)]
-struct Counter {
-    count: i32,
-}
+// Window A
+let tree = ui.insert(LocalTree::builder(Window::default()));
 
-impl Component for Counter {
-    type Message = Message;
+let a = tree.insert(Text::new("Window A"));
+tree.root().push_child(a.key);
 
-    fn update(&mut self, msg: Self::Message) {
-        match msg {
-            Message::Increment => self.count += 1,
-            Message::Decrement => self.count -= 1,
-        }
-    }
+// Window B
+let sub_tree = ui.insert(LocalTree::builder(Window::default()));
+tree.insert(sub_tree.tree.clone());
 
-    fn view<'a>(&mut self, bump: &'a Bump) -> impl View<'a, Self::Message> {
-        LinearLayout::column((
-            format_in!(bump, "High five count: {}", self.count),
-            LinearLayout::row((
-                Text::new("Up high!").on_click(|_| Message::Increment),
-                Text::new("Down low!").on_click(|_| Message::Decrement),
-            )),
-        ))
-    }
-}
+let b = sub_tree.insert(Text::new("Window B"));
+sub_tree.root().push_child(b.key);
+
+// Window C
+let window_c = sub_tree.insert(Window::default());
+sub_tree.root().push_child(window_c.key);
+
+let a = sub_tree.insert(Text::new("Window C"));
+window_c.push_child(a.key);
+
+ui.run();
 ```
 
 ## Features
