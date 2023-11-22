@@ -28,6 +28,8 @@ impl Text {
 impl Element for Text {
     type Message = TextMessage;
 
+    fn lifecycle(&mut self, _cx: super::LifecycleContext, _lifecycle: super::Lifecycle) {}
+
     fn handle(&mut self, msg: Self::Message) {
         match msg {
             TextMessage::SetContent(content) => {

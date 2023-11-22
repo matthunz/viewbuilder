@@ -1,3 +1,4 @@
+use crate::{TreeKey, UserInterface};
 use slotmap::DefaultKey;
 use vello::SceneBuilder;
 
@@ -6,8 +7,6 @@ pub use text::{Text, TextMessage};
 
 mod window;
 pub use window::Window;
-
-use crate::{TreeKey, UserInterface};
 
 pub struct LifecycleContext {
     pub ui: UserInterface,
@@ -22,7 +21,7 @@ pub enum Lifecycle {
 pub trait Element {
     type Message;
 
-    fn lifecycle(&mut self, _cx: LifecycleContext, _lifecycle: Lifecycle) {}
+    fn lifecycle(&mut self, cx: LifecycleContext, lifecycle: Lifecycle);
 
     fn handle(&mut self, msg: Self::Message);
 

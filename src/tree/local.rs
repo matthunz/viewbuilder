@@ -64,6 +64,8 @@ impl<E> LocalTree<E> {
 impl<E: Element> Element for LocalTree<E> {
     type Message = TreeMessage;
 
+    fn lifecycle(&mut self, _cx: LifecycleContext, _lifecycle: crate::element::Lifecycle) {}
+
     fn handle(&mut self, msg: Self::Message) {
         match msg {
             TreeMessage::Handle { key, msg } => self.inner.borrow_mut().elements[key]

@@ -1,7 +1,6 @@
+use super::LifecycleContext;
 use crate::Element;
 use std::borrow::Cow;
-
-use super::LifecycleContext;
 use vello::SceneBuilder;
 
 pub struct WindowBuilder {
