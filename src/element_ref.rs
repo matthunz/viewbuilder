@@ -1,43 +1,51 @@
-use crate::{tree::LocalTree, Element};
+use crate::{tree::LocalTree, AnyElement, Element};
 use slotmap::DefaultKey;
-use std::marker::PhantomData;
+use std::{
+    cell::{RefCell, RefMut},
+    marker::PhantomData,
+    rc::Rc,
+};
 
-pub struct ElementRef<E> {
+pub struct LocalElementRef<E> {
+    pub(crate) element: Rc<RefCell<Box<dyn AnyElement>>>,
+    pub tree: LocalTree,
     pub key: DefaultKey,
     pub(crate) _marker: PhantomData<E>,
 }
 
-impl<E> Clone for ElementRef<E> {
+impl<E> Clone for LocalElementRef<E> {
     fn clone(&self) -> Self {
-        *self
+        Self {
+            element: self.element.clone(),
+            tree: self.tree.clone(),
+            key: self.key.clone(),
+            _marker: self._marker.clone(),
+        }
     }
 }
 
-impl<E> Copy for ElementRef<E> {}
-
-impl<E> ElementRef<E> {
-    pub fn get(self, tree: &LocalTree) -> &E
+impl<E> LocalElementRef<E> {
+    pub fn get_mut(&self) -> RefMut<E>
     where
         E: 'static,
     {
-        tree.elements[self.key].as_any().downcast_ref().unwrap()
+        RefMut::map(self.element.borrow_mut(), |element| {
+            element.as_any_mut().downcast_mut().unwrap()
+        })
     }
 
-    pub fn get_mut(self, tree: &mut LocalTree) -> &mut E
-    where
-        E: 'static,
-    {
-        tree.elements[self.key].as_any_mut().downcast_mut().unwrap()
-    }
-
-    pub fn send(self, tree: &mut LocalTree, msg: E::Message)
+    pub fn send(self, msg: E::Message)
     where
         E: Element + 'static,
     {
+        let tree = self.tree.inner.borrow_mut();
         tree.ui.send(tree.key, self.key, Box::new(msg));
     }
 
-    pub fn push_child(self, tree: &mut LocalTree, key: DefaultKey) {
+    pub fn push_child(&self, key: DefaultKey) {
+        let mut tree = self.tree.inner.borrow_mut();
+        let tree = &mut *tree;
+
         if let Some(children) = tree.children.get_mut(self.key) {
             children.push(key);
         } else {

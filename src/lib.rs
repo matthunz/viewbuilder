@@ -1,5 +1,5 @@
 use slotmap::new_key_type;
-use std::{borrow::Cow, marker::PhantomData};
+use std::{borrow::Cow, cell::RefMut, marker::PhantomData};
 
 mod any_element;
 pub use any_element::AnyElement;
@@ -8,7 +8,7 @@ mod element;
 pub use element::Element;
 
 mod element_ref;
-pub use element_ref::ElementRef;
+pub use element_ref::LocalElementRef;
 
 pub mod tree;
 pub use tree::LocalTree;
@@ -35,12 +35,8 @@ impl Text {
         &self.content
     }
 
-    pub fn set_content(
-        text: ElementRef<Self>,
-        tree: &mut LocalTree,
-        content: impl Into<Cow<'static, str>>,
-    ) {
-        text.send(tree, TextMessage::SetContent(content.into()))
+    pub fn set_content(text: LocalElementRef<Self>, content: impl Into<Cow<'static, str>>) {
+        text.send(TextMessage::SetContent(content.into()))
     }
 }
 
@@ -73,20 +69,28 @@ impl<T> Element for TreeRef<T> {
 }
 
 pub struct TreeRef<T> {
+    ui: UserInterface,
     pub key: TreeKey,
     _marker: PhantomData<T>,
 }
 
 impl<T> Clone for TreeRef<T> {
     fn clone(&self) -> Self {
-        *self
+        Self {
+            ui: self.ui.clone(),
+            key: self.key,
+            _marker: PhantomData,
+        }
     }
 }
 
-impl<T> Copy for TreeRef<T> {}
-
-impl<T: 'static> TreeRef<T> {
-    pub fn get_mut(self, ui: &mut UserInterface) -> &mut T {
-        ui.trees[self.key].as_any_mut().downcast_mut().unwrap()
+impl<T> TreeRef<T> {
+    pub fn get_mut(&self) -> RefMut<T>
+    where
+        T: 'static,
+    {
+        RefMut::map(self.ui.inner.borrow_mut(), |ui| {
+            ui.trees[self.key].as_any_mut().downcast_mut().unwrap()
+        })
     }
 }

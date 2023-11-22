@@ -1,19 +1,20 @@
+use crate::{
+    tree::{TreeBuilder, TreeMessage},
+    AnyElement, Element, TreeKey, TreeRef,
+};
 use slotmap::{DefaultKey, SlotMap};
 use std::{
     any::Any,
+    cell::RefCell,
     collections::{HashMap, HashSet},
     marker::PhantomData,
+    rc::Rc,
 };
 use tokio::sync::mpsc;
 use vello::{Scene, SceneBuilder};
 use winit::{
     event_loop::EventLoop,
     window::{Window, WindowBuilder, WindowId},
-};
-
-use crate::{
-    tree::{TreeBuilder, TreeMessage},
-    AnyElement, Element, TreeKey, TreeRef,
 };
 
 #[derive(Clone)]
@@ -26,7 +27,7 @@ impl UserInterfaceRef {
     }
 }
 
-pub struct UserInterface {
+pub(crate) struct Inner {
     pub(crate) trees: SlotMap<TreeKey, Box<dyn AnyElement>>,
     windows: HashMap<WindowId, (Window, TreeKey, DefaultKey)>,
     tx: mpsc::UnboundedSender<(TreeKey, DefaultKey, Box<dyn Any>)>,
@@ -34,56 +35,66 @@ pub struct UserInterface {
     event_loop: EventLoop<()>,
 }
 
+#[derive(Clone)]
+pub struct UserInterface {
+    pub(crate) inner: Rc<RefCell<Inner>>,
+}
+
 impl UserInterface {
     pub fn new() -> Self {
         let (tx, rx) = mpsc::unbounded_channel();
         Self {
-            trees: SlotMap::default(),
-            windows: HashMap::new(),
-            event_loop: EventLoop::new().unwrap(),
-            tx,
-            rx,
+            inner: Rc::new(RefCell::new(Inner {
+                trees: SlotMap::default(),
+                windows: HashMap::new(),
+                event_loop: EventLoop::new().unwrap(),
+                tx,
+                rx,
+            })),
         }
     }
 
     pub fn insert<T: Element + 'static>(
-        &mut self,
+        &self,
         tree_builder: impl TreeBuilder<Tree = T>,
     ) -> TreeRef<T> {
-        let ui_ref = UserInterfaceRef {
-            tx: self.tx.clone(),
-        };
-        let key = self
+        let mut me = self.inner.borrow_mut();
+        let ui_ref = UserInterfaceRef { tx: me.tx.clone() };
+        let key = me
             .trees
             .insert_with_key(|key| Box::new(tree_builder.insert_with_key(key, ui_ref)));
         TreeRef {
+            ui: self.clone(),
             key,
             _marker: PhantomData,
         }
     }
 
-    pub fn insert_window(&mut self, tree_key: TreeKey, key: DefaultKey) {
-        let window = WindowBuilder::new().build(&self.event_loop).unwrap();
-        self.windows.insert(window.id(), (window, tree_key, key));
+    pub fn insert_window(&self, tree_key: TreeKey, key: DefaultKey) {
+        let mut me = self.inner.borrow_mut();
+        let window = WindowBuilder::new().build(&me.event_loop).unwrap();
+        me.windows.insert(window.id(), (window, tree_key, key));
     }
 
-    pub async fn render(&mut self) {
+    pub async fn render(&self) {
+        let mut me = self.inner.borrow_mut();
+
         let mut dirty = HashSet::new();
 
         // Await the first event
-        let (tree_key, key, msg) = self.rx.recv().await.unwrap();
-        self.trees[tree_key].handle_any(Box::new(TreeMessage::Handle { key, msg }));
+        let (tree_key, key, msg) = me.rx.recv().await.unwrap();
+        me.trees[tree_key].handle_any(Box::new(TreeMessage::Handle { key, msg }));
         dirty.insert((tree_key, key));
 
         // Process any remaining events
-        while let Ok((tree_key, key, msg)) = self.rx.try_recv() {
-            self.trees[tree_key].handle_any(Box::new(TreeMessage::Handle { key, msg }));
+        while let Ok((tree_key, key, msg)) = me.rx.try_recv() {
+            me.trees[tree_key].handle_any(Box::new(TreeMessage::Handle { key, msg }));
             dirty.insert((tree_key, key));
         }
 
         let mut dirty_trees = HashSet::new();
         for (tree_key, key) in dirty {
-            let tree = self.trees.get_mut(tree_key).unwrap();
+            let tree = me.trees.get_mut(tree_key).unwrap();
             tree.handle_any(Box::new(TreeMessage::Render { key }));
 
             dirty_trees.insert(tree_key);
@@ -91,21 +102,22 @@ impl UserInterface {
 
         for tree_key in dirty_trees {
             let mut scene = Scene::new();
-            let tree = self.trees.get_mut(tree_key).unwrap();
+            let tree = me.trees.get_mut(tree_key).unwrap();
             tree.handle_any(Box::new(TreeMessage::Render { key }));
             tree.render_any(SceneBuilder::for_scene(&mut scene));
         }
     }
 
-    pub fn render_all(&mut self) {
-        for tree in self.trees.values_mut() {
+    pub fn render_all(&self) {
+        let mut me = self.inner.borrow_mut();
+        for tree in me.trees.values_mut() {
             let mut scene = Scene::new();
             tree.render_any(SceneBuilder::for_scene(&mut scene));
         }
     }
 
-    pub fn run(mut self) {
+    pub fn run(self) {
         self.render_all();
-        self.event_loop.run(|_, _| {}).unwrap();
+        //self.inner.borrow_mut().event_loop.run(|_, _| {}).unwrap();
     }
 }
