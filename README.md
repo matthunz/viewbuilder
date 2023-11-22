@@ -26,26 +26,10 @@ This crate provides a moduler GUI library that can be used as an entire framewor
 
 ```rust
 let ui = UserInterface::new();
-
-// Window A
 let tree = ui.insert(LocalTree::builder(Window::default()));
 
-let a = tree.insert(Text::new("Window A"));
-tree.root().push_child(a.key);
-
-// Window B
-let sub_tree = ui.insert(LocalTree::builder(Window::default()));
-tree.insert(sub_tree.tree.clone());
-
-let b = sub_tree.insert(Text::new("Window B"));
-sub_tree.root().push_child(b.key);
-
-// Window C
-let window_c = sub_tree.insert(Window::default());
-sub_tree.root().push_child(window_c.key);
-
-let a = sub_tree.insert(Text::new("Window C"));
-window_c.push_child(a.key);
+let text = tree.insert(Text::new("Hello World!"));
+tree.root().push_child(text.key);
 
 ui.run();
 ```
