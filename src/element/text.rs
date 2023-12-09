@@ -1,4 +1,4 @@
-use crate::{Element, ElementRef};
+use crate::{Element, ElementRef, Update};
 use cosmic_text::{Attrs, Buffer, Color, FontSystem, Metrics, Shaping, SwashCache};
 use kurbo::Size;
 use slotmap::DefaultKey;
@@ -8,6 +8,7 @@ use vello::{
     peniko::Brush,
 };
 
+/// Builder for a [`Text`] element.
 #[derive(Default)]
 pub struct TextBuilder {
     font_size: Option<f64>,
@@ -15,15 +16,18 @@ pub struct TextBuilder {
 }
 
 impl TextBuilder {
+    /// Set the font size for this text element builder.
     pub fn font_size(&mut self, size: f64) -> &mut Self {
         self.font_size = Some(size);
         self
     }
 
+    /// Set the click handler for this text element builder.
     pub fn on_click(&mut self, _f: impl FnMut(ElementRef<Text>) + 'static) -> &mut Self {
         self
     }
 
+    /// Build this text element with its content.
     pub fn build(&mut self, content: impl Into<Cow<'static, str>>) -> Text {
         let mut text = Text::new(content);
         text.font_size = self.font_size;
@@ -32,31 +36,49 @@ impl TextBuilder {
     }
 }
 
+/// Text element.
 pub struct Text {
     content: Cow<'static, str>,
     buffer: Option<Buffer>,
     font_size: Option<f64>,
     line_height: Option<f64>,
+    key: Option<DefaultKey>,
 }
 
 impl Text {
+    /// Create a new text element from its content.
     pub fn new(content: impl Into<Cow<'static, str>>) -> Self {
         Self {
             content: content.into(),
             buffer: None,
             font_size: None,
             line_height: None,
+            key: None,
         }
     }
 
+    /// Create a builder for a new text element.
     pub fn builder() -> TextBuilder {
         TextBuilder::default()
     }
 
-    pub fn set_content(&mut self, _content: impl Into<Cow<'static, str>>) {}
+    /// Get the content of this text element.
+    pub fn content(&self) -> &str {
+        &self.content
+    }
+
+    pub fn set_content(&mut self, content: impl Into<Cow<'static, str>>) {
+        Update::new(self.key.unwrap()).layout().render();
+
+        self.content = content.into();
+    }
 }
 
 impl Element for Text {
+    fn build(&mut self, key: DefaultKey) {
+        self.key = Some(key);
+    }
+
     fn children(&self) -> Option<Box<[DefaultKey]>> {
         None
     }

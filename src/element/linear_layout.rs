@@ -39,6 +39,8 @@ impl LinearLayout {
 }
 
 impl Element for LinearLayout {
+    fn build(&mut self, _key: DefaultKey) {}
+
     fn children(&self) -> Option<Box<[DefaultKey]>> {
         Some(self.children.iter().map(|child| child.key).collect())
     }

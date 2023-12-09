@@ -76,6 +76,12 @@ impl UserInterface {
             element: Rc::new(RefCell::new(element)),
         };
         let key = self.inner.borrow_mut().nodes.insert(node);
+        self.inner.borrow_mut().nodes[key]
+            .element
+            .borrow_mut()
+            .as_element_mut()
+            .build(key);
+
         ElementRef {
             key,
             _marker: PhantomData,
@@ -161,4 +167,36 @@ pub fn launch<E: Element + 'static>(element: E) {
     Window::new(element);
 
     ui.run()
+}
+
+pub struct Update {
+    key: DefaultKey,
+    layout: bool,
+    render: bool,
+}
+
+impl Update {
+    pub fn new(key: DefaultKey) -> Self {
+        Self {
+            key,
+            layout: false,
+            render: false,
+        }
+    }
+
+    pub fn layout(mut self) -> Self {
+        self.layout = true;
+        self
+    }
+
+    pub fn render(mut self) -> Self {
+        self.render = true;
+        self
+    }
+}
+
+impl Drop for Update {
+    fn drop(&mut self) {
+        todo!()
+    }
 }
