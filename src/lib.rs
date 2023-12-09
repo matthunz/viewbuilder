@@ -53,6 +53,14 @@ pub struct ElementRef<E> {
     _marker: PhantomData<E>,
 }
 
+impl<E> Clone for ElementRef<E> {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+impl<E> Copy for ElementRef<E> {}
+
 impl<E> ElementRef<E> {
     pub fn get(self) -> Entry<E> {
         let element = UserInterface::current().inner.borrow_mut().nodes[self.key]

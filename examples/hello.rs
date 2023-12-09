@@ -4,7 +4,8 @@ use viewbuilder::Window;
 fn main() {
     let layout = viewbuilder::view(
         LinearLayout::builder()
-            .child(Text::new("Hello World!"))
+            .child(Text::new("Hello"))
+            .child(Text::new("World"))
             .build(),
     );
 

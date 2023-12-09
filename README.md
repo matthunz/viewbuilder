@@ -25,14 +25,23 @@ Cross-platform user interface framework for Rust.
 This crate provides a moduler GUI library that can be used as an entire framework, or with individual parts.
 
 ```rust
-let ui = UserInterface::new();
-let tree = ui.insert(LocalTree::builder(Window::default()));
+use viewbuilder::element::{LinearLayout, Text};
+use viewbuilder::Window;
 
-let text = tree.insert(Text::new("Hello World!"));
-tree.root().push_child(text.key);
+fn main() {
+    let layout = viewbuilder::view(
+        LinearLayout::builder()
+            .child(Text::new("Hello"))
+            .child(Text::new("World"))
+            .build(),
+    );
 
-ui.run();
+    Window::builder().title("Hello Example").build(layout);
+
+    viewbuilder::run()
+}
 ```
+
 
 ## Features
 - Cross-platform with desktop and mobile support
