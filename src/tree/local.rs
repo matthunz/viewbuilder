@@ -1,7 +1,7 @@
 use super::{TreeBuilder, TreeMessage};
 use crate::{
     element::{Lifecycle, LifecycleContext},
-    AnyElement, Element, LocalElementRef, TreeKey, UserInterface,
+    AnyElement, AnyElementRef, Element, LocalElementRef, TreeKey, UserInterface,
 };
 use slotmap::{DefaultKey, SlotMap, SparseSecondaryMap};
 use std::{cell::RefCell, marker::PhantomData, rc::Rc};
@@ -14,32 +14,25 @@ pub(crate) struct Inner {
     pub(crate) parents: SparseSecondaryMap<DefaultKey, DefaultKey>,
 }
 
-pub struct LocalTree<E> {
-    pub(crate) root: Option<Box<LocalElementRef<E, E>>>,
+#[derive(Clone)]
+pub struct LocalTree {
+    pub(crate) root: Option<Box<AnyElementRef>>,
     pub(crate) ui: UserInterface,
     pub(crate) inner: Rc<RefCell<Inner>>,
 }
 
-impl<E> Clone for LocalTree<E> {
-    fn clone(&self) -> Self {
-        Self {
-            root: self.root.clone(),
-            ui: self.ui.clone(),
-            inner: self.inner.clone(),
+impl LocalTree {
+    pub fn builder(root: impl Element + 'static) -> LocalTreeBuilder {
+        LocalTreeBuilder {
+            root: Box::new(root),
         }
     }
-}
 
-impl<E> LocalTree<E> {
-    pub fn builder(root: E) -> LocalTreeBuilder<E> {
-        LocalTreeBuilder { root }
-    }
-
-    pub fn root(&self) -> LocalElementRef<E, E> {
+    pub fn root(&self) -> AnyElementRef {
         self.root.as_deref().unwrap().clone()
     }
 
-    pub fn insert<E2: Element + 'static>(&self, element: E2) -> LocalElementRef<E, E2> {
+    pub fn insert<E2: Element + 'static>(&self, element: E2) -> LocalElementRef<E2> {
         let element: Rc<RefCell<Box<dyn AnyElement>>> = Rc::new(RefCell::new(Box::new(element)));
         let key = self.inner.borrow_mut().elements.insert(element.clone());
 
@@ -60,9 +53,30 @@ impl<E> LocalTree<E> {
             _marker: PhantomData,
         }
     }
+
+    pub fn insert_any(&self, element: Box<dyn AnyElement>) -> AnyElementRef {
+        let element: Rc<RefCell<Box<dyn AnyElement>>> = Rc::new(RefCell::new(element));
+        let key = self.inner.borrow_mut().elements.insert(element.clone());
+
+        // TODO
+        element.borrow_mut().lifecycle_any(
+            LifecycleContext {
+                ui: self.ui.clone(),
+                tree_key: self.inner.borrow().key,
+                key,
+            },
+            Lifecycle::Build,
+        );
+
+        AnyElementRef {
+            element,
+            tree: self.clone(),
+            key,
+        }
+    }
 }
 
-impl<E: Element> Element for LocalTree<E> {
+impl Element for LocalTree {
     type Message = TreeMessage;
 
     fn lifecycle(&mut self, _cx: LifecycleContext, _lifecycle: Lifecycle) {}
@@ -92,12 +106,12 @@ impl<E: Element> Element for LocalTree<E> {
     }
 }
 
-pub struct LocalTreeBuilder<E> {
-    pub(crate) root: E,
+pub struct LocalTreeBuilder {
+    pub(crate) root: Box<dyn AnyElement>,
 }
 
-impl<E: Element + 'static> TreeBuilder for LocalTreeBuilder<E> {
-    type Tree = LocalTree<E>;
+impl TreeBuilder for LocalTreeBuilder {
+    type Tree = LocalTree;
 
     fn insert_with_key(self, key: TreeKey, ui: UserInterface) -> Self::Tree {
         let mut me = LocalTree {
@@ -110,7 +124,7 @@ impl<E: Element + 'static> TreeBuilder for LocalTreeBuilder<E> {
                 parents: Default::default(),
             })),
         };
-        let root = me.insert(self.root);
+        let root = me.insert_any(self.root);
         me.root = Some(Box::new(root));
         me
     }

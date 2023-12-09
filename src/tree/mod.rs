@@ -1,7 +1,6 @@
-use std::any::Any;
-
 use crate::{Element, TreeKey, UserInterface};
 use slotmap::DefaultKey;
+use std::any::Any;
 
 mod local;
 pub use local::{LocalTree, LocalTreeBuilder};

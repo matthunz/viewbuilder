@@ -20,7 +20,7 @@ impl Text {
         &self.content
     }
 
-    pub fn set_content<R>(text: LocalElementRef<R, Self>, content: impl Into<Cow<'static, str>>) {
+    pub fn set_content(text: LocalElementRef<Self>, content: impl Into<Cow<'static, str>>) {
         text.send(TextMessage::SetContent(content.into()))
     }
 }

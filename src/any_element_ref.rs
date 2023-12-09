@@ -1,46 +1,29 @@
-use crate::{tree::LocalTree, AnyElement, Element};
+use crate::{tree::LocalTree, AnyElement};
 use slotmap::DefaultKey;
 use std::{
+    any::Any,
     cell::{RefCell, RefMut},
-    marker::PhantomData,
     rc::Rc,
 };
 
-pub struct LocalElementRef<E> {
+#[derive(Clone)]
+pub struct AnyElementRef {
     pub(crate) element: Rc<RefCell<Box<dyn AnyElement>>>,
     pub tree: LocalTree,
     pub key: DefaultKey,
-    pub(crate) _marker: PhantomData<E>,
 }
 
-impl<E> Clone for LocalElementRef<E> {
-    fn clone(&self) -> Self {
-        Self {
-            element: self.element.clone(),
-            tree: self.tree.clone(),
-            key: self.key.clone(),
-            _marker: self._marker.clone(),
-        }
-    }
-}
-
-impl<E> LocalElementRef<E> {
-    pub fn get_mut(&self) -> RefMut<E>
-    where
-        E: 'static,
-    {
+impl AnyElementRef {
+    pub fn get_mut(&self) -> RefMut<Box<dyn AnyElement>> {
         RefMut::map(self.element.borrow_mut(), |element| {
             element.as_any_mut().downcast_mut().unwrap()
         })
     }
 
-    pub fn send(self, msg: E::Message)
-    where
-        E: Element + 'static,
-    {
+    pub fn send(self, msg: Box<dyn Any>) {
         let ui = self.tree.ui.inner.borrow();
         ui.tx
-            .send((self.tree.inner.borrow().key, self.key, Box::new(msg)))
+            .send((self.tree.inner.borrow().key, self.key, msg))
             .unwrap();
     }
 

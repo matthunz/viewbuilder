@@ -3,6 +3,9 @@ use slotmap::new_key_type;
 mod any_element;
 pub use any_element::AnyElement;
 
+mod any_element_ref;
+pub use any_element_ref::AnyElementRef;
+
 pub mod element;
 pub use element::Element;
 
