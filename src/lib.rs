@@ -122,23 +122,20 @@ impl UserInterface {
                             antialiasing_method: vello::AaConfig::Msaa16,
                         };
 
-                        {
-                            vello::block_on_wgpu(
-                                &device_handle.device,
-                                me.renderers[render_state.surface.dev_id]
-                                    .as_mut()
-                                    .unwrap()
-                                    .render_to_surface_async(
-                                        &device_handle.device,
-                                        &device_handle.queue,
-                                        &me.scene.borrow(),
-                                        &surface_texture,
-                                        &render_params,
-                                    ),
-                            )
-                            .unwrap();
-                        }
-
+                        vello::block_on_wgpu(
+                            &device_handle.device,
+                            me.renderers[render_state.surface.dev_id]
+                                .as_mut()
+                                .unwrap()
+                                .render_to_surface_async(
+                                    &device_handle.device,
+                                    &device_handle.queue,
+                                    &me.scene.borrow(),
+                                    &surface_texture,
+                                    &render_params,
+                                ),
+                        )
+                        .unwrap();
                         surface_texture.present();
                     }
                 }

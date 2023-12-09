@@ -6,7 +6,7 @@ use vello::SceneBuilder;
 mod linear_layout;
 pub use self::linear_layout::{LinearLayout, LinearLayoutBuilder};
 
-mod text;
+pub mod text;
 pub use self::text::Text;
 
 pub trait Element {

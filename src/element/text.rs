@@ -61,7 +61,7 @@ impl Element for Text {
         None
     }
 
-    fn layout(&mut self, _min: Option<Size>, _max: Option<Size>) -> Size {
+    fn layout(&mut self, _min: Option<Size>, max: Option<Size>) -> Size {
         let cx = TextContext::current();
         let cache = &mut *cx.cache.borrow_mut();
 
@@ -72,7 +72,10 @@ impl Element for Text {
         let mut buffer = Buffer::new(&mut cache.font_system, metrics);
 
         let mut buffer_ref = buffer.borrow_with(&mut cache.font_system);
-        buffer_ref.set_size(1920.0, 1080.0);
+        buffer_ref.set_size(
+            max.map(|size| size.width).unwrap_or_default() as _,
+            max.map(|size| size.height).unwrap_or_default() as _,
+        );
 
         let attrs = Attrs::new().family(cosmic_text::Family::Monospace);
         buffer_ref.set_text(&self.content, attrs, Shaping::Advanced);
