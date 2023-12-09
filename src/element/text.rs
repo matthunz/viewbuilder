@@ -1,4 +1,4 @@
-use crate::Element;
+use crate::{Element, ElementRef};
 use kurbo::Size;
 use slotmap::DefaultKey;
 use std::borrow::Cow;
@@ -7,7 +7,7 @@ use std::borrow::Cow;
 pub struct TextBuilder {}
 
 impl TextBuilder {
-    pub fn on_click(&mut self, _f: impl FnMut() + 'static) -> &mut Self {
+    pub fn on_click(&mut self, f: impl FnMut(ElementRef<Text>) + 'static) -> &mut Self {
         self
     }
 

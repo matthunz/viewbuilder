@@ -1,40 +1,20 @@
-use std::cell::RefCell;
-use std::rc::Rc;
-
 use viewbuilder::element::{LinearLayout, Text};
 use viewbuilder::Window;
 
 fn main() {
-    let label = viewbuilder::view(Text::new("0"));
-    let count = Rc::new(RefCell::new(0));
-    let count_clone = count.clone();
-
+    let mut count = 0;
     let layout = viewbuilder::view(
         LinearLayout::builder()
-            .child(label)
+            .child(Text::new("Counter"))
             .child(
                 Text::builder()
-                    .on_click(move || {
-                        let mut n = count.borrow_mut();
-                        *n += 1;
-                        label
-                            .get()
+                    .on_click(move |text| {
+                        count += 1;
+                        text.get()
                             .borrow_mut()
-                            .set_content(format!("High fives: {}", n));
+                            .set_content(format!("High fives: {}", count));
                     })
-                    .build("More!"),
-            )
-            .child(
-                Text::builder()
-                    .on_click(move || {
-                        let mut n = count_clone.borrow_mut();
-                        *n -= 1;
-                        label
-                            .get()
-                            .borrow_mut()
-                            .set_content(format!("High fives: {}", n));
-                    })
-                    .build("Less!"),
+                    .build("High fives: 0"),
             )
             .build(),
     );

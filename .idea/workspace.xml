@@ -7,22 +7,7 @@
     <cargoProject FILE="$PROJECT_DIR$/Cargo.toml" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="aa46776f-4e8c-4678-8e78-89c737713651" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/examples/counter.rs" beforeDir="false" afterPath="$PROJECT_DIR$/examples/counter.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/color.rs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/element/mod.rs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/element/text.rs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/element/view.rs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/factory.rs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/layout/dimension.rs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/layout/flex_direction.rs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/layout/mod.rs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/render.rs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/text_factory.rs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/tree.rs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/virtual_tree.rs" beforeDir="false" />
-    </list>
+    <list default="true" id="aa46776f-4e8c-4678-8e78-89c737713651" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -52,24 +37,24 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;Cargo.Run counter.executor&quot;: &quot;Run&quot;,
-    &quot;Cargo.Run.executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;parallel&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/Users/matt/Documents/viewbuilder&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;org.rust.cargo.project.model.PROJECT_DISCOVERY&quot;: &quot;true&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;inlay.hints&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Cargo.Run counter.executor": "Run",
+    "Cargo.Run.executor": "Run",
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "git-widget-placeholder": "main",
+    "last_opened_file_path": "/Users/matt/Documents/viewbuilder",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "org.rust.cargo.project.model.PROJECT_DISCOVERY": "true",
+    "settings.editor.selected.configurable": "inlay.hints",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="RsExternalLinterProjectSettings">
     <option name="runOnTheFly" value="true" />
   </component>
@@ -138,6 +123,7 @@
       <workItem from="1700030107610" duration="945000" />
       <workItem from="1700063019129" duration="3028000" />
       <workItem from="1700066135576" duration="5239000" />
+      <workItem from="1702114908804" duration="1000" />
     </task>
     <servers />
   </component>

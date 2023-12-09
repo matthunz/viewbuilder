@@ -154,3 +154,9 @@ pub fn view<E: Element + 'static>(element: E) -> ElementRef<E> {
 pub fn run() {
     UserInterface::current().run()
 }
+
+pub fn launch<E: Element + 'static>(element: E) {
+    let ui = UserInterface::current();
+    ui.view(element);
+    ui.run()
+}
