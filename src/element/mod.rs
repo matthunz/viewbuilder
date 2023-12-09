@@ -1,7 +1,6 @@
 use kurbo::{Point, Size};
 use slotmap::DefaultKey;
 use std::any::Any;
-
 use vello::SceneBuilder;
 
 mod linear_layout;
