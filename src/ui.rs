@@ -280,8 +280,6 @@ impl UserInterface {
                         }
 
                         surface_texture.present();
-
-                        dbg!("rendered!");
                     }
                 }
                 _ => {}
