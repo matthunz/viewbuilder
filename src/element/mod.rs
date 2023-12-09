@@ -1,5 +1,6 @@
-use kurbo::Size;
+use kurbo::{Size, Point};
 use slotmap::DefaultKey;
+use vello::SceneBuilder;
 use std::any::Any;
 
 mod linear_layout;
@@ -12,6 +13,8 @@ pub trait Element {
     fn children(&self) -> Option<Box<[DefaultKey]>>;
 
     fn layout(&mut self, min: Option<Size>, max: Option<Size>) -> Size;
+
+    fn render(&mut self, point: Point, size: Size, scene: &mut SceneBuilder);
 }
 
 pub trait AnyElement {

@@ -1,10 +1,10 @@
-use kurbo::Size;
+use kurbo::{Point, Size};
 use slotmap::{DefaultKey, SlotMap};
 use std::{cell::RefCell, collections::HashMap, marker::PhantomData, rc::Rc};
 use vello::{
     peniko::Color,
     util::{RenderContext, RenderSurface},
-    Renderer, Scene,
+    Renderer, Scene, SceneBuilder,
 };
 use winit::{
     event::Event,
@@ -98,10 +98,10 @@ impl UserInterface {
                         let width = render_state.surface.config.width;
                         let height = render_state.surface.config.height;
 
-                        let _device_handle = &me.render_cx.devices[render_state.surface.dev_id];
+                        let device_handle = &me.render_cx.devices[render_state.surface.dev_id];
                         let surface_texture =
                             render_state.surface.surface.get_current_texture().unwrap();
-                        let _render_params = vello::RenderParams {
+                        let render_params = vello::RenderParams {
                             base_color: Color::PURPLE,
                             width,
                             height,
@@ -116,25 +116,28 @@ impl UserInterface {
                             Some(Size::new(window_size.width as _, window_size.height as _)),
                         );
 
-                        /* TODO
+                        root.element.borrow_mut().as_element_mut().render(
+                            Point::ZERO,
+                            Size::new(window_size.width as _, window_size.height as _),
+                            &mut SceneBuilder::for_scene(&mut me.scene),
+                        );
+
                         {
                             vello::block_on_wgpu(
                                 &device_handle.device,
-                                renderers[render_state.surface.dev_id]
+                                me.renderers[render_state.surface.dev_id]
                                     .as_mut()
                                     .unwrap()
                                     .render_to_surface_async(
                                         &device_handle.device,
                                         &device_handle.queue,
-                                        &self.inner.borrow().scene,
+                                        &me.scene,
                                         &surface_texture,
                                         &render_params,
                                     ),
                             )
                             .unwrap();
                         }
-
-                         */
 
                         surface_texture.present();
                     }
@@ -157,6 +160,8 @@ pub fn run() {
 
 pub fn launch<E: Element + 'static>(element: E) {
     let ui = UserInterface::current();
-    ui.view(element);
+    
+    Window::new(element);
+
     ui.run()
 }

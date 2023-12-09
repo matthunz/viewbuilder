@@ -46,4 +46,8 @@ impl Element for LinearLayout {
         }
         Size::new(pos, max_bound)
     }
+
+    fn render(&mut self, point: kurbo::Point, size: Size, scene: &mut vello::SceneBuilder) {
+        
+    }
 }

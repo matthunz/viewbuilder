@@ -1,5 +1,5 @@
 use viewbuilder::element::Text;
 
 fn main() {
-    viewbuilder::launch(Text::new("Hello World"))
+    viewbuilder::launch(Text::new("Hello Viewbuilder!"))
 }
