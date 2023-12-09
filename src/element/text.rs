@@ -9,26 +9,43 @@ use vello::{
 };
 
 #[derive(Default)]
-pub struct TextBuilder {}
+pub struct TextBuilder {
+    font_size: Option<f64>,
+    line_height: Option<f64>,
+}
 
 impl TextBuilder {
-    pub fn on_click(&mut self, f: impl FnMut(ElementRef<Text>) + 'static) -> &mut Self {
+    pub fn font_size(&mut self, size: f64) -> &mut Self {
+        self.font_size = Some(size);
+        self
+    }
+
+    pub fn on_click(&mut self, _f: impl FnMut(ElementRef<Text>) + 'static) -> &mut Self {
         self
     }
 
     pub fn build(&mut self, content: impl Into<Cow<'static, str>>) -> Text {
-        Text::new(content)
+        let mut text = Text::new(content);
+        text.font_size = self.font_size;
+        text.line_height = self.line_height;
+        text
     }
 }
 
 pub struct Text {
     content: Cow<'static, str>,
+    buffer: Option<Buffer>,
+    font_size: Option<f64>,
+    line_height: Option<f64>,
 }
 
 impl Text {
     pub fn new(content: impl Into<Cow<'static, str>>) -> Self {
         Self {
             content: content.into(),
+            buffer: None,
+            font_size: None,
+            line_height: None,
         }
     }
 
@@ -45,51 +62,53 @@ impl Element for Text {
     }
 
     fn layout(&mut self, _min: Option<Size>, _max: Option<Size>) -> Size {
-        Size::new(100., 100.)
-    }
-
-    fn render(&mut self, point: kurbo::Point, size: Size, scene: &mut vello::SceneBuilder) {
         let cx = TextContext::current();
         let cache = &mut *cx.cache.borrow_mut();
 
-        // Text metrics indicate the font size and line height of a buffer
-        let metrics = Metrics::new(100.0, 100.0);
+        let font_size = self.font_size.unwrap_or(14.);
+        let line_height = self.line_height.unwrap_or_else(|| font_size * 1.2);
 
-        // A Buffer provides shaping and layout for a UTF-8 string, create one per text widget
+        let metrics = Metrics::new(font_size as _, line_height as _);
         let mut buffer = Buffer::new(&mut cache.font_system, metrics);
 
-        // Borrow buffer together with the font system for more convenient method calls
-        let mut buffer = buffer.borrow_with(&mut cache.font_system);
+        let mut buffer_ref = buffer.borrow_with(&mut cache.font_system);
+        buffer_ref.set_size(1920.0, 1080.0);
 
-        // Set a size for the text buffer, in pixels
-        buffer.set_size(1920.0, 1080.0);
-
-        // Attributes indicate what font to choose
         let attrs = Attrs::new().family(cosmic_text::Family::Monospace);
+        buffer_ref.set_text(&self.content, attrs, Shaping::Advanced);
 
-        // Add some text!
-        buffer.set_text(&self.content, attrs, Shaping::Advanced);
+        buffer_ref.shape_until_scroll();
 
-        // Perform shaping as desired
-        buffer.shape_until_scroll();
+        let size = Size::new(100., line_height as f64);
+        self.buffer = Some(buffer);
+        size
+    }
 
+    fn render(&mut self, point: kurbo::Point, _size: Size, scene: &mut vello::SceneBuilder) {
+        let cx = TextContext::current();
+        let cache = &mut *cx.cache.borrow_mut();
         let text_color = Color::rgb(0, 255, 0);
 
         // Draw the buffer (for performance, instead use SwashCache directly)
-        buffer.draw(&mut cache.swash_cache, text_color, |x, y, w, h, color| {
-            scene.fill(
-                vello::peniko::Fill::EvenOdd,
-                Affine::default(),
-                &Brush::Solid(vello::peniko::Color::rgba8(
-                    color.r(),
-                    color.g(),
-                    color.b(),
-                    color.a(),
-                )),
-                None,
-                &Rect::new(x as _, y as _, (x + w as i32) as _, (y + h as i32) as _),
-            )
-        });
+        self.buffer.as_mut().unwrap().draw(
+            &mut cache.font_system,
+            &mut cache.swash_cache,
+            text_color,
+            |x, y, w, h, color| {
+                scene.fill(
+                    vello::peniko::Fill::EvenOdd,
+                    Affine::translate((point.x, point.y)),
+                    &Brush::Solid(vello::peniko::Color::rgba8(
+                        color.r(),
+                        color.g(),
+                        color.b(),
+                        color.a(),
+                    )),
+                    None,
+                    &Rect::new(x as _, y as _, (x + w as i32) as _, (y + h as i32) as _),
+                )
+            },
+        );
     }
 }
 

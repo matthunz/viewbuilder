@@ -1,7 +1,7 @@
-use kurbo::{Size, Point};
+use kurbo::{Point, Size};
 use slotmap::DefaultKey;
-use vello::SceneBuilder;
 use std::any::Any;
+use vello::SceneBuilder;
 
 mod linear_layout;
 pub use self::linear_layout::{LinearLayout, LinearLayoutBuilder};

@@ -50,8 +50,8 @@ impl Element for LinearLayout {
             let child_elem = UserInterface::current().get(child.key);
             let child_size = child_elem.borrow_mut().as_element_mut().layout(min, max);
             child.pos = Some(pos);
-            pos += child_size.width;
-            max_bound = max_bound.max(child_size.height);
+            pos += child_size.height;
+            max_bound = max_bound.max(child_size.width);
         }
         Size::new(pos, max_bound)
     }
@@ -59,7 +59,7 @@ impl Element for LinearLayout {
     fn render(&mut self, point: kurbo::Point, size: Size, scene: &mut vello::SceneBuilder) {
         for child in &self.children {
             let child_elem = UserInterface::current().get(child.key);
-            let point = Point::new(point.x + child.pos.unwrap(), point.y);
+            let point = Point::new(point.x, point.y + child.pos.unwrap());
             child_elem
                 .borrow_mut()
                 .as_element_mut()
