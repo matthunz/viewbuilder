@@ -7,5 +7,8 @@ fn main() {
             .child(Text::new("Hello World!"))
             .build(),
     );
-    Window::new(layout);
+
+    Window::builder().title("Hello Example").build(layout);
+
+    viewbuilder::run()
 }
