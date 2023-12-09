@@ -1,23 +1,81 @@
-use slotmap::new_key_type;
+use slotmap::{DefaultKey, SlotMap};
+use std::{
+    any::Any,
+    cell::{Ref, RefCell, RefMut},
+    marker::PhantomData,
+    rc::Rc,
+};
 
-mod any_element;
-pub use any_element::AnyElement;
+pub struct Node {
+    element: Rc<RefCell<dyn Any>>,
+}
 
-mod any_element_ref;
-pub use any_element_ref::AnyElementRef;
+pub struct Entry<E> {
+    element: Rc<RefCell<dyn Any>>,
+    _marker: PhantomData<E>,
+}
 
-pub mod element;
-pub use element::Element;
+impl<E: 'static> Entry<E> {
+    pub fn borrow(&self) -> Ref<E> {
+        Ref::map(self.element.borrow(), |element| {
+            element.downcast_ref().unwrap()
+        })
+    }
 
-mod element_ref;
-pub use element_ref::LocalElementRef;
+    pub fn borrow_mut(&self) -> RefMut<E> {
+        RefMut::map(self.element.borrow_mut(), |element| {
+            element.downcast_mut().unwrap()
+        })
+    }
+}
 
-pub mod tree;
-pub use tree::LocalTree;
+pub struct ElementRef<E> {
+    key: DefaultKey,
+    _marker: PhantomData<E>,
+}
 
-mod ui;
-pub use ui::UserInterface;
+impl<E> ElementRef<E> {
+    pub fn get(self) -> Entry<E> {
+        let element = UserInterface::current().inner.borrow_mut().nodes[self.key]
+            .element
+            .clone();
+        Entry {
+            element,
+            _marker: PhantomData,
+        }
+    }
+}
 
-new_key_type! {
-    pub struct TreeKey;
+#[derive(Default)]
+struct Inner {
+    nodes: SlotMap<DefaultKey, Node>,
+}
+
+#[derive(Clone, Default)]
+pub struct UserInterface {
+    inner: Rc<RefCell<Inner>>,
+}
+
+impl UserInterface {
+    pub fn current() -> Self {
+        thread_local! {
+            static CURRENT: UserInterface = UserInterface::default()
+        }
+        CURRENT.try_with(|ui| ui.clone()).unwrap()
+    }
+
+    pub fn view<E: 'static>(&self, element: E) -> ElementRef<E> {
+        let node = Node {
+            element: Rc::new(RefCell::new(element)),
+        };
+        let key = self.inner.borrow_mut().nodes.insert(node);
+        ElementRef {
+            key,
+            _marker: PhantomData,
+        }
+    }
+}
+
+pub fn view<E: 'static>(element: E) -> ElementRef<E> {
+    UserInterface::current().view(element)
 }
