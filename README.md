@@ -66,10 +66,10 @@ fn main() {
 
 - Cross-platform with desktop and mobile support
 - Event handling with an HTML-like API
-- State management with [dioxus](https://github.com/DioxusLabs/dioxus/) (optional)
+- High performance rendering with [vello](https://github.com/linebender/vello)
 - CSS flexbox and grid layout with [taffy](https://github.com/DioxusLabs/taffy/)
 - Accessibility with [accesskit](https://github.com/AccessKit/accesskit)
-- High performance rendering with [rust-skia](https://github.com/rust-skia/rust-skia)
+- State management with [dioxus](https://github.com/DioxusLabs/dioxus/) (optional)
 
 ## Getting started
 
