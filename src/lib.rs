@@ -1,10 +1,6 @@
+use kurbo::Size;
 use slotmap::{DefaultKey, SlotMap};
-use std::{
-    cell::{Ref, RefCell, RefMut},
-    collections::HashMap,
-    marker::PhantomData,
-    rc::Rc,
-};
+use std::{cell::RefCell, collections::HashMap, marker::PhantomData, rc::Rc};
 use vello::{
     peniko::Color,
     util::{RenderContext, RenderSurface},
@@ -19,6 +15,9 @@ use winit::{
 pub mod element;
 pub use self::element::{AnyElement, Element};
 
+mod element_ref;
+pub use element_ref::{ElementRef, Entry};
+
 mod view;
 pub use self::view::View;
 
@@ -29,55 +28,12 @@ pub struct Node {
     element: Rc<RefCell<dyn AnyElement>>,
 }
 
-pub struct Entry<E> {
-    element: Rc<RefCell<dyn AnyElement>>,
-    _marker: PhantomData<E>,
-}
-
-impl<E: 'static> Entry<E> {
-    pub fn borrow(&self) -> Ref<E> {
-        Ref::map(self.element.borrow(), |element| {
-            element.as_any().downcast_ref().unwrap()
-        })
-    }
-
-    pub fn borrow_mut(&self) -> RefMut<E> {
-        RefMut::map(self.element.borrow_mut(), |element| {
-            element.as_any_mut().downcast_mut().unwrap()
-        })
-    }
-}
-
-pub struct ElementRef<E> {
-    pub key: DefaultKey,
-    _marker: PhantomData<E>,
-}
-
-impl<E> Clone for ElementRef<E> {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-impl<E> Copy for ElementRef<E> {}
-
-impl<E> ElementRef<E> {
-    pub fn get(self) -> Entry<E> {
-        let element = UserInterface::current().inner.borrow_mut().nodes[self.key]
-            .element
-            .clone();
-        Entry {
-            element,
-            _marker: PhantomData,
-        }
-    }
-}
-
 struct RenderState {
     // TODO: We MUST drop the surface before the `window`, so the fields
     // must be in this order
     surface: RenderSurface,
     window: winit::window::Window,
+    root: DefaultKey,
 }
 
 struct Inner {
@@ -126,6 +82,10 @@ impl UserInterface {
         }
     }
 
+    pub fn get(&self, key: DefaultKey) -> Rc<RefCell<dyn AnyElement>> {
+        self.inner.borrow_mut().nodes[key].element.clone()
+    }
+
     pub fn run(self) {
         let event_loop = self.inner.borrow_mut().event_loop.take().unwrap();
 
@@ -147,6 +107,14 @@ impl UserInterface {
                             height,
                             antialiasing_method: vello::AaConfig::Msaa16,
                         };
+
+                        let root = &mut me.nodes[render_state.root];
+
+                        let window_size = render_state.window.inner_size();
+                        root.element.borrow_mut().as_element_mut().layout(
+                            None,
+                            Some(Size::new(window_size.width as _, window_size.height as _)),
+                        );
 
                         /* TODO
                         {

@@ -1,4 +1,5 @@
-use crate::{Element, View};
+use crate::{Element, UserInterface, View};
+use kurbo::Size;
 use slotmap::DefaultKey;
 
 pub struct LinearLayoutBuilder {
@@ -32,5 +33,17 @@ impl LinearLayout {
 impl Element for LinearLayout {
     fn children(&self) -> Option<Box<[DefaultKey]>> {
         Some(self.children.clone().into_boxed_slice())
+    }
+
+    fn layout(&mut self, min: Option<kurbo::Size>, max: Option<kurbo::Size>) -> kurbo::Size {
+        let mut pos = 0.;
+        let mut max_bound = 0f64;
+        for child_key in &self.children {
+            let child = UserInterface::current().get(*child_key);
+            let child_size = child.borrow_mut().as_element_mut().layout(min, max);
+            pos += child_size.width;
+            max_bound = max_bound.max(child_size.height);
+        }
+        Size::new(pos, max_bound)
     }
 }

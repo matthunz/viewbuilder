@@ -22,6 +22,7 @@ clap = "4.4.8"
 raw-window-handle = "0.6.0"
 pollster = "0.3.0"
 cosmic-text = "0.10.0"
+impl-trait-for-tuples = "0.2.2"
 
 [package.metadata.docs.rs]
 features = ["full"]

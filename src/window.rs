@@ -13,7 +13,9 @@ impl WindowBuilder {
         self
     }
 
-    pub fn build(&mut self, _view: impl View) -> Window {
+    pub fn build(&mut self, view: impl View) -> Window {
+        let root = view.view();
+
         let current_ui = UserInterface::current();
         let ui = &mut *current_ui.inner.borrow_mut();
         if let Some(event_loop) = &ui.event_loop {
@@ -31,7 +33,11 @@ impl WindowBuilder {
                 .create_surface(&window, size.width, size.height);
             let surface = pollster::block_on(surface_future).expect("Error creating surface");
             ui.render_states.insert(window.id(), {
-                let render_state = RenderState { surface, window };
+                let render_state = RenderState {
+                    surface,
+                    window,
+                    root,
+                };
                 ui.renderers
                     .resize_with(ui.render_cx.devices.len(), || None);
                 let id = render_state.surface.dev_id;

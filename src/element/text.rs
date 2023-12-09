@@ -1,4 +1,5 @@
 use crate::Element;
+use kurbo::Size;
 use slotmap::DefaultKey;
 use std::borrow::Cow;
 
@@ -6,7 +7,7 @@ use std::borrow::Cow;
 pub struct TextBuilder {}
 
 impl TextBuilder {
-    pub fn on_click(&mut self, f: impl FnMut() + 'static) -> &mut Self {
+    pub fn on_click(&mut self, _f: impl FnMut() + 'static) -> &mut Self {
         self
     }
 
@@ -30,11 +31,15 @@ impl Text {
         TextBuilder::default()
     }
 
-    pub fn set_content(&mut self, content: impl Into<Cow<'static, str>>) {}
+    pub fn set_content(&mut self, _content: impl Into<Cow<'static, str>>) {}
 }
 
 impl Element for Text {
     fn children(&self) -> Option<Box<[DefaultKey]>> {
         None
+    }
+
+    fn layout(&mut self, _min: Option<Size>, _max: Option<Size>) -> Size {
+        Size::new(100., 100.)
     }
 }
