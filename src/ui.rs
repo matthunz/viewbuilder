@@ -14,8 +14,7 @@ use std::{
 };
 use tokio::sync::mpsc;
 use vello::{
-    kurbo::{Affine, Rect},
-    peniko::{Brush, Color},
+    peniko::Color,
     util::{RenderContext, RenderSurface},
     Renderer, RendererOptions, Scene, SceneBuilder,
 };
@@ -44,11 +43,12 @@ impl UserInterfaceRef {
 }
 
 pub(crate) struct Inner {
-    pub(crate) trees: SlotMap<TreeKey, Box<dyn AnyElement>>,
+    pub(crate) trees: SlotMap<TreeKey, Rc<RefCell<dyn AnyElement>>>,
     windows: HashMap<WindowId, (TreeKey, DefaultKey)>,
     pub(crate) tx: mpsc::UnboundedSender<(TreeKey, DefaultKey, Box<dyn Any>)>,
     rx: mpsc::UnboundedReceiver<(TreeKey, DefaultKey, Box<dyn Any>)>,
     event_loop: Option<EventLoop<UserEvent>>,
+    scene: Scene,
 }
 
 #[derive(Clone)]
@@ -98,6 +98,7 @@ impl UserInterface {
                 event_loop: Some(event_loop),
                 tx,
                 rx,
+                scene: Scene::new(),
             })),
             proxy,
         }
@@ -113,7 +114,7 @@ impl UserInterface {
         let key = me.trees.insert_with_key(|key| {
             let tree = tree_builder.insert_with_key(key, ui_ref);
             tree_cell = Some(tree.clone());
-            Box::new(tree)
+            Rc::new(RefCell::new(tree))
         });
         TreeRef {
             key,
@@ -145,36 +146,49 @@ impl UserInterface {
 
         // Await the first event
         let (tree_key, key, msg) = me.rx.recv().await.unwrap();
-        me.trees[tree_key].handle_any(Box::new(TreeMessage::Handle { key, msg }));
+        me.trees[tree_key]
+            .borrow_mut()
+            .handle_any(Box::new(TreeMessage::Handle { key, msg }));
         dirty.insert((tree_key, key));
 
         // Process any remaining events
         while let Ok((tree_key, key, msg)) = me.rx.try_recv() {
-            me.trees[tree_key].handle_any(Box::new(TreeMessage::Handle { key, msg }));
+            me.trees[tree_key]
+                .borrow_mut()
+                .handle_any(Box::new(TreeMessage::Handle { key, msg }));
             dirty.insert((tree_key, key));
         }
 
         let mut dirty_trees = HashSet::new();
         for (tree_key, key) in dirty {
             let tree = me.trees.get_mut(tree_key).unwrap();
-            tree.handle_any(Box::new(TreeMessage::Render { key }));
+            tree.borrow_mut()
+                .handle_any(Box::new(TreeMessage::Render { key }));
 
             dirty_trees.insert(tree_key);
         }
 
+        drop(me);
+
         for tree_key in dirty_trees {
-            let mut scene = Scene::new();
-            let tree = me.trees.get_mut(tree_key).unwrap();
-            tree.handle_any(Box::new(TreeMessage::Render { key }));
-            tree.render_any(SceneBuilder::for_scene(&mut scene));
+            let mut me = self.inner.borrow_mut();
+            let tree = me.trees.get(tree_key).unwrap().clone();
+            tree.borrow_mut()
+                .handle_any(Box::new(TreeMessage::Render { key }));
+            tree.borrow_mut()
+                .render_any(SceneBuilder::for_scene(&mut me.scene));
         }
     }
 
     pub fn render_all(&self) {
-        let mut me = self.inner.borrow_mut();
-        for tree in me.trees.values_mut() {
-            let mut scene = Scene::new();
-            tree.render_any(SceneBuilder::for_scene(&mut scene));
+        let me = self.inner.borrow_mut();
+        let trees = me.trees.values().cloned().collect::<Vec<_>>();
+        drop(me);
+
+        for tree in trees {
+            let mut me = self.inner.borrow_mut();
+            tree.borrow_mut()
+                .render_any(SceneBuilder::for_scene(&mut me.scene));
         }
     }
 
@@ -184,7 +198,6 @@ impl UserInterface {
         let mut render_cx = RenderContext::new().unwrap();
         let mut renderers: Vec<Option<Renderer>> = vec![];
         let mut render_states = HashMap::new();
-        let mut scene = Scene::new();
 
         event_loop.run(move |event, event_loop, control_flow| {
             match event {
@@ -249,15 +262,6 @@ impl UserInterface {
                             antialiasing_method: vello::AaConfig::Msaa16,
                         };
 
-                        let mut scene_builder = SceneBuilder::for_scene(&mut scene);
-                        scene_builder.fill(
-                            vello::peniko::Fill::EvenOdd,
-                            Affine::default(),
-                            &Brush::Solid(Color::ALICE_BLUE),
-                            Default::default(),
-                            &Rect::new(0., 0., 1000., 1000.),
-                        );
-
                         {
                             vello::block_on_wgpu(
                                 &device_handle.device,
@@ -267,7 +271,7 @@ impl UserInterface {
                                     .render_to_surface_async(
                                         &device_handle.device,
                                         &device_handle.queue,
-                                        &scene,
+                                        &self.inner.borrow().scene,
                                         &surface_texture,
                                         &render_params,
                                     ),

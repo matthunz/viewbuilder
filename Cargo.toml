@@ -21,6 +21,7 @@ anyhow = "1.0.75"
 clap = "4.4.8"
 raw-window-handle = "0.6.0"
 pollster = "0.3.0"
+cosmic-text = "0.10.0"
 
 [package.metadata.docs.rs]
 features = ["full"]

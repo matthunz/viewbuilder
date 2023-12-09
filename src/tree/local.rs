@@ -5,7 +5,7 @@ use crate::{
 };
 use slotmap::{DefaultKey, SlotMap, SparseSecondaryMap};
 use std::{cell::RefCell, marker::PhantomData, rc::Rc};
-use vello::{Scene, SceneBuilder};
+use vello::{kurbo::Affine, Scene, SceneBuilder, SceneFragment};
 
 pub(crate) struct Inner {
     pub(crate) key: TreeKey,
@@ -95,13 +95,14 @@ impl Element for LocalTree {
         }
     }
 
-    fn render(&mut self, _scene: vello::SceneBuilder) {
+    fn render(&mut self, mut scene: vello::SceneBuilder) {
         dbg!("render tree");
         for element in self.inner.borrow_mut().elements.values_mut() {
-            let mut scene = Scene::new();
+            let mut child_scene = SceneFragment::new();
             element
                 .borrow_mut()
-                .render_any(SceneBuilder::for_scene(&mut scene))
+                .render_any(SceneBuilder::for_fragment(&mut child_scene));
+            scene.append(&child_scene, Some(Affine::default()));
         }
     }
 }
