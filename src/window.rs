@@ -32,7 +32,7 @@ impl WindowBuilder {
                 .render_cx
                 .create_surface(&window, size.width, size.height);
             let surface = pollster::block_on(surface_future).expect("Error creating surface");
-            ui.render_states.insert(window.id(), {
+            ui.render_states.borrow_mut().insert(window.id(), {
                 let render_state = RenderState {
                     surface,
                     window,

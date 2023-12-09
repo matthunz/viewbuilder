@@ -38,11 +38,11 @@ struct RenderState {
 
 struct Inner {
     nodes: SlotMap<DefaultKey, Node>,
-    scene: Scene,
+    scene: Rc<RefCell<Scene>>,
     event_loop: Option<EventLoop<()>>,
     render_cx: RenderContext,
     renderers: Vec<Option<Renderer>>,
-    render_states: HashMap<WindowId, RenderState>,
+    render_states: Rc<RefCell<HashMap<WindowId, RenderState>>>,
 }
 
 impl Default for Inner {
@@ -90,14 +90,28 @@ impl UserInterface {
         let event_loop = self.inner.borrow_mut().event_loop.take().unwrap();
 
         event_loop.run(move |event, _event_loop, control_flow| {
-            let me = &mut *self.inner.borrow_mut();
-
             match event {
                 Event::RedrawRequested(_) => {
-                    for render_state in me.render_states.values_mut() {
+                    let render_states = self.inner.borrow().render_states.clone();
+                    for render_state in render_states.borrow_mut().values_mut() {
                         let width = render_state.surface.config.width;
                         let height = render_state.surface.config.height;
 
+                        let root = self.inner.borrow().nodes[render_state.root].element.clone();
+                        let window_size = render_state.window.inner_size();
+                        root.borrow_mut().as_element_mut().layout(
+                            None,
+                            Some(Size::new(window_size.width as _, window_size.height as _)),
+                        );
+
+                        let scene = self.inner.borrow().scene.clone();
+                        root.borrow_mut().as_element_mut().render(
+                            Point::ZERO,
+                            Size::new(window_size.width as _, window_size.height as _),
+                            &mut SceneBuilder::for_scene(&mut *scene.borrow_mut()),
+                        );
+
+                        let me = &mut *self.inner.borrow_mut();
                         let device_handle = &me.render_cx.devices[render_state.surface.dev_id];
                         let surface_texture =
                             render_state.surface.surface.get_current_texture().unwrap();
@@ -108,20 +122,6 @@ impl UserInterface {
                             antialiasing_method: vello::AaConfig::Msaa16,
                         };
 
-                        let root = &mut me.nodes[render_state.root];
-
-                        let window_size = render_state.window.inner_size();
-                        root.element.borrow_mut().as_element_mut().layout(
-                            None,
-                            Some(Size::new(window_size.width as _, window_size.height as _)),
-                        );
-
-                        root.element.borrow_mut().as_element_mut().render(
-                            Point::ZERO,
-                            Size::new(window_size.width as _, window_size.height as _),
-                            &mut SceneBuilder::for_scene(&mut me.scene),
-                        );
-
                         {
                             vello::block_on_wgpu(
                                 &device_handle.device,
@@ -131,7 +131,7 @@ impl UserInterface {
                                     .render_to_surface_async(
                                         &device_handle.device,
                                         &device_handle.queue,
-                                        &me.scene,
+                                        &me.scene.borrow(),
                                         &surface_texture,
                                         &render_params,
                                     ),
@@ -160,7 +160,7 @@ pub fn run() {
 
 pub fn launch<E: Element + 'static>(element: E) {
     let ui = UserInterface::current();
-    
+
     Window::new(element);
 
     ui.run()
