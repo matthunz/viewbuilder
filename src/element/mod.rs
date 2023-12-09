@@ -1,3 +1,4 @@
+use crate::Event;
 use kurbo::{Point, Size};
 use slotmap::DefaultKey;
 use std::any::Any;
@@ -15,6 +16,8 @@ pub trait Element {
     fn children(&self) -> Option<Box<[DefaultKey]>>;
 
     fn layout(&mut self, min: Option<Size>, max: Option<Size>) -> Size;
+
+    fn handle(&mut self, event: Event);
 
     fn render(&mut self, point: Point, size: Size, scene: &mut SceneBuilder);
 }

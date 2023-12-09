@@ -7,7 +7,7 @@ use vello::{
     Renderer, Scene, SceneBuilder,
 };
 use winit::{
-    event::Event,
+    event::{ElementState, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
     window::WindowId,
 };
@@ -17,6 +17,9 @@ pub use self::element::{AnyElement, Element};
 
 mod element_ref;
 pub use element_ref::{ElementRef, Entry};
+
+mod event;
+pub use self::event::{Event, MouseEvent};
 
 mod view;
 pub use self::view::View;
@@ -95,9 +98,11 @@ impl UserInterface {
     pub fn run(self) {
         let event_loop = self.inner.borrow_mut().event_loop.take().unwrap();
 
+        let mut cursor = None;
+
         event_loop.run(move |event, _event_loop, control_flow| {
             match event {
-                Event::RedrawRequested(_) => {
+                winit::event::Event::RedrawRequested(_) => {
                     let render_states = self.inner.borrow().render_states.clone();
                     for render_state in render_states.borrow_mut().values_mut() {
                         let width = render_state.surface.config.width;
@@ -144,6 +149,30 @@ impl UserInterface {
                         .unwrap();
                         surface_texture.present();
                     }
+                }
+                winit::event::Event::WindowEvent { window_id, event } => {
+                    let me = &mut *self.inner.borrow_mut();
+                    let root_key = me.render_states.borrow()[&window_id].root;
+                    let mut root = me.nodes[root_key].element.borrow_mut();
+
+                    match event {
+                        WindowEvent::CursorMoved { position, .. } => {
+                            cursor = Some(Point::new(position.x, position.y))
+                        }
+                        WindowEvent::MouseInput { state, .. } => {
+                            if let Some(point) = cursor {
+                                let event = Event::MouseEvent {
+                                    mouse_event: match state {
+                                        ElementState::Pressed => MouseEvent::MouseDown,
+                                        ElementState::Released => MouseEvent::MouseUp,
+                                    },
+                                    point,
+                                };
+                                root.as_element_mut().handle(event);
+                            }
+                        }
+                        _ => {}
+                    };
                 }
                 _ => {}
             }

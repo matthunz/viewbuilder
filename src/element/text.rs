@@ -109,6 +109,8 @@ impl Element for Text {
         size
     }
 
+    fn handle(&mut self, _event: crate::Event) {}
+
     fn render(&mut self, point: kurbo::Point, _size: Size, scene: &mut vello::SceneBuilder) {
         let cx = TextContext::current();
         let cache = &mut *cx.cache.borrow_mut();

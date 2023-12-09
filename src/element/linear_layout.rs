@@ -58,6 +58,10 @@ impl Element for LinearLayout {
         Size::new(pos, max_bound)
     }
 
+    fn handle(&mut self, event: crate::Event) {
+        dbg!(event);
+    }
+
     fn render(&mut self, point: kurbo::Point, size: Size, scene: &mut vello::SceneBuilder) {
         for child in &self.children {
             let child_elem = UserInterface::current().get(child.key);
