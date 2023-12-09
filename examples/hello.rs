@@ -1,4 +1,11 @@
+use viewbuilder::element::{LinearLayout, Text};
+use viewbuilder::Window;
+
 fn main() {
-    let text = viewbuilder::view("Hello World!");
-    *text.get().borrow_mut() = "";
+    let layout = viewbuilder::view(
+        LinearLayout::builder()
+            .child(Text::new("Hello World!"))
+            .build(),
+    );
+    Window::new(layout);
 }

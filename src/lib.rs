@@ -1,36 +1,44 @@
 use slotmap::{DefaultKey, SlotMap};
 use std::{
-    any::Any,
     cell::{Ref, RefCell, RefMut},
     marker::PhantomData,
     rc::Rc,
 };
 
+pub mod element;
+pub use self::element::{AnyElement, Element};
+
+mod view;
+pub use self::view::View;
+
+mod window;
+pub use self::window::Window;
+
 pub struct Node {
-    element: Rc<RefCell<dyn Any>>,
+    element: Rc<RefCell<dyn AnyElement>>,
 }
 
 pub struct Entry<E> {
-    element: Rc<RefCell<dyn Any>>,
+    element: Rc<RefCell<dyn AnyElement>>,
     _marker: PhantomData<E>,
 }
 
 impl<E: 'static> Entry<E> {
     pub fn borrow(&self) -> Ref<E> {
         Ref::map(self.element.borrow(), |element| {
-            element.downcast_ref().unwrap()
+            element.as_any().downcast_ref().unwrap()
         })
     }
 
     pub fn borrow_mut(&self) -> RefMut<E> {
         RefMut::map(self.element.borrow_mut(), |element| {
-            element.downcast_mut().unwrap()
+            element.as_any_mut().downcast_mut().unwrap()
         })
     }
 }
 
 pub struct ElementRef<E> {
-    key: DefaultKey,
+    pub key: DefaultKey,
     _marker: PhantomData<E>,
 }
 
@@ -64,7 +72,7 @@ impl UserInterface {
         CURRENT.try_with(|ui| ui.clone()).unwrap()
     }
 
-    pub fn view<E: 'static>(&self, element: E) -> ElementRef<E> {
+    pub fn view<E: Element + 'static>(&self, element: E) -> ElementRef<E> {
         let node = Node {
             element: Rc::new(RefCell::new(element)),
         };
@@ -76,6 +84,6 @@ impl UserInterface {
     }
 }
 
-pub fn view<E: 'static>(element: E) -> ElementRef<E> {
+pub fn view<E: Element + 'static>(element: E) -> ElementRef<E> {
     UserInterface::current().view(element)
 }
