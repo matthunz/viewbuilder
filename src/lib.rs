@@ -1,64 +1,72 @@
-use kurbo::{Point, Size};
+use kurbo::Size;
 use slotmap::{DefaultKey, SlotMap};
-use std::{cell::RefCell, collections::HashMap, marker::PhantomData, rc::Rc};
-use vello::{
-    peniko::Color,
-    util::{RenderContext, RenderSurface},
-    Renderer, Scene, SceneBuilder,
-};
-use winit::{
-    event::{ElementState, WindowEvent},
-    event_loop::{ControlFlow, EventLoop},
-    window::WindowId,
-};
+use std::{any::Any, cell::RefCell, collections::HashSet, marker::PhantomData, mem, rc::Rc};
 
-pub mod element;
-pub use self::element::{AnyElement, Element};
+pub trait Element {
+    type Message;
 
-mod element_ref;
-pub use element_ref::{ElementRef, Entry};
+    fn update(&mut self, cx: Handle<Self>, msg: Self::Message);
 
-mod event;
-pub use self::event::{Event, MouseEvent};
+    fn layout(&mut self, min_size: Option<Size>, max_size: Option<Size>) -> Size;
+}
 
-mod view;
-pub use self::view::View;
+pub trait AnyElement {
+    fn update_any(&mut self, key: DefaultKey, ui: UserInterface, msg: Box<dyn Any>);
 
-mod window;
-pub use self::window::Window;
+    fn layout_any(&mut self, min_size: Option<Size>, max_size: Option<Size>) -> Size;
+}
+
+impl<E: Element> AnyElement for E
+where
+    E::Message: 'static,
+{
+    fn update_any(&mut self, key: DefaultKey, ui: UserInterface, msg: Box<dyn Any>) {
+        let cx = Handle {
+            key,
+            ui,
+            _marker: PhantomData,
+        };
+        self.update(cx, *msg.downcast().unwrap())
+    }
+
+    fn layout_any(&mut self, min_size: Option<Size>, max_size: Option<Size>) -> Size {
+        self.layout(min_size, max_size)
+    }
+}
 
 pub struct Node {
     element: Rc<RefCell<dyn AnyElement>>,
 }
 
-struct RenderState {
-    // TODO: We MUST drop the surface before the `window`, so the fields
-    // must be in this order
-    surface: RenderSurface,
-    window: winit::window::Window,
-    root: DefaultKey,
+pub struct Handle<E: ?Sized> {
+    key: DefaultKey,
+    ui: UserInterface,
+    _marker: PhantomData<E>,
 }
 
-struct Inner {
-    nodes: SlotMap<DefaultKey, Node>,
-    scene: Rc<RefCell<Scene>>,
-    event_loop: Option<EventLoop<()>>,
-    render_cx: RenderContext,
-    renderers: Vec<Option<Renderer>>,
-    render_states: Rc<RefCell<HashMap<WindowId, RenderState>>>,
-}
-
-impl Default for Inner {
-    fn default() -> Self {
-        Self {
-            nodes: Default::default(),
-            scene: Default::default(),
-            event_loop: Some(EventLoop::new()),
-            render_cx: RenderContext::new().unwrap(),
-            renderers: Default::default(),
-            render_states: Default::default(),
-        }
+impl<E> Handle<E> {
+    pub fn send(&self, msg: E::Message)
+    where
+        E: Element,
+        E::Message: 'static,
+    {
+        self.ui
+            .inner
+            .borrow_mut()
+            .queue
+            .push((self.key, Box::new(msg)));
     }
+
+    pub fn layout(&self) {
+        self.ui.inner.borrow_mut().pending_layouts.insert(self.key);
+    }
+}
+
+#[derive(Default)]
+struct Inner {
+    queue: Vec<(DefaultKey, Box<dyn Any>)>,
+    nodes: SlotMap<DefaultKey, Node>,
+    pending_layouts: HashSet<DefaultKey>,
 }
 
 #[derive(Clone, Default)]
@@ -67,165 +75,48 @@ pub struct UserInterface {
 }
 
 impl UserInterface {
-    pub fn current() -> Self {
-        thread_local! {
-            static CURRENT: UserInterface = UserInterface::default()
-        }
-        CURRENT.try_with(|ui| ui.clone()).unwrap()
-    }
-
-    pub fn view<E: Element + 'static>(&self, element: E) -> ElementRef<E> {
+    pub fn insert<E: Element + 'static>(&self, element: E) -> Handle<E> {
         let node = Node {
             element: Rc::new(RefCell::new(element)),
         };
         let key = self.inner.borrow_mut().nodes.insert(node);
-        self.inner.borrow_mut().nodes[key]
-            .element
-            .borrow_mut()
-            .as_element_mut()
-            .build(key);
-
-        ElementRef {
+        Handle {
             key,
+            ui: self.clone(),
             _marker: PhantomData,
         }
     }
 
-    pub fn get(&self, key: DefaultKey) -> Rc<RefCell<dyn AnyElement>> {
-        self.inner.borrow_mut().nodes[key].element.clone()
-    }
+    pub fn run(&self) {
+        let mut queue = mem::take(&mut self.inner.borrow_mut().queue);
+        while let Some((key, msg)) = queue.pop() {
+            let element = self.inner.borrow().nodes[key].element.clone();
+            element.borrow_mut().update_any(key, self.clone(), msg);
+        }
 
-    pub fn run(self) {
-        let event_loop = self.inner.borrow_mut().event_loop.take().unwrap();
-
-        let mut cursor = None;
-
-        event_loop.run(move |event, _event_loop, control_flow| {
-            match event {
-                winit::event::Event::RedrawRequested(_) => {
-                    let render_states = self.inner.borrow().render_states.clone();
-                    for render_state in render_states.borrow_mut().values_mut() {
-                        let width = render_state.surface.config.width;
-                        let height = render_state.surface.config.height;
-
-                        let root = self.inner.borrow().nodes[render_state.root].element.clone();
-                        let window_size = render_state.window.inner_size();
-                        root.borrow_mut().as_element_mut().layout(
-                            None,
-                            Some(Size::new(window_size.width as _, window_size.height as _)),
-                        );
-
-                        let scene = self.inner.borrow().scene.clone();
-                        root.borrow_mut().as_element_mut().render(
-                            Point::ZERO,
-                            Size::new(window_size.width as _, window_size.height as _),
-                            &mut SceneBuilder::for_scene(&mut *scene.borrow_mut()),
-                        );
-
-                        let me = &mut *self.inner.borrow_mut();
-                        let device_handle = &me.render_cx.devices[render_state.surface.dev_id];
-                        let surface_texture =
-                            render_state.surface.surface.get_current_texture().unwrap();
-                        let render_params = vello::RenderParams {
-                            base_color: Color::PURPLE,
-                            width,
-                            height,
-                            antialiasing_method: vello::AaConfig::Msaa16,
-                        };
-
-                        vello::block_on_wgpu(
-                            &device_handle.device,
-                            me.renderers[render_state.surface.dev_id]
-                                .as_mut()
-                                .unwrap()
-                                .render_to_surface_async(
-                                    &device_handle.device,
-                                    &device_handle.queue,
-                                    &me.scene.borrow(),
-                                    &surface_texture,
-                                    &render_params,
-                                ),
-                        )
-                        .unwrap();
-                        surface_texture.present();
-                    }
-                }
-                winit::event::Event::WindowEvent { window_id, event } => {
-                    let me = &mut *self.inner.borrow_mut();
-                    let root_key = me.render_states.borrow()[&window_id].root;
-                    let mut root = me.nodes[root_key].element.borrow_mut();
-
-                    match event {
-                        WindowEvent::CursorMoved { position, .. } => {
-                            cursor = Some(Point::new(position.x, position.y))
-                        }
-                        WindowEvent::MouseInput { state, .. } => {
-                            if let Some(point) = cursor {
-                                let event = Event::MouseEvent {
-                                    mouse_event: match state {
-                                        ElementState::Pressed => MouseEvent::MouseDown,
-                                        ElementState::Released => MouseEvent::MouseUp,
-                                    },
-                                    point,
-                                };
-                                root.as_element_mut().handle(event);
-                            }
-                        }
-                        _ => {}
-                    };
-                }
-                _ => {}
-            }
-
-            *control_flow = ControlFlow::Poll;
-        });
-    }
-}
-
-pub fn view<E: Element + 'static>(element: E) -> ElementRef<E> {
-    UserInterface::current().view(element)
-}
-
-pub fn run() {
-    UserInterface::current().run()
-}
-
-pub fn launch<E: Element + 'static>(element: E) {
-    let ui = UserInterface::current();
-
-    Window::new(element);
-
-    ui.run()
-}
-
-pub struct Update {
-    key: DefaultKey,
-    layout: bool,
-    render: bool,
-}
-
-impl Update {
-    pub fn new(key: DefaultKey) -> Self {
-        Self {
-            key,
-            layout: false,
-            render: false,
+        let pending_layouts = mem::take(&mut self.inner.borrow_mut().pending_layouts);
+        for key in pending_layouts {
+            let element = self.inner.borrow().nodes[key].element.clone();
+            element.borrow_mut().layout_any(None, None);
         }
     }
-
-    pub fn layout(mut self) -> Self {
-        self.layout = true;
-        self
-    }
-
-    pub fn render(mut self) -> Self {
-        self.render = true;
-        self
-    }
 }
 
-impl Drop for Update {
-    fn drop(&mut self) {
-        todo!()
+pub enum TextMessage {
+    Set,
+}
+
+pub struct Text {}
+
+impl Element for Text {
+    type Message = TextMessage;
+
+    fn update(&mut self, cx: Handle<Self>, msg: Self::Message) {
+        cx.layout();
+    }
+
+    fn layout(&mut self, min_size: Option<Size>, max_size: Option<Size>) -> Size {
+        dbg!("layout");
+        Size::default()
     }
 }
