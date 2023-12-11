@@ -4,19 +4,16 @@ use std::marker::PhantomData;
 
 pub struct Handle<E: ?Sized> {
     pub(crate) key: DefaultKey,
-    pub(crate) ui: UserInterface,
     pub(crate) _marker: PhantomData<E>,
 }
 
 impl<E> Clone for Handle<E> {
     fn clone(&self) -> Self {
-        Self {
-            key: self.key.clone(),
-            ui: self.ui.clone(),
-            _marker: self._marker.clone(),
-        }
+        *self
     }
 }
+
+impl<E> Copy for Handle<E> {}
 
 impl<E> Handle<E> {
     pub fn send(&self, msg: E::Message)
@@ -24,7 +21,7 @@ impl<E> Handle<E> {
         E: Element,
         E::Message: 'static,
     {
-        self.ui
+        UserInterface::current()
             .inner
             .borrow_mut()
             .queue
@@ -32,6 +29,10 @@ impl<E> Handle<E> {
     }
 
     pub fn layout(&self) {
-        self.ui.inner.borrow_mut().pending_layouts.insert(self.key);
+        UserInterface::current()
+            .inner
+            .borrow_mut()
+            .pending_layouts
+            .insert(self.key);
     }
 }

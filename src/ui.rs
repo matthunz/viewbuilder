@@ -41,7 +41,7 @@ impl UserInterface {
         let key = self.inner.borrow_mut().nodes.insert(node);
         Handle {
             key,
-            ui: self.clone(),
+
             _marker: PhantomData,
         }
     }

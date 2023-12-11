@@ -15,10 +15,10 @@ impl<E: Element> AnyElement for E
 where
     E::Message: 'static,
 {
-    fn update_any(&mut self, key: DefaultKey, ui: UserInterface, msg: Box<dyn Any>) {
+    fn update_any(&mut self, key: DefaultKey, _ui: UserInterface, msg: Box<dyn Any>) {
         let cx = Handle {
             key,
-            ui,
+
             _marker: PhantomData,
         };
         self.update(cx, *msg.downcast().unwrap())

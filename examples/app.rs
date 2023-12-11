@@ -7,7 +7,7 @@ fn main() {
     let label = Text::new("0").spawn();
 
     let _window = Window::new(LinearLayout::new((
-        label.clone(),
+        label,
         Text::new("Up High!"),
         Text::new("Down Low!"),
     )))
