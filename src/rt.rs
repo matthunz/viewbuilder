@@ -46,6 +46,11 @@ impl Runtime {
         me.message_queue.push((key, msg));
     }
 
+    pub fn send(&self, key: DefaultKey, msg: Box<dyn Any>) {
+        let mut me = self.inner.borrow_mut();
+        me.message_queue.push((key, msg));
+    }
+
     pub fn run(&self) {
         let mut updates = mem::take(&mut self.inner.borrow_mut().updates);
         for (key, f) in &mut updates {
