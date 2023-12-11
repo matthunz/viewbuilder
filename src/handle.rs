@@ -1,4 +1,4 @@
-use crate::{AnyObject, Object, Runtime};
+use crate::{rt::RuntimeMessage, AnyObject, Object, Runtime};
 use slotmap::DefaultKey;
 use std::{
     cell::{self, RefCell},
@@ -55,7 +55,9 @@ struct Dropper {
 
 impl Drop for Dropper {
     fn drop(&mut self) {
-        //Runtime::current().inner.borrow_mut().nodes.remove(self.key);
+        if let Some(rt) = Runtime::try_current() {
+            rt.tx.send(RuntimeMessage::Remove { key: self.key }).ok();
+        }
     }
 }
 
@@ -90,10 +92,13 @@ impl<O: Object> HandleState<O> {
     where
         O: 'static,
     {
-        Runtime::current().inner.borrow_mut().updates.push((
-            self.key(),
-            Box::new(move |element| f(element.downcast_mut().unwrap())),
-        ))
+        Runtime::current()
+            .tx
+            .send(RuntimeMessage::Update {
+                key: self.key(),
+                update: Box::new(move |element| f(element.downcast_mut().unwrap())),
+            })
+            .unwrap();
     }
 
     /// Immutably borrow the object.

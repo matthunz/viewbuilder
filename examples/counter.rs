@@ -18,13 +18,19 @@ impl Counter {
     }
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
+    let rt = Runtime::default();
+    let _guard = rt.enter();
+
     let a = Counter::default().spawn();
     let b = Counter::default().spawn();
 
     a.value_changed().bind(&b, Counter::set);
-
     a.set(2);
 
-    Runtime::current().run();
+    rt.run().await;
+
+    assert_eq!(a.borrow().value, 2);
+    assert_eq!(b.borrow().value, 2);
 }

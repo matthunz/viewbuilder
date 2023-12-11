@@ -1,71 +1,133 @@
 use crate::AnyObject;
 use slotmap::{DefaultKey, SlotMap};
-use std::{any::Any, cell::RefCell, mem, rc::Rc};
+use std::{any::Any, cell::RefCell, rc::Rc};
+use tokio::sync::mpsc;
+
+pub(crate) enum RuntimeMessage {
+    Update {
+        key: DefaultKey,
+        update: Box<dyn FnMut(&mut dyn Any)>,
+    },
+    Message {
+        key: DefaultKey,
+        msg: Box<dyn Any>,
+    },
+    Remove {
+        key: DefaultKey,
+    },
+}
 
 pub(crate) struct Node {
     pub(crate) object: Rc<RefCell<dyn AnyObject>>,
     pub(crate) listeners: Vec<Rc<RefCell<dyn FnMut(&dyn Any)>>>,
 }
 
-#[derive(Default)]
 pub(crate) struct Inner {
     pub(crate) nodes: SlotMap<DefaultKey, Node>,
-    pub(crate) updates: Vec<(DefaultKey, Box<dyn FnMut(&mut dyn Any)>)>,
-    pub(crate) message_queue: Vec<(DefaultKey, Box<dyn Any>)>,
+    pub(crate) rx: mpsc::UnboundedReceiver<RuntimeMessage>,
     pub(crate) current: Option<DefaultKey>,
 }
 
-#[derive(Clone, Default)]
+thread_local! {
+    static CURRENT: RefCell<Option<Runtime>> = RefCell::default();
+}
+
+#[derive(Clone)]
 pub struct Runtime {
     pub(crate) inner: Rc<RefCell<Inner>>,
+    pub(crate) tx: mpsc::UnboundedSender<RuntimeMessage>,
+}
+
+impl Default for Runtime {
+    fn default() -> Self {
+        let (tx, rx) = mpsc::unbounded_channel();
+        Self {
+            inner: Rc::new(RefCell::new(Inner {
+                nodes: Default::default(),
+                rx,
+                current: Default::default(),
+            })),
+            tx,
+        }
+    }
 }
 
 impl Runtime {
-    pub fn current() -> Self {
-        thread_local! {
-            static CURRENT: RefCell<Option<Runtime>> = RefCell::default();
-        }
-
+    pub fn enter(&self) -> RuntimeGuard {
         CURRENT
             .try_with(|cell| {
                 let mut current = cell.borrow_mut();
-                if let Some(ui) = &*current {
-                    ui.clone()
-                } else {
-                    let ui = Self::default();
-                    *current = Some(ui.clone());
-                    ui
+                if current.is_some() {
+                    panic!("A Viewbuilder runtime is already running in this thread.");
                 }
+                *current = Some(self.clone());
             })
-            .unwrap()
+            .unwrap();
+
+        RuntimeGuard { _priv: () }
+    }
+
+    pub fn current() -> Self {
+        Self::try_current().expect("There is no Viewbuilder runtime running on this thread.")
+    }
+
+    pub fn try_current() -> Option<Self> {
+        CURRENT.try_with(|cell| cell.borrow().clone()).unwrap()
     }
 
     pub fn emit(&self, msg: Box<dyn Any>) {
-        let mut me = self.inner.borrow_mut();
+        let me = self.inner.borrow();
         let key = me.current.unwrap();
-        me.message_queue.push((key, msg));
+        self.send(key, msg);
     }
 
     pub fn send(&self, key: DefaultKey, msg: Box<dyn Any>) {
-        let mut me = self.inner.borrow_mut();
-        me.message_queue.push((key, msg));
+        self.tx.send(RuntimeMessage::Message { key, msg }).unwrap();
     }
 
-    pub fn run(&self) {
-        let mut updates = mem::take(&mut self.inner.borrow_mut().updates);
-        for (key, f) in &mut updates {
-            let object = self.inner.borrow().nodes[*key].object.clone();
-            self.inner.borrow_mut().current = Some(*key);
-            f(object.borrow_mut().as_any_mut());
-            self.inner.borrow_mut().current = None;
-        }
+    pub async fn run(&self) {
+        let mut me = self.inner.borrow_mut();
+        if let Some(msg) = me.rx.recv().await {
+            drop(me);
+            self.handle(msg);
 
-        let mut message_queue = mem::take(&mut self.inner.borrow_mut().message_queue);
-        for (key, msg) in &mut message_queue {
-            let listeners = self.inner.borrow().nodes[*key].listeners.clone();
-            for listener in &listeners {
-                listener.borrow_mut()(&**msg);
+            loop {
+                let mut me = self.inner.borrow_mut();
+                if let Ok(msg) = me.rx.try_recv() {
+                    drop(me);
+                    self.handle(msg);
+                } else {
+                    break;
+                }
             }
         }
+    }
+
+    fn handle(&self, msg: RuntimeMessage) {
+        match msg {
+            RuntimeMessage::Update { key, mut update } => {
+                let object = self.inner.borrow().nodes[key].object.clone();
+                self.inner.borrow_mut().current = Some(key);
+                update(object.borrow_mut().as_any_mut());
+                self.inner.borrow_mut().current = None;
+            }
+            RuntimeMessage::Message { key, msg } => {
+                let listeners = self.inner.borrow().nodes[key].listeners.clone();
+                for listener in &listeners {
+                    listener.borrow_mut()(&*msg);
+                }
+            }
+            RuntimeMessage::Remove { key: _ } => todo!(),
+        }
+    }
+}
+
+pub struct RuntimeGuard {
+    _priv: (),
+}
+
+impl Drop for RuntimeGuard {
+    fn drop(&mut self) {
+        CURRENT.try_with(|cell| cell.borrow_mut().take()).unwrap();
     }
 }
