@@ -1,5 +1,5 @@
 use crate::{Handle, HandleState, Node, Runtime};
-use std::{cell::RefCell, marker::PhantomData, rc::Rc};
+use std::{cell::RefCell, rc::Rc};
 
 /// A reactive object.
 pub trait Object: Sized {
@@ -17,15 +17,8 @@ pub trait Object: Sized {
         });
 
         Handle {
-            state: HandleState {
-                key,
-                _marker: PhantomData,
-            },
-            sender: HandleState {
-                key,
-                _marker: PhantomData,
-            }
-            .into(),
+            state: HandleState::new(key),
+            sender: HandleState::new(key).into(),
         }
     }
 }

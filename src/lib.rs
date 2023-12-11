@@ -48,7 +48,8 @@ impl App {
 
     pub fn insert_window(&mut self, handle: Handle<Window>) {
         let window = winit::window::Window::new(&self.event_loop).unwrap();
-        self.windows.insert(window.id(), (window, handle.state.key));
+        self.windows
+            .insert(window.id(), (window, handle.state.key()));
     }
 
     pub fn run(self) {

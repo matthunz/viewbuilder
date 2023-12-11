@@ -23,6 +23,10 @@ impl<O: Object> Clone for Handle<O> {
 }
 
 impl<O: Object> Handle<O> {
+    pub fn key(&self) -> DefaultKey {
+        self.state.key()
+    }
+
     /// Send an update to the object.
     pub fn update(&self, f: impl FnMut(&mut O) + 'static)
     where
@@ -45,35 +49,56 @@ impl<O: Object> Deref for Handle<O> {
     }
 }
 
+struct Dropper {
+    key: DefaultKey,
+}
+
+impl Drop for Dropper {
+    fn drop(&mut self) {
+        Runtime::current().inner.borrow_mut().nodes.remove(self.key);
+    }
+}
+
 pub struct HandleState<O: Object> {
-    pub key: DefaultKey,
-    pub(crate) _marker: PhantomData<O>,
+    dropper: Rc<Dropper>,
+    _marker: PhantomData<O>,
 }
 
 impl<O: Object> Clone for HandleState<O> {
     fn clone(&self) -> Self {
         Self {
-            key: self.key.clone(),
+            dropper: self.dropper.clone(),
             _marker: self._marker.clone(),
         }
     }
 }
 
 impl<O: Object> HandleState<O> {
+    pub(crate) fn new(key: DefaultKey) -> Self {
+        Self {
+            dropper: Rc::new(Dropper { key }),
+            _marker: PhantomData,
+        }
+    }
+
+    pub fn key(&self) -> DefaultKey {
+        self.dropper.key
+    }
+
     /// Send an update to the object.
     pub fn update(&self, mut f: impl FnMut(&mut O) + 'static)
     where
         O: 'static,
     {
         Runtime::current().inner.borrow_mut().updates.push((
-            self.key,
+            self.key(),
             Box::new(move |element| f(element.downcast_mut().unwrap())),
         ))
     }
 
     /// Immutably borrow the object.
     pub fn borrow(&self) -> Ref<O> {
-        let guard = Runtime::current().inner.borrow().nodes[self.key]
+        let guard = Runtime::current().inner.borrow().nodes[self.key()]
             .object
             .clone();
 

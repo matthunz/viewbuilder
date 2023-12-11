@@ -74,7 +74,7 @@ pub fn object(_attrs: TokenStream, input: TokenStream) -> TokenStream {
                 let ident = sig.ident;
                 sender_items.push(parse_quote! {
                     pub fn #ident(&self) -> viewbuilder::Signal<(#(#input_tys),*,)> {
-                        viewbuilder::Signal::new(self.handle.key)
+                        viewbuilder::Signal::new(self.handle.key())
                     }
                 });
             }
