@@ -7,7 +7,6 @@ pub struct Counter {
 
 #[object]
 impl Counter {
-    #[signal]
     fn value_changed(&mut self, value: i32);
 
     #[slot]

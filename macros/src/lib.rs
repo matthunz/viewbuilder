@@ -12,20 +12,16 @@ pub fn object(_attrs: TokenStream, input: TokenStream) -> TokenStream {
         match item {
             syn::ImplItem::Fn(fn_item) => {
                 let mut fn_item = fn_item.clone();
-                if fn_item
-                    .attrs
-                    .iter()
-                    .find(|attr| {
-                        attr.meta
-                            .path()
-                            .get_ident()
-                            .map(|ident| ident.to_string())
-                            .as_deref()
-                            == Some("slot")
-                    })
-                    .is_some()
-                {
-                    fn_item.attrs.clear();
+                if let Some(idx) = fn_item.attrs.iter().position(|attr| {
+                    attr.meta
+                        .path()
+                        .get_ident()
+                        .map(|ident| ident.to_string())
+                        .as_deref()
+                        == Some("slot")
+                }) {
+                    fn_item.attrs.remove(idx);
+
                     items.push(fn_item.clone());
 
                     fn_item.sig.inputs[0] = parse_quote!(&self);
@@ -47,7 +43,6 @@ pub fn object(_attrs: TokenStream, input: TokenStream) -> TokenStream {
 
                     handle_items.push(fn_item.clone());
                 } else {
-                    fn_item.attrs.clear();
                     items.push(fn_item.clone());
                 }
             }
@@ -58,8 +53,10 @@ pub fn object(_attrs: TokenStream, input: TokenStream) -> TokenStream {
                 let ident = &sig.ident;
                 let id = items.len();
                 if sig.inputs.len() == 1 {
+                    let attrs = item.attrs;
                     items.push(parse_quote! {
                         #[allow(unused_variables)]
+                        #(#attrs)*
                         pub #sig {
                             viewbuilder::Runtime::current().emit(#id as u32, Box::new(()))
                         }
@@ -75,8 +72,10 @@ pub fn object(_attrs: TokenStream, input: TokenStream) -> TokenStream {
                         syn::FnArg::Receiver(_) => None,
                         syn::FnArg::Typed(pat_ty) => Some(&pat_ty.pat),
                     });
+                    let attrs = item.attrs;
                     items.push(parse_quote! {
                         #[allow(unused_variables)]
+                        #(#attrs)*
                         pub #sig {
                             viewbuilder::Runtime::current().emit(#id as u32, Box::new((#(#input_pats),*,)))
                         }
