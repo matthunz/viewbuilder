@@ -40,8 +40,12 @@ impl UserInterface {
                     winit::event::WindowEvent::CursorMoved { position, .. } => {
                         let handle = &self.windows[&window_id].1;
                         handle
-                            .cursor_pos()
+                            .cursor_moved()
                             .emit((Point::new(position.x, position.y),));
+                    }
+                    winit::event::WindowEvent::MouseInput { state, button, .. } => {
+                        let handle = &self.windows[&window_id].1;
+                        handle.mouse_event().emit((state, button));
                     }
                     _ => {}
                 },

@@ -41,7 +41,7 @@ pub fn object(_attrs: TokenStream, input: TokenStream) -> TokenStream {
                         .collect();
                     fn_item.block = parse_quote!({
                         self.handle.update(move |me| {
-                            me.#fn_ident(#(#inputs)*)
+                            me.#fn_ident(#(#inputs,)*)
                         });
                     });
 
