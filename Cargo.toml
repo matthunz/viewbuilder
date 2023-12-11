@@ -18,17 +18,8 @@ full = []
 [dependencies]
 kurbo = "0.9.5"
 tokio = { version = "1.32.0", features = ["full"] }
-futures = "0.3.29"
-lazy_static = "1.4.0"
 slotmap = "1.0.6"
-vello = { git = "https://github.com/linebender/vello", version = "0.0.1" }
 winit = "0.28.1"
-anyhow = "1.0.75"
-clap = "4.4.8"
-raw-window-handle = "0.6.0"
-pollster = "0.3.0"
-cosmic-text = "0.10.0"
-impl-trait-for-tuples = "0.2.2"
 viewbuilder-macros = { path = "macros" }
 
 [package.metadata.docs.rs]

@@ -1,8 +1,6 @@
 extern crate self as viewbuilder;
 
-use std::cell::RefCell;
 use std::collections::HashMap;
-use std::rc::Rc;
 
 use kurbo::Point;
 use slotmap::DefaultKey;
@@ -29,7 +27,6 @@ pub struct Window {}
 
 #[object]
 impl Window {
-
     #[signal]
     fn cursor_pos(&self, point: Point);
 }
@@ -42,7 +39,11 @@ pub struct App {
 
 impl App {
     pub fn new() -> Self {
-        Self { event_loop: EventLoop::new(), rt: Runtime::current(), windows: HashMap::new() }
+        Self {
+            event_loop: EventLoop::new(),
+            rt: Runtime::current(),
+            windows: HashMap::new(),
+        }
     }
 
     pub fn insert_window(&mut self, handle: Handle<Window>) {
