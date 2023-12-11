@@ -1,4 +1,3 @@
-
 use proc_macro::TokenStream;
 use quote::{format_ident, quote, ToTokens};
 use syn::{parse_macro_input, parse_quote, ItemImpl, TraitItemFn};
