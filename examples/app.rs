@@ -1,5 +1,5 @@
 use kurbo::Point;
-use viewbuilder::{App, Object, Window};
+use viewbuilder::{ui::Window, Object, UserInterface};
 use viewbuilder_macros::object;
 
 struct Example;
@@ -13,7 +13,7 @@ impl Object for Example {
 }
 
 fn main() {
-    let mut app = App::new();
+    let mut app = UserInterface::new();
     let _guard = app.enter();
 
     let window = Window {}.spawn();
