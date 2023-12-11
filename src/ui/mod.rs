@@ -39,11 +39,9 @@ impl UserInterface {
                 winit::event::Event::WindowEvent { window_id, event } => match event {
                     winit::event::WindowEvent::CursorMoved { position, .. } => {
                         let handle = &self.windows[&window_id].1;
-                        self.rt.send(
-                            handle.key(),
-                            0,
-                            Box::new((Point::new(position.x, position.y),)),
-                        );
+                        handle
+                            .cursor_pos()
+                            .emit((Point::new(position.x, position.y),));
                     }
                     _ => {}
                 },

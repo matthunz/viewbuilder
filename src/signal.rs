@@ -19,6 +19,10 @@ impl<T> Signal<T> {
 }
 
 impl<T: Clone + 'static> Signal<T> {
+    pub fn emit(&self, msg: T) {
+        Runtime::current().send(self.key, self.id, Box::new(msg))
+    }
+
     pub fn bind<O>(&self, handle: &Handle<O>, slot: impl Slot<O, T> + 'static)
     where
         O: Object + 'static,
