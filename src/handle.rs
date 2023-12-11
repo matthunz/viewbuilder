@@ -10,14 +10,14 @@ use std::{
 
 pub struct Handle<O: Object> {
     pub(crate) state: HandleState<O>,
-    pub(crate) sender: O::Sender,
+    pub(crate) handle: O::Handle,
 }
 
 impl<O: Object> Clone for Handle<O> {
     fn clone(&self) -> Self {
         Self {
             state: self.state.clone(),
-            sender: self.sender.clone(),
+            handle: self.handle.clone(),
         }
     }
 }
@@ -42,10 +42,10 @@ impl<O: Object> Handle<O> {
 }
 
 impl<O: Object> Deref for Handle<O> {
-    type Target = O::Sender;
+    type Target = O::Handle;
 
     fn deref(&self) -> &Self::Target {
-        &self.sender
+        &self.handle
     }
 }
 

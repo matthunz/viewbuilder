@@ -7,7 +7,7 @@ pub fn object(_attrs: TokenStream, input: TokenStream) -> TokenStream {
     let item = parse_macro_input!(input as ItemImpl);
 
     let mut items = Vec::new();
-    let mut sender_items = Vec::new();
+    let mut handle_items = Vec::new();
     for item in item.items {
         match item {
             syn::ImplItem::Fn(fn_item) => {
@@ -45,7 +45,7 @@ pub fn object(_attrs: TokenStream, input: TokenStream) -> TokenStream {
                         });
                     });
 
-                    sender_items.push(fn_item.clone());
+                    handle_items.push(fn_item.clone());
                 } else {
                     fn_item.attrs.clear();
                     items.push(fn_item.clone());
@@ -72,7 +72,7 @@ pub fn object(_attrs: TokenStream, input: TokenStream) -> TokenStream {
                     syn::FnArg::Typed(pat_ty) => Some(&pat_ty.ty),
                 });
                 let ident = sig.ident;
-                sender_items.push(parse_quote! {
+                handle_items.push(parse_quote! {
                     pub fn #ident(&self) -> viewbuilder::Signal<(#(#input_tys),*,)> {
                         viewbuilder::Signal::new(self.handle.key())
                     }
@@ -83,10 +83,10 @@ pub fn object(_attrs: TokenStream, input: TokenStream) -> TokenStream {
     }
 
     let ident = format_ident!("{}", item.self_ty.to_token_stream().to_string());
-    let sender_ident = format_ident!("{}Sender", &ident);
+    let handle_ident = format_ident!("{}Handle", &ident);
     let output = quote! {
         impl Object for #ident {
-            type Sender = #sender_ident;
+            type Handle = #handle_ident;
         }
 
         impl #ident {
@@ -94,19 +94,19 @@ pub fn object(_attrs: TokenStream, input: TokenStream) -> TokenStream {
         }
 
         #[derive(Clone)]
-        pub struct #sender_ident {
+        pub struct #handle_ident {
             handle: viewbuilder::HandleState<#ident>,
         }
 
-        impl From<viewbuilder::HandleState<#ident>> for #sender_ident {
+        impl From<viewbuilder::HandleState<#ident>> for #handle_ident {
             fn from(value: viewbuilder::HandleState<#ident>) -> Self {
                 Self { handle: value }
             }
         }
 
 
-        impl #sender_ident {
-            #(#sender_items)*
+        impl #handle_ident {
+            #(#handle_items)*
         }
     };
     output.into_token_stream().into()
