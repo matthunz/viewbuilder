@@ -1,9 +1,8 @@
-use viewbuilder::{Text, TextMessage, UserInterface};
+use viewbuilder::{Element, Text, TextMessage, UserInterface};
 
 fn main() {
-    let ui = UserInterface::default();
-    let text = ui.insert(Text {});
+    let text = Text::new("A").spawn();
     text.send(TextMessage::Set);
 
-    ui.run();
+    UserInterface::current().run();
 }

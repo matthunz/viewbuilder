@@ -1,6 +1,8 @@
 use kurbo::Size;
 use slotmap::{DefaultKey, SlotMap};
-use std::{any::Any, cell::RefCell, collections::HashSet, marker::PhantomData, mem, rc::Rc};
+use std::{
+    any::Any, borrow::Cow, cell::RefCell, collections::HashSet, marker::PhantomData, mem, rc::Rc,
+};
 
 pub trait Element {
     type Message;
@@ -8,6 +10,13 @@ pub trait Element {
     fn update(&mut self, cx: Handle<Self>, msg: Self::Message);
 
     fn layout(&mut self, min_size: Option<Size>, max_size: Option<Size>) -> Size;
+
+    fn spawn(self) -> Handle<Self>
+    where
+        Self: Sized + 'static,
+    {
+        UserInterface::current().insert(self)
+    }
 }
 
 pub trait AnyElement {
@@ -75,6 +84,24 @@ pub struct UserInterface {
 }
 
 impl UserInterface {
+    pub fn current() -> Self {
+        thread_local! {
+            static CURRENT: RefCell<Option<UserInterface>> = RefCell::default();
+        }
+
+        CURRENT
+            .try_with(|cell| {
+                let mut current = cell.borrow_mut();
+                if let Some(ui) = &*current {
+                    ui.clone()
+                } else {
+                    let ui = Self::default();
+                    *current = Some(ui.clone());
+                    ui
+                }
+            })
+            .unwrap()
+    }
     pub fn insert<E: Element + 'static>(&self, element: E) -> Handle<E> {
         let node = Node {
             element: Rc::new(RefCell::new(element)),
@@ -106,16 +133,26 @@ pub enum TextMessage {
     Set,
 }
 
-pub struct Text {}
+pub struct Text {
+    content: Cow<'static, str>,
+}
+
+impl Text {
+    pub fn new(content: impl Into<Cow<'static, str>>) -> Self {
+        Self {
+            content: content.into(),
+        }
+    }
+}
 
 impl Element for Text {
     type Message = TextMessage;
 
-    fn update(&mut self, cx: Handle<Self>, msg: Self::Message) {
+    fn update(&mut self, cx: Handle<Self>, _msg: Self::Message) {
         cx.layout();
     }
 
-    fn layout(&mut self, min_size: Option<Size>, max_size: Option<Size>) -> Size {
+    fn layout(&mut self, _min_size: Option<Size>, _max_size: Option<Size>) -> Size {
         dbg!("layout");
         Size::default()
     }
