@@ -55,7 +55,7 @@ struct Dropper {
 
 impl Drop for Dropper {
     fn drop(&mut self) {
-        Runtime::current().inner.borrow_mut().nodes.remove(self.key);
+        //Runtime::current().inner.borrow_mut().nodes.remove(self.key);
     }
 }
 

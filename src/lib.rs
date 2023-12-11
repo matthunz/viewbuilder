@@ -10,6 +10,7 @@ pub use viewbuilder_macros::object;
 
 mod any_object;
 pub use self::any_object::AnyObject;
+
 mod handle;
 pub use self::handle::{Handle, HandleState, Ref};
 

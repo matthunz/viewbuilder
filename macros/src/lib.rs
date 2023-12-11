@@ -63,7 +63,7 @@ pub fn object(_attrs: TokenStream, input: TokenStream) -> TokenStream {
                 items.push(parse_quote! {
                     #[allow(unused_variables)]
                     pub #sig {
-                        viewbuilder::Runtime::current().emit(Box::new((#(#input_pats),*)))
+                        viewbuilder::Runtime::current().emit(Box::new((#(#input_pats),*,)))
                     }
                 });
 
