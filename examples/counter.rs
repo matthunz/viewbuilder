@@ -26,8 +26,7 @@ fn main() {
 
     a.set(2);
 
-    for _ in 0..3 {
-        Runtime::current().run();
+    for _ in 0..2 {
         Runtime::current().run();
     }
 }
