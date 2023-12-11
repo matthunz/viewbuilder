@@ -1,231 +1,238 @@
-use kurbo::{Point, Size};
+extern crate self as viewbuilder;
+
 use slotmap::{DefaultKey, SlotMap};
-use std::{cell::RefCell, collections::HashMap, marker::PhantomData, rc::Rc};
-use vello::{
-    peniko::Color,
-    util::{RenderContext, RenderSurface},
-    Renderer, Scene, SceneBuilder,
-};
-use winit::{
-    event::{ElementState, WindowEvent},
-    event_loop::{ControlFlow, EventLoop},
-    window::WindowId,
+use std::{
+    any::Any,
+    cell::{self, RefCell},
+    marker::PhantomData,
+    mem,
+    ops::Deref,
+    rc::Rc,
 };
 
-pub mod element;
-pub use self::element::{AnyElement, Element};
+pub use viewbuilder_macros::object;
 
-mod element_ref;
-pub use element_ref::{ElementRef, Entry};
-
-mod event;
-pub use self::event::{Event, MouseEvent};
-
-mod view;
-pub use self::view::View;
-
-mod window;
-pub use self::window::Window;
-
-pub struct Node {
-    element: Rc<RefCell<dyn AnyElement>>,
+pub struct HandleState<O: Object> {
+    pub key: DefaultKey,
+    _marker: PhantomData<O>,
 }
 
-struct RenderState {
-    // TODO: We MUST drop the surface before the `window`, so the fields
-    // must be in this order
-    surface: RenderSurface,
-    window: winit::window::Window,
-    root: DefaultKey,
-}
-
-struct Inner {
-    nodes: SlotMap<DefaultKey, Node>,
-    scene: Rc<RefCell<Scene>>,
-    event_loop: Option<EventLoop<()>>,
-    render_cx: RenderContext,
-    renderers: Vec<Option<Renderer>>,
-    render_states: Rc<RefCell<HashMap<WindowId, RenderState>>>,
-}
-
-impl Default for Inner {
-    fn default() -> Self {
+impl<O: Object> Clone for HandleState<O> {
+    fn clone(&self) -> Self {
         Self {
-            nodes: Default::default(),
-            scene: Default::default(),
-            event_loop: Some(EventLoop::new()),
-            render_cx: RenderContext::new().unwrap(),
-            renderers: Default::default(),
-            render_states: Default::default(),
+            key: self.key.clone(),
+            _marker: self._marker.clone(),
         }
     }
+}
+
+impl<O: Object> HandleState<O> {
+    pub fn update(&self, mut f: impl FnMut(&mut O) + 'static)
+    where
+        O: 'static,
+    {
+        Runtime::current().inner.borrow_mut().updates.push((
+            self.key,
+            Box::new(move |element| f(element.downcast_mut().unwrap())),
+        ))
+    }
+
+    pub fn borrow(&self) -> Ref<O> {
+        let rc = Runtime::current().inner.borrow().nodes[self.key]
+            .object
+            .clone();
+        let r = unsafe {
+            mem::transmute(cell::Ref::map(rc.borrow(), |object| {
+                object.as_any().downcast_ref::<O>().unwrap()
+            }))
+        };
+        Ref { rc, r }
+    }
+}
+
+pub struct Ref<O: 'static> {
+    rc: Rc<RefCell<dyn AnyObject>>,
+    r: cell::Ref<'static, O>,
+}
+
+impl<O: 'static> Deref for Ref<O> {
+    type Target = O;
+
+    fn deref(&self) -> &Self::Target {
+        &*self.r
+    }
+}
+
+pub struct Handle<O: Object> {
+    state: HandleState<O>,
+    sender: O::Sender,
+}
+
+impl<O: Object> Clone for Handle<O> {
+    fn clone(&self) -> Self {
+        Self {
+            state: self.state.clone(),
+            sender: self.sender.clone(),
+        }
+    }
+}
+
+impl<O: Object> Handle<O> {
+    pub fn update(&self, f: impl FnMut(&mut O) + 'static)
+    where
+        O: 'static,
+    {
+        self.state.update(f)
+    }
+
+    pub fn borrow(&self) -> Ref<O> {
+        self.state.borrow()
+    }
+}
+
+impl<O: Object> Deref for Handle<O> {
+    type Target = O::Sender;
+
+    fn deref(&self) -> &Self::Target {
+        &self.sender
+    }
+}
+
+pub trait Object: Sized {
+    type Sender: From<HandleState<Self>> + Clone;
+
+    fn spawn(self) -> Handle<Self>
+    where
+        Self: 'static,
+    {
+        let key = Runtime::current().inner.borrow_mut().nodes.insert(Node {
+            object: Rc::new(RefCell::new(self)),
+            listeners: Vec::new(),
+        });
+
+        Handle {
+            state: HandleState {
+                key,
+                _marker: PhantomData,
+            },
+            sender: HandleState {
+                key,
+                _marker: PhantomData,
+            }
+            .into(),
+        }
+    }
+}
+
+pub trait AnyObject {
+    fn as_any(&self) -> &dyn Any;
+
+    fn as_any_mut(&mut self) -> &mut dyn Any;
+}
+
+impl<O> AnyObject for O
+where
+    O: Object + 'static,
+{
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    fn as_any_mut(&mut self) -> &mut dyn Any {
+        self
+    }
+}
+
+struct Node {
+    object: Rc<RefCell<dyn AnyObject>>,
+    listeners: Vec<Rc<RefCell<dyn FnMut(&dyn Any)>>>,
+}
+
+#[derive(Default)]
+struct Inner {
+    nodes: SlotMap<DefaultKey, Node>,
+    updates: Vec<(DefaultKey, Box<dyn FnMut(&mut dyn Any)>)>,
+    message_queue: Vec<(DefaultKey, Box<dyn Any>)>,
+    current: Option<DefaultKey>,
 }
 
 #[derive(Clone, Default)]
-pub struct UserInterface {
+pub struct Runtime {
     inner: Rc<RefCell<Inner>>,
 }
 
-impl UserInterface {
+impl Runtime {
     pub fn current() -> Self {
         thread_local! {
-            static CURRENT: UserInterface = UserInterface::default()
+            static CURRENT: RefCell<Option<Runtime>> = RefCell::default();
         }
-        CURRENT.try_with(|ui| ui.clone()).unwrap()
+
+        CURRENT
+            .try_with(|cell| {
+                let mut current = cell.borrow_mut();
+                if let Some(ui) = &*current {
+                    ui.clone()
+                } else {
+                    let ui = Self::default();
+                    *current = Some(ui.clone());
+                    ui
+                }
+            })
+            .unwrap()
     }
 
-    pub fn view<E: Element + 'static>(&self, element: E) -> ElementRef<E> {
-        let node = Node {
-            element: Rc::new(RefCell::new(element)),
-        };
-        let key = self.inner.borrow_mut().nodes.insert(node);
-        self.inner.borrow_mut().nodes[key]
-            .element
-            .borrow_mut()
-            .as_element_mut()
-            .build(key);
+    pub fn emit(&self, msg: Box<dyn Any>) {
+        let mut me = self.inner.borrow_mut();
+        let key = me.current.unwrap();
+        me.message_queue.push((key, msg));
+    }
 
-        ElementRef {
+    pub fn run(&self) {
+        let mut updates = mem::take(&mut self.inner.borrow_mut().updates);
+        for (key, f) in &mut updates {
+            let object = self.inner.borrow().nodes[*key].object.clone();
+            self.inner.borrow_mut().current = Some(*key);
+            f(object.borrow_mut().as_any_mut());
+            self.inner.borrow_mut().current = None;
+        }
+
+        let mut message_queue = mem::take(&mut self.inner.borrow_mut().message_queue);
+        for (key, msg) in &mut message_queue {
+            let listeners = self.inner.borrow().nodes[*key].listeners.clone();
+            for listener in &listeners {
+                listener.borrow_mut()(&**msg);
+            }
+        }
+    }
+}
+
+pub struct Signal<T> {
+    key: DefaultKey,
+    _marker: PhantomData<T>,
+}
+
+impl<T> Signal<T> {
+    pub fn new(key: DefaultKey) -> Self {
+        Self {
             key,
             _marker: PhantomData,
         }
     }
-
-    pub fn get(&self, key: DefaultKey) -> Rc<RefCell<dyn AnyElement>> {
-        self.inner.borrow_mut().nodes[key].element.clone()
-    }
-
-    pub fn run(self) {
-        let event_loop = self.inner.borrow_mut().event_loop.take().unwrap();
-
-        let mut cursor = None;
-
-        event_loop.run(move |event, _event_loop, control_flow| {
-            match event {
-                winit::event::Event::RedrawRequested(_) => {
-                    let render_states = self.inner.borrow().render_states.clone();
-                    for render_state in render_states.borrow_mut().values_mut() {
-                        let width = render_state.surface.config.width;
-                        let height = render_state.surface.config.height;
-
-                        let root = self.inner.borrow().nodes[render_state.root].element.clone();
-                        let window_size = render_state.window.inner_size();
-                        root.borrow_mut().as_element_mut().layout(
-                            None,
-                            Some(Size::new(window_size.width as _, window_size.height as _)),
-                        );
-
-                        let scene = self.inner.borrow().scene.clone();
-                        root.borrow_mut().as_element_mut().render(
-                            Point::ZERO,
-                            Size::new(window_size.width as _, window_size.height as _),
-                            &mut SceneBuilder::for_scene(&mut *scene.borrow_mut()),
-                        );
-
-                        let me = &mut *self.inner.borrow_mut();
-                        let device_handle = &me.render_cx.devices[render_state.surface.dev_id];
-                        let surface_texture =
-                            render_state.surface.surface.get_current_texture().unwrap();
-                        let render_params = vello::RenderParams {
-                            base_color: Color::PURPLE,
-                            width,
-                            height,
-                            antialiasing_method: vello::AaConfig::Msaa16,
-                        };
-
-                        vello::block_on_wgpu(
-                            &device_handle.device,
-                            me.renderers[render_state.surface.dev_id]
-                                .as_mut()
-                                .unwrap()
-                                .render_to_surface_async(
-                                    &device_handle.device,
-                                    &device_handle.queue,
-                                    &me.scene.borrow(),
-                                    &surface_texture,
-                                    &render_params,
-                                ),
-                        )
-                        .unwrap();
-                        surface_texture.present();
-                    }
-                }
-                winit::event::Event::WindowEvent { window_id, event } => {
-                    let me = &mut *self.inner.borrow_mut();
-                    let root_key = me.render_states.borrow()[&window_id].root;
-                    let mut root = me.nodes[root_key].element.borrow_mut();
-
-                    match event {
-                        WindowEvent::CursorMoved { position, .. } => {
-                            cursor = Some(Point::new(position.x, position.y))
-                        }
-                        WindowEvent::MouseInput { state, .. } => {
-                            if let Some(point) = cursor {
-                                let event = Event::MouseEvent {
-                                    mouse_event: match state {
-                                        ElementState::Pressed => MouseEvent::MouseDown,
-                                        ElementState::Released => MouseEvent::MouseUp,
-                                    },
-                                    point,
-                                };
-                                root.as_element_mut().handle(event);
-                            }
-                        }
-                        _ => {}
-                    };
-                }
-                _ => {}
-            }
-
-            *control_flow = ControlFlow::Poll;
-        });
-    }
 }
 
-pub fn view<E: Element + 'static>(element: E) -> ElementRef<E> {
-    UserInterface::current().view(element)
-}
-
-pub fn run() {
-    UserInterface::current().run()
-}
-
-pub fn launch<E: Element + 'static>(element: E) {
-    let ui = UserInterface::current();
-
-    Window::new(element);
-
-    ui.run()
-}
-
-pub struct Update {
-    key: DefaultKey,
-    layout: bool,
-    render: bool,
-}
-
-impl Update {
-    pub fn new(key: DefaultKey) -> Self {
-        Self {
-            key,
-            layout: false,
-            render: false,
-        }
-    }
-
-    pub fn layout(mut self) -> Self {
-        self.layout = true;
-        self
-    }
-
-    pub fn render(mut self) -> Self {
-        self.render = true;
-        self
-    }
-}
-
-impl Drop for Update {
-    fn drop(&mut self) {
-        todo!()
+impl<T: Clone + 'static> Signal<T> {
+    pub fn bind<O>(&self, handle: &Handle<O>, slot: impl FnMut(&mut O, T) + 'static)
+    where
+        O: Object + 'static,
+    {
+        let f = Rc::new(RefCell::new(slot));
+        let handle = handle.clone();
+        Runtime::current().inner.borrow_mut().nodes[self.key]
+            .listeners
+            .push(Rc::new(RefCell::new(move |any: &dyn Any| {
+                let data = any.downcast_ref::<T>().unwrap().clone();
+                let f = f.clone();
+                handle.update(move |object| f.borrow_mut()(object, data.clone()))
+            })));
     }
 }

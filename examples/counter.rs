@@ -1,26 +1,33 @@
-use viewbuilder::element::{LinearLayout, Text};
-use viewbuilder::Window;
+use viewbuilder::{object, Object, Runtime};
+
+#[derive(Default)]
+pub struct Counter {
+    value: i32,
+}
+
+#[object]
+impl Counter {
+    #[signal]
+    fn value_changed(&mut self, value: i32);
+
+    #[slot]
+    pub fn set(&mut self, value: i32) {
+        dbg!(value);
+        self.value = value;
+        self.value_changed(value);
+    }
+}
 
 fn main() {
-    let mut count = 0;
-    let layout = viewbuilder::view(
-        LinearLayout::builder()
-            .child(Text::builder().font_size(100.).build("Counter"))
-            .child(
-                Text::builder()
-                    .font_size(50.)
-                    .on_click(move |text| {
-                        count += 1;
-                        text.get()
-                            .borrow_mut()
-                            .set_content(format!("High fives: {}", count));
-                    })
-                    .build("High fives: 0"),
-            )
-            .build(),
-    );
+    let a = Counter::default().spawn();
+    let b = Counter::default().spawn();
 
-    Window::builder().title("Counter Example").build(layout);
+    a.value_changed().bind(&b, Counter::set);
 
-    viewbuilder::run()
+    a.set(2);
+
+    for _ in 0..3 {
+        Runtime::current().run();
+        Runtime::current().run();
+    }
 }

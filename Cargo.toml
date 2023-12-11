@@ -6,6 +6,12 @@ license = "MIT OR Apache-2.0"
 description = "Cross-platform UI framework"
 repository = "https://github.com/concoct-rs/viewbuilder"
 
+[workspace]
+members = [
+    ".",
+    "macros"
+]
+
 [features]
 full = []
 
@@ -23,6 +29,7 @@ raw-window-handle = "0.6.0"
 pollster = "0.3.0"
 cosmic-text = "0.10.0"
 impl-trait-for-tuples = "0.2.2"
+viewbuilder-macros = { path = "macros" }
 
 [package.metadata.docs.rs]
 features = ["full"]
