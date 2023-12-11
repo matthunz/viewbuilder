@@ -1,8 +1,19 @@
-use viewbuilder::{Element, Text, TextMessage, UserInterface};
+use viewbuilder::{
+    element::{LinearLayout, Text, TextMessage, Window},
+    Element, UserInterface,
+};
 
 fn main() {
-    let text = Text::new("A").spawn();
-    text.send(TextMessage::Set);
+    let label = Text::new("0").spawn();
+
+    let _window = Window::new(LinearLayout::new((
+        label.clone(),
+        Text::new("Up High!"),
+        Text::new("Down Low!"),
+    )))
+    .spawn();
+
+    label.send(TextMessage::Set);
 
     UserInterface::current().run();
 }
