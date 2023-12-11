@@ -1,9 +1,11 @@
-use crate::object;
+use crate::{object, Handle, Object, UserInterface};
 use kurbo::Point;
 use winit::{
     dpi::PhysicalSize,
     event::{ElementState, MouseButton, MouseScrollDelta, TouchPhase},
 };
+
+use super::Context;
 
 /// Window on the native platform.
 pub struct Window {}
@@ -30,4 +32,14 @@ impl Window {
 
     /// Signal for the cursor leave event.
     fn cursor_left(&self);
+
+    pub fn spawn_window(self) -> Handle<Self> {
+        let handle = self.spawn();
+        Context::current()
+            .inner
+            .borrow_mut()
+            .pending_windows
+            .push(handle.clone());
+        handle
+    }
 }

@@ -28,5 +28,5 @@ features = ["full"]
 rustdoc-args = ["--cfg", "docsrs"]
 
 [[example]]
-name = "app"
-required-features = ["full"]
+name = "ui"
+required-features = ["ui"]

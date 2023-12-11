@@ -3,10 +3,10 @@ use viewbuilder::{ui::Window, Object, UserInterface};
 use viewbuilder_macros::object;
 use winit::event::{ElementState, MouseButton};
 
-struct Example;
+struct App;
 
 #[object]
-impl Object for Example {
+impl Object for App {
     #[slot]
     fn cursor_moved(&mut self, point: Point) {
         dbg!(point);
@@ -19,14 +19,14 @@ impl Object for Example {
 }
 
 fn main() {
-    let mut app = UserInterface::new();
-    let _guard = app.enter();
+    let ui = UserInterface::new();
+    let _guard = ui.enter();
 
-    let window = Window {}.spawn();
-    let example = Example.spawn();
-    window.cursor_moved().bind(&example, Example::cursor_moved);
-    window.mouse_event().bind(&example, Example::mouse_event);
-    app.insert_window(window);
+    let window = Window {}.spawn_window();
+    let app = App.spawn();
 
-    app.run();
+    window.cursor_moved().bind(&app, App::cursor_moved);
+    window.mouse_event().bind(&app, App::mouse_event);
+
+    ui.run();
 }
