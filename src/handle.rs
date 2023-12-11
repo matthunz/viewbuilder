@@ -4,7 +4,7 @@ use std::{
     cell::{self, RefCell},
     marker::PhantomData,
     mem,
-    ops::Deref,
+    ops::{Deref, DerefMut},
     rc::Rc,
 };
 
@@ -38,6 +38,11 @@ impl<O: Object> Handle<O> {
     /// Immutably borrow the object.
     pub fn borrow(&self) -> Ref<O> {
         self.state.borrow()
+    }
+
+    /// Mutably borrow the object.
+    pub fn borrow_mut(&self) -> RefMut<O> {
+        self.state.borrow_mut()
     }
 }
 
@@ -119,6 +124,25 @@ impl<O: Object> HandleState<O> {
             object,
         }
     }
+
+    /// Mutably borrow the object.
+    pub fn borrow_mut(&self) -> RefMut<O> {
+        let guard = Runtime::current().inner.borrow().nodes[self.key()]
+            .object
+            .clone();
+
+        let object = cell::RefMut::map(guard.borrow_mut(), |object| {
+            object.as_any_mut().downcast_mut::<O>().unwrap()
+        });
+
+        // Safety: `guard` is held as long as `Ref`.
+        let object = unsafe { mem::transmute(object) };
+
+        RefMut {
+            _guard: guard,
+            object,
+        }
+    }
 }
 
 pub struct Ref<O: 'static> {
@@ -131,5 +155,24 @@ impl<O: 'static> Deref for Ref<O> {
 
     fn deref(&self) -> &Self::Target {
         &*self.object
+    }
+}
+
+pub struct RefMut<O: 'static> {
+    object: cell::RefMut<'static, O>,
+    _guard: Rc<RefCell<dyn AnyObject>>,
+}
+
+impl<O: 'static> Deref for RefMut<O> {
+    type Target = O;
+
+    fn deref(&self) -> &Self::Target {
+        &*self.object
+    }
+}
+
+impl<O: 'static> DerefMut for RefMut<O> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut *self.object
     }
 }

@@ -1,6 +1,6 @@
 use crate::{rt::RuntimeGuard, Handle, Runtime};
 use kurbo::Point;
-use std::{cell::RefCell, collections::HashMap, mem, rc::Rc};
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 use winit::event::WindowEvent;
 use winit::event_loop::EventLoop;
 use winit::window::WindowId;

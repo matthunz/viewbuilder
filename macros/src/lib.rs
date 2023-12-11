@@ -8,6 +8,7 @@ pub fn object(_attrs: TokenStream, input: TokenStream) -> TokenStream {
 
     let mut items = Vec::new();
     let mut handle_items = Vec::new();
+    let mut start_item = None;
     for item in item.items {
         match item {
             syn::ImplItem::Fn(fn_item) => {
@@ -42,6 +43,8 @@ pub fn object(_attrs: TokenStream, input: TokenStream) -> TokenStream {
                     });
 
                     handle_items.push(fn_item.clone());
+                } else if fn_item.sig.ident.to_string() == "start" {
+                    start_item = Some(fn_item.block);
                 } else {
                     items.push(fn_item.clone());
                 }
@@ -101,6 +104,10 @@ pub fn object(_attrs: TokenStream, input: TokenStream) -> TokenStream {
     let output = quote! {
         impl viewbuilder::Object for #ident {
             type Handle = #handle_ident;
+
+            fn start(&mut self, handle: viewbuilder::Handle<Self>) {
+                #start_item
+            }
         }
 
         impl #ident {

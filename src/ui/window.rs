@@ -1,4 +1,4 @@
-use crate::{object, Handle, Object, UserInterface};
+use crate::object;
 use kurbo::Point;
 use winit::{
     dpi::PhysicalSize,
@@ -12,6 +12,14 @@ pub struct Window {}
 
 #[object]
 impl Window {
+    fn start(&mut self, handle: Handle<Self>) {
+        Context::current()
+            .inner
+            .borrow_mut()
+            .pending_windows
+            .push(handle.clone());
+    }
+
     /// Signal for the cursor movement event.
     fn cursor_moved(&self, point: Point);
 
@@ -32,14 +40,4 @@ impl Window {
 
     /// Signal for the cursor leave event.
     fn cursor_left(&self);
-
-    pub fn spawn_window(self) -> Handle<Self> {
-        let handle = self.spawn();
-        Context::current()
-            .inner
-            .borrow_mut()
-            .pending_windows
-            .push(handle.clone());
-        handle
-    }
 }

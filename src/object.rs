@@ -6,6 +6,9 @@ pub trait Object: Sized {
     /// Handle for this object.
     type Handle: From<HandleState<Self>> + Clone;
 
+    #[allow(unused_variables)]
+    fn start(&mut self, handle: Handle<Self>) {}
+
     /// Spawn this object and return a handle to it.
     fn spawn(self) -> Handle<Self>
     where
@@ -16,9 +19,11 @@ pub trait Object: Sized {
             listeners: Vec::new(),
         });
 
-        Handle {
+        let handle: Handle<Self> = Handle {
             state: HandleState::new(key),
             handle: HandleState::new(key).into(),
-        }
+        };
+        handle.borrow_mut().start(handle.clone());
+        handle
     }
 }
