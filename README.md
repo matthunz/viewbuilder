@@ -4,7 +4,7 @@
     <img src="https://img.shields.io/crates/v/viewbuilder?style=flat-square"
     alt="Crates.io version" />
   </a>
-  <a href="https://concoct-rs.github.io/viewbuilder/viewbuilder/index.html">
+  <a href="https://docs.rs/crate/viewbuilder/latest">
     <img src="https://img.shields.io/badge/docs-latest-blue.svg?style=flat-square"
       alt="docs.rs docs" />
   </a>
