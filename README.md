@@ -25,51 +25,40 @@ Cross-platform user interface framework for Rust.
 This crate provides a moduler GUI library that can be used as an entire framework, or with individual parts.
 
 ```rust
-use viewbuilder::element::Text;
+use viewbuilder::{object, Object, Runtime};
+
+#[derive(Default)]
+pub struct Counter {
+    value: i32,
+}
+
+#[object]
+impl Counter {
+    #[signal]
+    fn value_changed(&mut self, value: i32);
+
+    #[slot]
+    pub fn set(&mut self, value: i32) {
+        dbg!(value);
+        self.value = value;
+        self.value_changed(value);
+    }
+}
 
 fn main() {
-    viewbuilder::launch(Text::new("Hello Viewbuilder!"))
+    let a = Counter::default().spawn();
+    let b = Counter::default().spawn();
+
+    a.value_changed().bind(&b, Counter::set);
+
+    a.set(2);
+
+    for _ in 0..3 {
+        Runtime::current().run();
+        Runtime::current().run();
+    }
 }
 ```
-
-### Bring your own state management
-
-```rust
-use viewbuilder::element::{LinearLayout, Text};
-use viewbuilder::Window;
-
-fn main() {
-    let mut count = 0;
-    let layout = viewbuilder::view(
-        LinearLayout::builder()
-            .child(Text::new("Counter"))
-            .child(
-                Text::builder()
-                    .on_click(move |text| {
-                        count += 1;
-                        text.get()
-                            .borrow_mut()
-                            .set_content(format!("High fives: {}", count));
-                    })
-                    .build("High fives: 0"),
-            )
-            .build(),
-    );
-
-    Window::builder().title("Counter Example").build(layout);
-
-    viewbuilder::run()
-}
-```
-
-## Features
-
-- Cross-platform with desktop and mobile support
-- Event handling with an HTML-like API
-- High performance rendering with [vello](https://github.com/linebender/vello)
-- CSS flexbox and grid layout with [taffy](https://github.com/DioxusLabs/taffy/)
-- Accessibility with [accesskit](https://github.com/AccessKit/accesskit)
-- State management with [dioxus](https://github.com/DioxusLabs/dioxus/) (optional)
 
 ## Getting started
 
@@ -78,5 +67,3 @@ Instatllation is simple with:
 ```sh
 cargo add viewbuilder --features full
 ```
-
-If you encounter errors, please check the instructions for building [rust-skia](https://github.com/rust-skia/rust-skia).

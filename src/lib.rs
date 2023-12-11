@@ -58,7 +58,7 @@ impl App {
             match event {
                 winit::event::Event::WindowEvent { window_id, event } => match event {
                     winit::event::WindowEvent::CursorMoved {
-                        device_id,
+                        
                         position,
                         ..
                     } => {
