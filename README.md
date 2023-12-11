@@ -8,14 +8,14 @@
     <img src="https://img.shields.io/badge/docs-latest-blue.svg?style=flat-square"
       alt="docs.rs docs" />
   </a>
-   <a href="https://github.com/concoct-rs/viewbuilder/actions">
-    <img src="https://github.com/concoct-rs/viewbuilder/actions/workflows/ci.yml/badge.svg"
+   <a href="https://github.com/matthunz/viewbuilder/actions">
+    <img src="https://github.com/matthunz/viewbuilder/actions/workflows/ci.yml/badge.svg"
       alt="CI status" />
   </a>
 </div>
 
 <div align="center">
- <a href="https://github.com/concoct-rs/viewbuilder/tree/main/examples">Examples</a>
+ <a href="https://github.com/matthunz/viewbuilder/tree/main/examples">Examples</a>
 </div>
 
 <br>
