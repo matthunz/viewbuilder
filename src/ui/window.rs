@@ -1,11 +1,10 @@
+use super::Context;
 use crate::object;
 use kurbo::Point;
 use winit::{
     dpi::PhysicalSize,
     event::{ElementState, MouseButton, MouseScrollDelta, TouchPhase},
 };
-
-use super::Context;
 
 /// Window on the native platform.
 pub struct Window {}

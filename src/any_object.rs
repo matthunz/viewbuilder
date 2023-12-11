@@ -1,8 +1,8 @@
 use slotmap::DefaultKey;
-
 use crate::{HandleState, Object};
 use std::any::Any;
 
+/// A dynamic reactive object.
 pub trait AnyObject {
     fn as_any(&self) -> &dyn Any;
 
