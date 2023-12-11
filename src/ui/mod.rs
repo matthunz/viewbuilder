@@ -1,11 +1,12 @@
 use crate::{rt::RuntimeGuard, Handle, Runtime};
 use kurbo::Point;
 use std::collections::HashMap;
+use winit::event::WindowEvent;
 use winit::event_loop::EventLoop;
 use winit::window::WindowId;
 
 mod window;
-pub use window::Window;
+pub use window::{Window, WindowHandle};
 
 pub struct UserInterface {
     event_loop: EventLoop<()>,
@@ -36,19 +37,25 @@ impl UserInterface {
             self.rt.try_run();
 
             match event {
-                winit::event::Event::WindowEvent { window_id, event } => match event {
-                    winit::event::WindowEvent::CursorMoved { position, .. } => {
-                        let handle = &self.windows[&window_id].1;
-                        handle
+                winit::event::Event::WindowEvent { window_id, event } => {
+                    let handle = &self.windows[&window_id].1;
+                    match event {
+                        WindowEvent::CursorMoved { position, .. } => handle
                             .cursor_moved()
-                            .emit((Point::new(position.x, position.y),));
+                            .emit((Point::new(position.x, position.y),)),
+                        WindowEvent::MouseInput { state, button, .. } => {
+                            handle.mouse_event().emit((state, button))
+                        }
+                        WindowEvent::MouseWheel { delta, phase, .. } => {
+                            handle.mouse_wheel().emit((delta, phase))
+                        }
+                        WindowEvent::Resized(size) => handle.resized().emit((size,)),
+                        WindowEvent::Focused(is_focused) => handle.focused().emit((is_focused,)),
+                        WindowEvent::CursorEntered { .. } => handle.cursor_entered().emit(()),
+                        WindowEvent::CursorLeft { .. } => handle.cursor_left().emit(()),
+                        _ => {}
                     }
-                    winit::event::WindowEvent::MouseInput { state, button, .. } => {
-                        let handle = &self.windows[&window_id].1;
-                        handle.mouse_event().emit((state, button));
-                    }
-                    _ => {}
-                },
+                }
                 _ => {}
             }
         });

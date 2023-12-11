@@ -55,31 +55,43 @@ pub fn object(_attrs: TokenStream, input: TokenStream) -> TokenStream {
                 let item: TraitItemFn = syn::parse2(tokens).unwrap();
                 let sig = item.sig;
 
-                let input_pats = sig.inputs.iter().filter_map(|arg| match arg {
-                    syn::FnArg::Receiver(_) => None,
-                    syn::FnArg::Typed(pat_ty) => Some(&pat_ty.pat),
-                });
-
+                let ident = &sig.ident;
                 let id = items.len();
+                if sig.inputs.len() == 1 {
+                    items.push(parse_quote! {
+                        #[allow(unused_variables)]
+                        pub #sig {
+                            viewbuilder::Runtime::current().emit(#id as u32, Box::new(()))
+                        }
+                    });
 
-                items.push(parse_quote! {
-                    #[allow(unused_variables)]
-                    pub #sig {
-                        viewbuilder::Runtime::current().emit(#id as u32, Box::new((#(#input_pats),*,)))
-                    }
-                });
+                    handle_items.push(parse_quote! {
+                        pub fn #ident(&self) -> viewbuilder::Signal<()> {
+                            viewbuilder::Signal::new(self.handle.key(), #id as u32)
+                        }
+                    });
+                } else {
+                    let input_pats = sig.inputs.iter().filter_map(|arg| match arg {
+                        syn::FnArg::Receiver(_) => None,
+                        syn::FnArg::Typed(pat_ty) => Some(&pat_ty.pat),
+                    });
+                    items.push(parse_quote! {
+                        #[allow(unused_variables)]
+                        pub #sig {
+                            viewbuilder::Runtime::current().emit(#id as u32, Box::new((#(#input_pats),*,)))
+                        }
+                    });
 
-                let input_tys = sig.inputs.iter().filter_map(|arg| match arg {
-                    syn::FnArg::Receiver(_) => None,
-                    syn::FnArg::Typed(pat_ty) => Some(&pat_ty.ty),
-                });
-                let ident = sig.ident;
-
-                handle_items.push(parse_quote! {
-                    pub fn #ident(&self) -> viewbuilder::Signal<(#(#input_tys),*,)> {
-                        viewbuilder::Signal::new(self.handle.key(), #id as u32)
-                    }
-                });
+                    let input_tys = sig.inputs.iter().filter_map(|arg| match arg {
+                        syn::FnArg::Receiver(_) => None,
+                        syn::FnArg::Typed(pat_ty) => Some(&pat_ty.ty),
+                    });
+                    handle_items.push(parse_quote! {
+                        pub fn #ident(&self) -> viewbuilder::Signal<(#(#input_tys),*,)> {
+                            viewbuilder::Signal::new(self.handle.key(), #id as u32)
+                        }
+                    });
+                }
             }
             _ => {}
         }
