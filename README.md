@@ -34,11 +34,10 @@ pub struct Counter {
 
 #[object]
 impl Counter {
-    #[signal]
     fn value_changed(&mut self, value: i32);
 
     #[slot]
-    pub fn set(&mut self, value: i32) {
+    pub fn set_value(&mut self, value: i32) {
         self.value = value;
         self.value_changed(value);
     }
@@ -53,7 +52,7 @@ async fn main() {
     let b = Counter::default().spawn();
 
     a.value_changed().bind(&b, Counter::set);
-    a.set(2);
+    a.set_value(2);
 
     rt.run().await;
 
