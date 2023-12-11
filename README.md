@@ -39,7 +39,6 @@ impl Counter {
 
     #[slot]
     pub fn set(&mut self, value: i32) {
-        dbg!(value);
         self.value = value;
         self.value_changed(value);
     }

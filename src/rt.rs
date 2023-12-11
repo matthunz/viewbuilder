@@ -103,6 +103,18 @@ impl Runtime {
         }
     }
 
+    pub fn try_run(&self) {
+        loop {
+            let mut me = self.inner.borrow_mut();
+            if let Ok(msg) = me.rx.try_recv() {
+                drop(me);
+                self.handle(msg);
+            } else {
+                break;
+            }
+        }
+    }
+
     fn handle(&self, msg: RuntimeMessage) {
         match msg {
             RuntimeMessage::Update { key, mut update } => {
@@ -117,7 +129,9 @@ impl Runtime {
                     listener.borrow_mut()(&*msg);
                 }
             }
-            RuntimeMessage::Remove { key: _ } => todo!(),
+            RuntimeMessage::Remove { key } => {
+                self.inner.borrow_mut().nodes.remove(key);
+            }
         }
     }
 }

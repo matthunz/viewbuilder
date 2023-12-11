@@ -21,6 +21,7 @@ tokio = { version = "1.32.0", features = ["full"] }
 slotmap = "1.0.6"
 winit = "0.28.1"
 viewbuilder-macros = { path = "macros" }
+pollster = "0.3.0"
 
 [package.metadata.docs.rs]
 features = ["full"]

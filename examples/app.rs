@@ -14,11 +14,11 @@ impl Object for Example {
 
 fn main() {
     let mut app = App::new();
+    let _guard = app.enter();
 
     let window = Window {}.spawn();
-    window
-        .cursor_pos()
-        .bind(&Example.spawn(), Example::set_cursor_pos);
+    let example = Example.spawn();
+    window.cursor_pos().bind(&example, Example::set_cursor_pos);
     app.insert_window(window);
 
     app.run();
