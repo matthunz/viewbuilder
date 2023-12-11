@@ -1,8 +1,8 @@
+use crate::{rt::RuntimeGuard, Handle, Runtime};
 use kurbo::Point;
 use std::collections::HashMap;
 use winit::event_loop::EventLoop;
 use winit::window::WindowId;
-use crate::{Runtime, Handle, rt::RuntimeGuard};
 
 mod window;
 pub use window::Window;
@@ -41,6 +41,7 @@ impl UserInterface {
                         let handle = &self.windows[&window_id].1;
                         self.rt.send(
                             handle.key(),
+                            0,
                             Box::new((Point::new(position.x, position.y),)),
                         );
                     }

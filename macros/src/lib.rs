@@ -60,10 +60,12 @@ pub fn object(_attrs: TokenStream, input: TokenStream) -> TokenStream {
                     syn::FnArg::Typed(pat_ty) => Some(&pat_ty.pat),
                 });
 
+                let id = items.len();
+
                 items.push(parse_quote! {
                     #[allow(unused_variables)]
                     pub #sig {
-                        viewbuilder::Runtime::current().emit(Box::new((#(#input_pats),*,)))
+                        viewbuilder::Runtime::current().emit(#id as u32, Box::new((#(#input_pats),*,)))
                     }
                 });
 
@@ -72,9 +74,10 @@ pub fn object(_attrs: TokenStream, input: TokenStream) -> TokenStream {
                     syn::FnArg::Typed(pat_ty) => Some(&pat_ty.ty),
                 });
                 let ident = sig.ident;
+
                 handle_items.push(parse_quote! {
                     pub fn #ident(&self) -> viewbuilder::Signal<(#(#input_tys),*,)> {
-                        viewbuilder::Signal::new(self.handle.key())
+                        viewbuilder::Signal::new(self.handle.key(), #id as u32)
                     }
                 });
             }

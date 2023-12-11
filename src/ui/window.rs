@@ -1,5 +1,5 @@
-use kurbo::Point;
 use crate::object;
+use kurbo::Point;
 
 pub struct Window {}
 

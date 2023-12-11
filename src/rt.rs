@@ -10,6 +10,7 @@ pub(crate) enum RuntimeMessage {
     },
     Message {
         key: DefaultKey,
+        id: u32,
         msg: Box<dyn Any>,
     },
     Remove {
@@ -19,7 +20,7 @@ pub(crate) enum RuntimeMessage {
 
 pub(crate) struct Node {
     pub(crate) object: Rc<RefCell<dyn AnyObject>>,
-    pub(crate) listeners: Vec<Rc<RefCell<dyn FnMut(&dyn Any)>>>,
+    pub(crate) listeners: Vec<(u32, Rc<RefCell<dyn FnMut(&dyn Any)>>)>,
 }
 
 pub(crate) struct Inner {
@@ -75,14 +76,16 @@ impl Runtime {
         CURRENT.try_with(|cell| cell.borrow().clone()).unwrap()
     }
 
-    pub fn emit(&self, msg: Box<dyn Any>) {
+    pub fn emit(&self, id: u32, msg: Box<dyn Any>) {
         let me = self.inner.borrow();
         let key = me.current.unwrap();
-        self.send(key, msg);
+        self.send(key, id, msg);
     }
 
-    pub fn send(&self, key: DefaultKey, msg: Box<dyn Any>) {
-        self.tx.send(RuntimeMessage::Message { key, msg }).unwrap();
+    pub fn send(&self, key: DefaultKey, id: u32, msg: Box<dyn Any>) {
+        self.tx
+            .send(RuntimeMessage::Message { key, id, msg })
+            .unwrap();
     }
 
     pub async fn run(&self) {
@@ -123,10 +126,12 @@ impl Runtime {
                 update(object.borrow_mut().as_any_mut());
                 self.inner.borrow_mut().current = None;
             }
-            RuntimeMessage::Message { key, msg } => {
+            RuntimeMessage::Message { key, id, msg } => {
                 let listeners = self.inner.borrow().nodes[key].listeners.clone();
-                for listener in &listeners {
-                    listener.borrow_mut()(&*msg);
+                for (listener_id, listener) in &listeners {
+                    if *listener_id == id {
+                        listener.borrow_mut()(&*msg);
+                    }
                 }
             }
             RuntimeMessage::Remove { key } => {

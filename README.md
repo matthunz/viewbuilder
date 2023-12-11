@@ -20,9 +20,9 @@
 
 <br>
 
-Cross-platform user interface framework for Rust.
+A cross-platform user interface framework for Rust.
 
-This crate provides a moduler GUI library that can be used as an entire framework, or with individual parts.
+Viewbuilder is a moduler GUI library that can be used as an entire framework, or with individual parts.
 
 ```rust
 use viewbuilder::{object, Object, Runtime};

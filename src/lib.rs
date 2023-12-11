@@ -1,3 +1,8 @@
+//! A cross-platform user interface framework for Rust.
+//!  
+//! Viewbuilder is a moduler GUI library that can be used as an entire framework,
+//! or with individual parts.
+
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
 extern crate self as viewbuilder;
