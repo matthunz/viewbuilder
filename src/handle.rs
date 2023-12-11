@@ -23,6 +23,7 @@ impl<O: Object> Clone for Handle<O> {
 }
 
 impl<O: Object> Handle<O> {
+    /// Send an update to the object.
     pub fn update(&self, f: impl FnMut(&mut O) + 'static)
     where
         O: 'static,
@@ -30,6 +31,7 @@ impl<O: Object> Handle<O> {
         self.state.update(f)
     }
 
+    /// Immutably borrow the object.
     pub fn borrow(&self) -> Ref<O> {
         self.state.borrow()
     }
@@ -58,6 +60,7 @@ impl<O: Object> Clone for HandleState<O> {
 }
 
 impl<O: Object> HandleState<O> {
+    /// Send an update to the object.
     pub fn update(&self, mut f: impl FnMut(&mut O) + 'static)
     where
         O: 'static,
@@ -68,28 +71,35 @@ impl<O: Object> HandleState<O> {
         ))
     }
 
+    /// Immutably borrow the object.
     pub fn borrow(&self) -> Ref<O> {
-        let rc = Runtime::current().inner.borrow().nodes[self.key]
+        let guard = Runtime::current().inner.borrow().nodes[self.key]
             .object
             .clone();
-        let r = unsafe {
-            mem::transmute(cell::Ref::map(rc.borrow(), |object| {
-                object.as_any().downcast_ref::<O>().unwrap()
-            }))
-        };
-        Ref { rc, r }
+
+        let object = cell::Ref::map(guard.borrow(), |object| {
+            object.as_any().downcast_ref::<O>().unwrap()
+        });
+
+        // Safety: `guard` is held as long as `Ref`.
+        let object = unsafe { mem::transmute(object) };
+
+        Ref {
+            _guard: guard,
+            object,
+        }
     }
 }
 
 pub struct Ref<O: 'static> {
-    rc: Rc<RefCell<dyn AnyObject>>,
-    r: cell::Ref<'static, O>,
+    object: cell::Ref<'static, O>,
+    _guard: Rc<RefCell<dyn AnyObject>>,
 }
 
 impl<O: 'static> Deref for Ref<O> {
     type Target = O;
 
     fn deref(&self) -> &Self::Target {
-        &*self.r
+        &*self.object
     }
 }

@@ -1,9 +1,12 @@
+use crate::{Handle, HandleState, Node, Runtime};
 use std::{cell::RefCell, marker::PhantomData, rc::Rc};
 
-use crate::{Handle, HandleState, Node, Runtime};
+/// A reactive object.
 pub trait Object: Sized {
+    /// Update event sender for this object.
     type Sender: From<HandleState<Self>> + Clone;
 
+    /// Spawn this object and return a handle to it.
     fn spawn(self) -> Handle<Self>
     where
         Self: 'static,
