@@ -85,7 +85,7 @@ pub fn object(_attrs: TokenStream, input: TokenStream) -> TokenStream {
     let ident = format_ident!("{}", item.self_ty.to_token_stream().to_string());
     let handle_ident = format_ident!("{}Handle", &ident);
     let output = quote! {
-        impl Object for #ident {
+        impl viewbuilder::Object for #ident {
             type Handle = #handle_ident;
         }
 
