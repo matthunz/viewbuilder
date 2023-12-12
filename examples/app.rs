@@ -1,5 +1,13 @@
 use concoct::{Handler, Object};
-use viewbuilder::{window, UserInterface, Window};
+use viewbuilder::{
+    view::{LinearLayout, Text, View},
+    window, UserInterface, Window,
+};
+
+fn app() -> impl View {
+    let text = Text {}.spawn();
+    LinearLayout::new((text, Text {}))
+}
 
 struct App;
 

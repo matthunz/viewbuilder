@@ -6,6 +6,10 @@ use winit::{
     window::WindowId,
 };
 
+pub mod element;
+
+pub mod view;
+
 pub mod window;
 pub use window::Window;
 
