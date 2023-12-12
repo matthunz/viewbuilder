@@ -1,36 +1,81 @@
-//! A cross-platform user interface framework for Rust.
-//!  
-//! Viewbuilder is a moduler GUI library that can be used as an entire framework,
-//! or with individual parts.
+use concoct::{Context, Runtime, RuntimeGuard};
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
+use winit::{
+    event::{Event, WindowEvent},
+    event_loop::EventLoop,
+    window::WindowId,
+};
 
-#![cfg_attr(docsrs, feature(doc_cfg))]
+pub mod window;
+pub use window::Window;
 
-extern crate self as viewbuilder;
+thread_local! {
+    static CURRENT: RefCell<Option<UserInterface>> = RefCell::default();
+}
 
-pub use viewbuilder_macros::object;
+#[derive(Default)]
+struct Inner {
+    pending_windows: Vec<Context<Window>>,
+    windows: HashMap<WindowId, (winit::window::Window, Context<Window>)>,
+}
 
-mod any_object;
-pub use self::any_object::AnyObject;
+#[derive(Clone, Default)]
+pub struct UserInterface {
+    rt: Runtime,
+    inner: Rc<RefCell<Inner>>,
+}
 
-mod handle;
-pub use self::handle::{Handle, HandleState, Ref};
+impl UserInterface {
+    pub fn current() -> Self {
+        Self::try_current().unwrap()
+    }
 
-mod object;
-pub use self::object::Object;
+    pub fn try_current() -> Option<Self> {
+        CURRENT
+            .try_with(|cell| cell.borrow().clone())
+            .ok()
+            .flatten()
+    }
 
-mod rt;
-pub(crate) use self::rt::Node;
-pub use rt::Runtime;
+    pub fn enter(&self) -> UserInterfaceGuard {
+        CURRENT
+            .try_with(|cell| *cell.borrow_mut() = Some(self.clone()))
+            .unwrap();
 
-mod signal;
-pub use self::signal::Signal;
+        let rt = self.rt.enter();
 
-mod slot;
-pub use self::slot::Slot;
+        UserInterfaceGuard { rt }
+    }
 
-#[cfg(feature = "ui")]
-#[cfg_attr(docsrs, doc(cfg(feature = "ui")))]
-pub mod ui;
-#[cfg(feature = "ui")]
-#[cfg_attr(docsrs, doc(cfg(feature = "ui")))]
-pub use ui::UserInterface;
+    pub fn run(self) {
+        EventLoop::new().run(move |event, event_loop, _| {
+            self.rt.try_run();
+
+            let mut me = self.inner.borrow_mut();
+            while let Some(handle) = me.pending_windows.pop() {
+                let window = winit::window::Window::new(&event_loop).unwrap();
+                me.windows.insert(window.id(), (window, handle));
+            }
+
+            match event {
+                Event::WindowEvent { window_id, event } => match event {
+                    WindowEvent::Resized(size) => {
+                        me.windows[&window_id].1.emit(window::Resized(size));
+                    }
+                    _ => {}
+                },
+                _ => {}
+            }
+        });
+    }
+}
+
+pub struct UserInterfaceGuard {
+    rt: RuntimeGuard,
+}
+
+impl Drop for UserInterfaceGuard {
+    fn drop(&mut self) {
+        CURRENT.try_with(|cell| cell.borrow_mut().take()).unwrap();
+    }
+}

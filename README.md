@@ -25,39 +25,28 @@ A cross-platform user interface framework for Rust.
 Viewbuilder is a moduler GUI library that can be used as an entire framework, or with individual parts.
 
 ```rust
-use viewbuilder::{object, Object, Runtime};
+use concoct::{Handler, Object};
+use viewbuilder::{window, UserInterface, Window};
 
-#[derive(Default)]
-pub struct Counter {
-    value: i32,
-}
+struct App;
 
-#[object]
-impl Counter {
-    fn value_changed(&mut self, value: i32);
+impl Object for App {}
 
-    #[slot]
-    pub fn set_value(&mut self, value: i32) {
-        self.value = value;
-        self.value_changed(value);
+impl Handler<window::Resized> for App {
+    fn handle(&mut self, _handle: concoct::Context<Self>, msg: window::Resized) {
+        dbg!(msg);
     }
 }
 
-#[tokio::main]
-async fn main() {
-    let rt = Runtime::default();
-    let _guard = rt.enter();
+fn main() {
+    let ui = UserInterface::default();
+    let _guard = ui.enter();
 
-    let a = Counter::default().spawn();
-    let b = Counter::default().spawn();
+    let window = Window::default().spawn();
+    let app = App.spawn();
+    window.bind(&app);
 
-    a.value_changed().bind(&b, Counter::set_value);
-    a.set_value(2);
-
-    rt.run().await;
-
-    assert_eq!(a.borrow().value, 2);
-    assert_eq!(b.borrow().value, 2);
+    ui.run()
 }
 ```
 

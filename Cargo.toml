@@ -6,27 +6,17 @@ license = "MIT OR Apache-2.0"
 description = "Cross-platform UI framework"
 repository = "https://github.com/matthunz/viewbuilder"
 
-[workspace]
-members = [
-    ".",
-    "macros"
-]
 
 [features]
-ui = ["winit"]
-full = ["ui"]
+full = []
 
 [dependencies]
 kurbo = "0.9.5"
 tokio = { version = "1.32.0", features = ["full"] }
-slotmap = "1.0.6"
-winit = { version = "0.28.1", optional = true }
-viewbuilder-macros = { version = "0.1.1", path = "macros" }
+slotmap = "1.0.7"
+winit = { version = "0.28.1" }
+concoct = { git = "https://github.com/concoct-rs/concoct" }
 
 [package.metadata.docs.rs]
 features = ["full"]
 rustdoc-args = ["--cfg", "docsrs"]
-
-[[example]]
-name = "ui"
-required-features = ["ui"]
