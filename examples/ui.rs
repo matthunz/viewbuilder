@@ -22,7 +22,7 @@ fn main() {
     let ui = UserInterface::new();
     let _guard = ui.enter();
 
-    let window = Window {}.spawn();
+    let window = Window::builder().title("Window A").build().spawn();
     let app = App.spawn();
 
     window.cursor_moved().bind(&app, App::cursor_moved);

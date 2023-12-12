@@ -9,7 +9,7 @@ mod window;
 pub use window::{Window, WindowHandle};
 
 struct Inner {
-    pending_windows: Vec<Handle<Window>>,
+    pending_windows: Vec<(winit::window::WindowBuilder, Handle<Window>)>,
     windows: HashMap<WindowId, (winit::window::Window, Handle<Window>)>,
 }
 
@@ -83,8 +83,8 @@ impl UserInterface {
             self.rt.try_run();
 
             let mut cx = self.context.inner.borrow_mut();
-            while let Some(handle) = cx.pending_windows.pop() {
-                let window = winit::window::Window::new(&event_loop).unwrap();
+            while let Some((builder, handle)) = cx.pending_windows.pop() {
+                let window = builder.build(event_loop).unwrap();
                 cx.windows.insert(window.id(), (window, handle));
             }
             drop(cx);

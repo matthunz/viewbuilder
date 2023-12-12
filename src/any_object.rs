@@ -1,5 +1,5 @@
-use slotmap::DefaultKey;
 use crate::{HandleState, Object};
+use slotmap::DefaultKey;
 use std::any::Any;
 
 /// A dynamic reactive object.

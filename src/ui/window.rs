@@ -4,19 +4,83 @@ use kurbo::Point;
 use winit::{
     dpi::PhysicalSize,
     event::{ElementState, MouseButton, MouseScrollDelta, TouchPhase},
+    window::Theme,
 };
 
+pub struct WindowBuilder {
+    window: Option<winit::window::WindowBuilder>,
+}
+
+impl Default for WindowBuilder {
+    fn default() -> Self {
+        Self {
+            window: Some(Default::default()),
+        }
+    }
+}
+
+impl WindowBuilder {
+    pub fn build(&mut self) -> Window {
+        Window {
+            window: self.window.take(),
+        }
+    }
+
+    pub fn title(&mut self, title: impl Into<String>) -> &mut Self {
+        self.window = Some(self.window.take().unwrap().with_title(title));
+        self
+    }
+
+    pub fn is_resizable(&mut self, is_resizable: bool) -> &mut Self {
+        self.attr(|builder| builder.with_resizable(is_resizable))
+    }
+
+    pub fn is_active(&mut self, is_active: bool) -> &mut Self {
+        self.attr(|builder| builder.with_active(is_active))
+    }
+
+    pub fn decorations(&mut self, decorations: bool) -> &mut Self {
+        self.attr(|builder| builder.with_decorations(decorations))
+    }
+
+    pub fn theme(&mut self, theme: Option<Theme>) -> &mut Self {
+        self.attr(|builder| builder.with_theme(theme))
+    }
+
+    fn attr(
+        &mut self,
+        f: impl FnOnce(winit::window::WindowBuilder) -> winit::window::WindowBuilder,
+    ) -> &mut Self {
+        self.window = Some(f(self.window.take().unwrap()));
+        self
+    }
+}
+
 /// Window on the native platform.
-pub struct Window {}
+pub struct Window {
+    window: Option<winit::window::WindowBuilder>,
+}
+
+impl Default for Window {
+    fn default() -> Self {
+        Self {
+            window: Some(Default::default()),
+        }
+    }
+}
 
 #[object]
 impl Window {
+    pub fn builder() -> WindowBuilder {
+        WindowBuilder::default()
+    }
+
     fn start(&mut self, handle: Handle<Self>) {
         Context::current()
             .inner
             .borrow_mut()
             .pending_windows
-            .push(handle.clone());
+            .push((self.window.take().unwrap(), handle.clone()));
     }
 
     /// Signal for the cursor movement event.
