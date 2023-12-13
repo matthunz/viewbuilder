@@ -1,14 +1,15 @@
-use concoct::Object;
-
 use super::{View, ViewGroup};
+use concoct::Object;
 
 pub struct LinearLayout<V> {
     views: V,
 }
 
 impl<V> LinearLayout<V> {
-    pub fn new(views: V) -> Self {
-        Self { views }
+    pub fn new(views: impl ViewGroup<Handles = V>) -> Self {
+        Self {
+            views: views.view_group(),
+        }
     }
 }
 
