@@ -33,7 +33,7 @@ struct App;
 impl Object for App {}
 
 impl Handler<window::Resized> for App {
-    fn handle(&mut self, _handle: concoct::Context<Self>, msg: window::Resized) {
+    fn handle(&mut self, _cx: concoct::Context<Self>, msg: window::Resized) {
         dbg!(msg);
     }
 }
@@ -43,6 +43,7 @@ fn main() {
     let _guard = ui.enter();
 
     let window = Window::default().spawn();
+
     let app = App.spawn();
     window.bind(&app);
 
