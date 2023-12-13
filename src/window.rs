@@ -1,5 +1,5 @@
 use crate::{view::IntoView, UserInterface};
-use concoct::{Context, Handle, Handler, Object, Signal};
+use concoct::{Context, Handle, Slot, Object, Signal};
 use winit::dpi::PhysicalSize;
 
 pub struct Window<V> {
@@ -35,7 +35,7 @@ impl<V: 'static> Signal<Resized> for Window<V> {}
 
 pub struct SetSize {}
 
-impl<V: 'static> Handler<SetSize> for Window<V> {
+impl<V: 'static> Slot<SetSize> for Window<V> {
     fn handle(&mut self, _handle: Context<Self>, _msg: SetSize) {}
 }
 
@@ -43,7 +43,7 @@ pub enum WindowMessage {
     Resized(PhysicalSize<u32>),
 }
 
-impl<V: 'static> Handler<WindowMessage> for Window<V> {
+impl<V: 'static> Slot<WindowMessage> for Window<V> {
     fn handle(&mut self, handle: Context<Self>, msg: WindowMessage) {
         match msg {
             WindowMessage::Resized(size) => handle.emit(Resized(size)),

@@ -178,6 +178,7 @@ checksum = "fd16c4719339c4530435d38e511904438d07cce7950afa3718a84ac36c10e89e"
 [[package]]
 name = "concoct"
 version = "0.8.0-alpha.3"
+source = "git+https://github.com/concoct-rs/concoct#585dfa6d5b54e9134b9f4ebf06d8e4d26f6d2fcf"
 dependencies = [
  "futures",
  "slotmap",

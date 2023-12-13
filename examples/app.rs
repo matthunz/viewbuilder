@@ -1,4 +1,4 @@
-use concoct::{Handler, Object};
+use concoct::{Context, Slot, Object};
 use viewbuilder::{
     view::{LinearLayout, Text},
     window, UserInterface, Window,
@@ -8,8 +8,8 @@ struct App;
 
 impl Object for App {}
 
-impl Handler<window::Resized> for App {
-    fn handle(&mut self, _handle: concoct::Context<Self>, msg: window::Resized) {
+impl Slot<window::Resized> for App {
+    fn handle(&mut self, _handle: Context<Self>, msg: window::Resized) {
         dbg!(msg);
     }
 }
