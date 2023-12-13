@@ -24,51 +24,57 @@ A cross-platform user interface framework for Rust.
 
 Viewbuilder is a moduler GUI library that can be used as an entire framework, or with individual parts.
 
+## Web
 ```rust
-use concoct::{Context, Handle, Object, Slot};
-use viewbuilder::{
-    view::{LinearLayout, Text},
-    window, UserInterface, Window,
-};
-use winit::dpi::PhysicalSize;
+use concoct::{Handle, Object, Signal, Slot};
+use viewbuilder::web::{Element, Text};
 
-struct App {
-    width_text: Handle<Text>,
-    height_text: Handle<Text>,
-    size: PhysicalSize<u32>,
+#[derive(Clone, Copy)]
+enum Message {
+    Increment,
+    Decrement,
 }
 
-impl Object for App {}
+#[derive(Default)]
+struct Counter {
+    value: i32,
+}
 
-impl Slot<window::Resized> for App {
-    fn handle(&mut self, _cx: Handle<Self>, msg: window::Resized) {
-        if msg.width != self.size.width {
-            self.width_text.send(format!("Width: {}", msg.width).into());
-            self.size.width = msg.width
-        }
+impl Object for Counter {}
 
-        if msg.height != self.size.height {
-            self.height_text
-                .send(format!("Height: {}", msg.height).into());
-            self.size.height = msg.height
-        }
+impl Signal<i32> for Counter {}
+
+impl Slot<Message> for Counter {
+    fn handle(&mut self, cx: Handle<Self>, msg: Message) {
+        match msg {
+            Message::Increment => self.value += 1,
+            Message::Decrement => self.value -= 1,
+        };
+        cx.emit(self.value);
     }
+}
+
+fn counter_button(counter: &Handle<Counter>, label: &str, msg: Message) -> Handle<Element> {
+    let button = Element::builder().child(Text::new(label)).build().start();
+    button.map(&counter, move |_| msg);
+    button
 }
 
 #[viewbuilder::main]
 fn main() {
-    let width_text = Text::default().spawn();
-    let height_text = Text::default().spawn();
+    let text = Text::new("0").start();
 
-    let app = App {
-        width_text: width_text.clone(),
-        height_text: height_text.clone(),
-        size: PhysicalSize::default(),
-    }
-    .spawn();
+    let counter = Counter::default().start();
+    counter.map(&text, |value| value.to_string());
 
-    let window = Window::new(LinearLayout::new((width_text, height_text))).spawn();
-    window.bind(&app);
+    Element::builder()
+        .child((
+            text,
+            counter_button(&counter, "Up high!", Message::Increment),
+            counter_button(&counter, "Down low!", Message::Decrement),
+        ))
+        .build()
+        .start();
 }
 ```
 

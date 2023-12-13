@@ -10,7 +10,7 @@ repository = "https://github.com/matthunz/viewbuilder"
 members = [
     ".",
     "macros",
-    "web-examples"
+    "web_examples"
 ]
 
 [features]

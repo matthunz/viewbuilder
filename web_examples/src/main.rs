@@ -1,4 +1,4 @@
-use concoct::{Handle, Object, Slot};
+use concoct::{Handle, Object, Signal, Slot};
 use viewbuilder::web::{Element, Text};
 
 #[derive(Clone, Copy)]
@@ -7,20 +7,22 @@ enum Message {
     Decrement,
 }
 
+#[derive(Default)]
 struct Counter {
     value: i32,
-    text: Handle<Text>,
 }
 
 impl Object for Counter {}
 
+impl Signal<i32> for Counter {}
+
 impl Slot<Message> for Counter {
-    fn handle(&mut self, _cx: concoct::Handle<Self>, msg: Message) {
+    fn handle(&mut self, cx: Handle<Self>, msg: Message) {
         match msg {
             Message::Increment => self.value += 1,
             Message::Decrement => self.value -= 1,
         };
-        self.text.send(self.value.to_string());
+        cx.emit(self.value);
     }
 }
 
@@ -34,11 +36,8 @@ fn counter_button(counter: &Handle<Counter>, label: &str, msg: Message) -> Handl
 fn main() {
     let text = Text::new("0").start();
 
-    let counter = Counter {
-        value: 0,
-        text: text.clone(),
-    }
-    .start();
+    let counter = Counter::default().start();
+    counter.map(&text, |value| value.to_string());
 
     Element::builder()
         .child((
