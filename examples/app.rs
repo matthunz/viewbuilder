@@ -1,5 +1,5 @@
 use concoct::{Context, Handle, Object, Slot};
-use viewbuilder::{
+use viewbuilder::native::{
     view::{LinearLayout, Text},
     window, UserInterface, Window,
 };

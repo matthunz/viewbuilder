@@ -1,7 +1,6 @@
-use std::ops::Deref;
-
-use crate::{view::IntoView, UserInterface};
+use super::{view::IntoView, UserInterface};
 use concoct::{Context, Handle, Object, Signal, Slot};
+use std::ops::Deref;
 use winit::dpi::PhysicalSize;
 
 pub struct Window<V> {

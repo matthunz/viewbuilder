@@ -13,7 +13,9 @@ members = [
 ]
 
 [features]
-full = []
+native = []
+web = []
+full = ["native"]
 
 [dependencies]
 kurbo = "0.9.5"
@@ -26,3 +28,7 @@ viewbuilder-macros = { path = "macros" }
 [package.metadata.docs.rs]
 features = ["full"]
 rustdoc-args = ["--cfg", "docsrs"]
+
+[[example]]
+name = "app"
+required-features = ["native"]
