@@ -1,5 +1,5 @@
 use concoct::{Handle, Object, Slot};
-use viewbuilder::web::{self, Element, Text};
+use viewbuilder::web::{Element, Text};
 
 #[derive(Clone, Copy)]
 enum Message {
@@ -24,17 +24,10 @@ impl Slot<Message> for Counter {
     }
 }
 
-struct CounterButton {
-    msg: Message,
-    counter: Handle<Counter>,
-}
-
-impl Object for CounterButton {}
-
-impl Slot<web::MouseEvent> for CounterButton {
-    fn handle(&mut self, _cx: concoct::Handle<Self>, _msg: web::MouseEvent) {
-        self.counter.send(self.msg);
-    }
+fn counter_button(counter: &Handle<Counter>, label: &str, msg: Message) -> Handle<Element> {
+    let button = Element::builder().child(Text::new(label)).build().start();
+    button.map(&counter, move |_| msg);
+    button
 }
 
 #[viewbuilder::main]
@@ -47,28 +40,11 @@ fn main() {
     }
     .start();
 
-    let increment_button = CounterButton {
-        msg: Message::Increment,
-        counter: counter.clone(),
-    }
-    .start();
-    let decrement_button = CounterButton {
-        msg: Message::Decrement,
-        counter,
-    }
-    .start();
-
     Element::builder()
         .child((
             text,
-            Element::builder()
-                .on_click(increment_button)
-                .child(Text::new("Up High!"))
-                .build(),
-            Element::builder()
-                .on_click(decrement_button)
-                .child(Text::new("Down Low!"))
-                .build(),
+            counter_button(&counter, "Up high!", Message::Increment),
+            counter_button(&counter, "Down low!", Message::Decrement),
         ))
         .build()
         .start();

@@ -1,4 +1,4 @@
-use concoct::{Handle, Object, Slot};
+use concoct::{Handle, Object, Slot, Signal};
 use web_sys::wasm_bindgen::JsCast;
 
 pub trait View {
@@ -59,9 +59,7 @@ pub struct MouseEvent;
 pub struct ElementBuilder {}
 
 impl ElementBuilder {
-    pub fn on_click(&mut self, _f: Handle<impl Slot<MouseEvent>>) -> &mut Self {
-        self
-    }
+   
 
     pub fn child(&mut self, _view: impl ViewGroup) -> &mut Self {
         self
@@ -106,6 +104,10 @@ impl View for Element {
         self.parent = Some(parent.clone());
         parent.append_child(&self.element).unwrap();
     }
+}
+
+impl Signal<MouseEvent> for Element {
+
 }
 
 pub struct AppendChild<V>(pub Handle<V>);
