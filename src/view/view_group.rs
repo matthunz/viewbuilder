@@ -1,7 +1,7 @@
-use super::View;
+use super::IntoView;
 
 pub trait ViewGroup {}
 
-impl<V: View> ViewGroup for V {}
+impl<V: IntoView> ViewGroup for V {}
 
-impl<A: View, B: View> ViewGroup for (A, B) {}
+impl<A: IntoView, B: IntoView> ViewGroup for (A, B) {}

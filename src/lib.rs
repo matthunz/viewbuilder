@@ -1,5 +1,6 @@
-use concoct::{Context, Runtime, RuntimeGuard};
+use concoct::{Runtime, RuntimeGuard, SlotHandle};
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
+use window::WindowMessage;
 use winit::{
     event::{Event, WindowEvent},
     event_loop::EventLoop,
@@ -19,8 +20,8 @@ thread_local! {
 
 #[derive(Default)]
 struct Inner {
-    pending_windows: Vec<Context<Window>>,
-    windows: HashMap<WindowId, (winit::window::Window, Context<Window>)>,
+    pending_windows: Vec<SlotHandle<WindowMessage>>,
+    windows: HashMap<WindowId, (winit::window::Window, SlotHandle<WindowMessage>)>,
 }
 
 #[derive(Clone, Default)]
@@ -64,7 +65,7 @@ impl UserInterface {
             match event {
                 Event::WindowEvent { window_id, event } => match event {
                     WindowEvent::Resized(size) => {
-                        me.windows[&window_id].1.emit(window::Resized(size));
+                        me.windows[&window_id].1.send(WindowMessage::Resized(size));
                     }
                     _ => {}
                 },

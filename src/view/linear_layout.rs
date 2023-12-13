@@ -1,3 +1,5 @@
+use concoct::Object;
+
 use super::{View, ViewGroup};
 
 pub struct LinearLayout<V> {
@@ -10,11 +12,6 @@ impl<V> LinearLayout<V> {
     }
 }
 
-impl<V> View for LinearLayout<V>
-where
-    V: ViewGroup,
-{
-    fn view(self) {
-        todo!()
-    }
-}
+impl<V> Object for LinearLayout<V> {}
+
+impl<V> View for LinearLayout<V> where V: ViewGroup {}

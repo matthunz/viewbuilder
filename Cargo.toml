@@ -15,7 +15,7 @@ kurbo = "0.9.5"
 tokio = { version = "1.32.0", features = ["full"] }
 slotmap = "1.0.7"
 winit = { version = "0.28.1" }
-concoct = { git = "https://github.com/concoct-rs/concoct" }
+concoct = { path = "../concoct" }
 
 [package.metadata.docs.rs]
 features = ["full"]
