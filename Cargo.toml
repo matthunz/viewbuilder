@@ -24,7 +24,7 @@ kurbo = "0.9.5"
 tokio = { version = "1.32.0", features = ["full"] }
 slotmap = "1.0.7"
 winit = { version = "0.28.1" }
-concoct = { git = "https://github.com/concoct-rs/concoct" }
+concoct = { git = "https://github.com/concoct-rs/concoct", features = ["full"] }
 viewbuilder-macros = { path = "macros" }
 web-sys = { version = "0.3.66", optional = true, features = ["Document", "HtmlElement", "Text", "Window"] }
 

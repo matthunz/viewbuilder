@@ -20,7 +20,7 @@ where
     type View = V;
 
     fn into_view(self) -> Handle<Self::View> {
-        self.spawn()
+        self.start()
     }
 }
 
@@ -111,7 +111,7 @@ impl View for Element {
 pub struct AppendChild<V>(pub Handle<V>);
 
 impl<V: View + 'static> Slot<AppendChild<V>> for Element {
-    fn handle(&mut self, _handle: concoct::Context<Self>, msg: AppendChild<V>) {
+    fn handle(&mut self, _handle: concoct::Handle<Self>, msg: AppendChild<V>) {
         self.element.append_child(msg.0.borrow().node()).unwrap();
     }
 }
@@ -148,5 +148,5 @@ impl View for Text {
 impl Object for Text {}
 
 impl Slot<String> for Text {
-    fn handle(&mut self, _handle: concoct::Context<Self>, _msg: String) {}
+    fn handle(&mut self, _handle: concoct::Handle<Self>, _msg: String) {}
 }

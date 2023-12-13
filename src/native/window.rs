@@ -1,11 +1,11 @@
 use super::{view::IntoView, UserInterface};
-use concoct::{Context, Handle, Object, Signal, Slot};
+use concoct::{ Handle, Object, Signal, Slot};
 use std::ops::Deref;
 use winit::dpi::PhysicalSize;
 
 pub struct Window<V> {
     view: Handle<V>,
-    cx: Option<Context<Self>>,
+    cx: Option<Handle<Self>>,
 }
 
 impl<V> Window<V> {
@@ -18,7 +18,7 @@ impl<V> Window<V> {
 }
 
 impl<V: 'static> Object for Window<V> {
-    fn start(&mut self, cx: Context<Self>) {
+    fn started(&mut self, cx: Handle<Self>) {
         UserInterface::current()
             .inner
             .borrow_mut()
@@ -45,7 +45,7 @@ impl<V: 'static> Signal<Resized> for Window<V> {}
 pub struct SetSize {}
 
 impl<V: 'static> Slot<SetSize> for Window<V> {
-    fn handle(&mut self, _handle: Context<Self>, _msg: SetSize) {}
+    fn handle(&mut self, _handle: Handle<Self>, _msg: SetSize) {}
 }
 
 pub enum WindowMessage {
@@ -53,7 +53,7 @@ pub enum WindowMessage {
 }
 
 impl<V: 'static> Slot<WindowMessage> for Window<V> {
-    fn handle(&mut self, handle: Context<Self>, msg: WindowMessage) {
+    fn handle(&mut self, handle: Handle<Self>, msg: WindowMessage) {
         match msg {
             WindowMessage::Resized(size) => handle.emit(Resized(size)),
         }

@@ -19,7 +19,7 @@ impl Object for Text {}
 impl View for Text {}
 
 impl Slot<Rc<str>> for Text {
-    fn handle(&mut self, _handle: concoct::Context<Self>, msg: Rc<str>) {
+    fn handle(&mut self, _handle: concoct::Handle<Self>, msg: Rc<str>) {
         dbg!(msg);
     }
 }

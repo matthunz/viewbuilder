@@ -7,4 +7,4 @@ edition = "2021"
 
 [dependencies]
 viewbuilder = { path = "../", features = ["full"] }
-concoct = { git = "https://github.com/concoct-rs/concoct" }
+concoct = { git = "https://github.com/concoct-rs/concoct", features = ["full"] }

@@ -41,7 +41,7 @@ struct App {
 impl Object for App {}
 
 impl Slot<window::Resized> for App {
-    fn handle(&mut self, _cx: Context<Self>, msg: window::Resized) {
+    fn handle(&mut self, _cx: Handle<Self>, msg: window::Resized) {
         if msg.width != self.size.width {
             self.width_text.send(format!("Width: {}", msg.width).into());
             self.size.width = msg.width

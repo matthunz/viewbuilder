@@ -24,7 +24,7 @@ where
     type View = V;
 
     fn into_view(self) -> Handle<Self::View> {
-        self.spawn()
+        self.start()
     }
 }
 

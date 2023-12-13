@@ -1,4 +1,4 @@
-use concoct::{Context, Handle, Object, Slot};
+use concoct::{ Handle, Object, Slot};
 use viewbuilder::native::{
     view::{LinearLayout, Text},
     window, Window,
@@ -14,7 +14,7 @@ struct App {
 impl Object for App {}
 
 impl Slot<window::Resized> for App {
-    fn handle(&mut self, _cx: Context<Self>, msg: window::Resized) {
+    fn handle(&mut self, _cx: Handle<Self>, msg: window::Resized) {
         if msg.width != self.size.width {
             self.width_text.send(format!("Width: {}", msg.width).into());
             self.size.width = msg.width
@@ -30,16 +30,16 @@ impl Slot<window::Resized> for App {
 
 #[viewbuilder::main]
 fn main() {
-    let width_text = Text::default().spawn();
-    let height_text = Text::default().spawn();
+    let width_text = Text::default().start();
+    let height_text = Text::default().start();
 
     let app = App {
         width_text: width_text.clone(),
         height_text: height_text.clone(),
         size: PhysicalSize::default(),
     }
-    .spawn();
+    .start();
 
-    let window = Window::new(LinearLayout::new((width_text, height_text))).spawn();
+    let window = Window::new(LinearLayout::new((width_text, height_text))).start();
     window.bind(&app);
 }

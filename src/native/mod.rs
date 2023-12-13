@@ -1,4 +1,4 @@
-use concoct::{Runtime, RuntimeGuard, SlotHandle};
+use concoct::{Runtime, SlotHandle, rt::RuntimeGuard};
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 use window::WindowMessage;
 use winit::{

@@ -15,7 +15,7 @@ struct Counter {
 impl Object for Counter {}
 
 impl Slot<Message> for Counter {
-    fn handle(&mut self, _cx: concoct::Context<Self>, msg: Message) {
+    fn handle(&mut self, _cx: concoct::Handle<Self>, msg: Message) {
         match msg {
             Message::Increment => self.value += 1,
             Message::Decrement => self.value -= 1,
@@ -32,31 +32,31 @@ struct CounterButton {
 impl Object for CounterButton {}
 
 impl Slot<web::MouseEvent> for CounterButton {
-    fn handle(&mut self, _cx: concoct::Context<Self>, _msg: web::MouseEvent) {
+    fn handle(&mut self, _cx: concoct::Handle<Self>, _msg: web::MouseEvent) {
         self.counter.send(self.msg);
     }
 }
 
 #[viewbuilder::main]
 fn main() {
-    let text = Text::new("0").spawn();
+    let text = Text::new("0").start();
 
     let counter = Counter {
         value: 0,
         text: text.clone(),
     }
-    .spawn();
+    .start();
 
     let increment_button = CounterButton {
         msg: Message::Increment,
         counter: counter.clone(),
     }
-    .spawn();
+    .start();
     let decrement_button = CounterButton {
         msg: Message::Decrement,
         counter,
     }
-    .spawn();
+    .start();
 
     Element::builder()
         .child((
@@ -71,5 +71,5 @@ fn main() {
                 .build(),
         ))
         .build()
-        .spawn();
+        .start();
 }
