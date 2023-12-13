@@ -8,12 +8,12 @@ pub fn main(_attrs: TokenStream, input: TokenStream) -> TokenStream {
     let stmts = input.block.stmts;
     let expanded = quote! {
         fn main() {
-            let ui = UserInterface::default();
-            let _guard = ui.enter();
+            let viewbuilder_macros_ui = viewbuilder::native::UserInterface::default();
+            let _guard = viewbuilder_macros_ui.enter();
 
             #(#stmts)*
 
-            ui.run()
+            viewbuilder_macros_ui.run()
         }
     };
     expanded.into()

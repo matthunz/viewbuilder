@@ -9,13 +9,15 @@ repository = "https://github.com/matthunz/viewbuilder"
 [workspace]
 members = [
     ".",
-    "macros"
+    "macros",
+    "web-examples"
 ]
 
 [features]
 native = []
-web = []
-full = ["native"]
+web = ["dep:web-sys"]
+full = ["native", "web"]
+web-sys = ["dep:web-sys"]
 
 [dependencies]
 kurbo = "0.9.5"
@@ -24,6 +26,7 @@ slotmap = "1.0.7"
 winit = { version = "0.28.1" }
 concoct = { git = "https://github.com/concoct-rs/concoct" }
 viewbuilder-macros = { path = "macros" }
+web-sys = { version = "0.3.66", optional = true, features = ["Document", "HtmlElement", "Text", "Window"] }
 
 [package.metadata.docs.rs]
 features = ["full"]

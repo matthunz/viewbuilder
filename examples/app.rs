@@ -1,7 +1,7 @@
 use concoct::{Context, Handle, Object, Slot};
 use viewbuilder::native::{
     view::{LinearLayout, Text},
-    window, UserInterface, Window,
+    window, Window,
 };
 use winit::dpi::PhysicalSize;
 
