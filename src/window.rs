@@ -1,5 +1,7 @@
+use std::ops::Deref;
+
 use crate::{view::IntoView, UserInterface};
-use concoct::{Context, Handle, Slot, Object, Signal};
+use concoct::{Context, Handle, Object, Signal, Slot};
 use winit::dpi::PhysicalSize;
 
 pub struct Window<V> {
@@ -30,6 +32,14 @@ impl<V: 'static> Object for Window<V> {
 
 #[derive(Clone, Copy, Debug)]
 pub struct Resized(pub PhysicalSize<u32>);
+
+impl Deref for Resized {
+    type Target = PhysicalSize<u32>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
 impl<V: 'static> Signal<Resized> for Window<V> {}
 

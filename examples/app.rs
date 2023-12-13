@@ -1,27 +1,24 @@
-use concoct::{Context, Slot, Object};
-use viewbuilder::{
-    view::{LinearLayout, Text},
-    window, UserInterface, Window,
-};
+use concoct::{Context, Handle, Object, Slot};
+use viewbuilder::{view::Text, window, UserInterface, Window};
 
-struct App;
+struct App {
+    text: Handle<Text>,
+}
 
 impl Object for App {}
 
 impl Slot<window::Resized> for App {
     fn handle(&mut self, _handle: Context<Self>, msg: window::Resized) {
-        dbg!(msg);
+        self.text.send(msg.width.to_string().into())
     }
 }
 
+#[viewbuilder::main]
 fn main() {
-    let ui = UserInterface::default();
-    let _guard = ui.enter();
+    let text = Text::default().spawn();
 
-    let app = App.spawn();
+    let app = App { text: text.clone() }.spawn();
 
-    let window = Window::new(LinearLayout::new((Text {}, Text {}))).spawn();
+    let window = Window::new(text).spawn();
     window.bind(&app);
-
-    ui.run()
 }

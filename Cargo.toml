@@ -6,6 +6,11 @@ license = "MIT OR Apache-2.0"
 description = "Cross-platform UI framework"
 repository = "https://github.com/matthunz/viewbuilder"
 
+[workspace]
+members = [
+    ".",
+    "macros"
+]
 
 [features]
 full = []
@@ -16,6 +21,7 @@ tokio = { version = "1.32.0", features = ["full"] }
 slotmap = "1.0.7"
 winit = { version = "0.28.1" }
 concoct = { git = "https://github.com/concoct-rs/concoct" }
+viewbuilder-macros = { path = "macros" }
 
 [package.metadata.docs.rs]
 features = ["full"]

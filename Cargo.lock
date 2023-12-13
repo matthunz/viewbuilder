@@ -1079,7 +1079,16 @@ dependencies = [
  "kurbo",
  "slotmap",
  "tokio",
+ "viewbuilder-macros",
  "winit",
+]
+
+[[package]]
+name = "viewbuilder-macros"
+version = "0.1.0"
+dependencies = [
+ "quote",
+ "syn 2.0.41",
 ]
 
 [[package]]

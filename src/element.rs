@@ -1,4 +1,4 @@
-use concoct::{Slot, Object};
+use concoct::{Object, Slot};
 
 pub struct Element<V> {
     view: V,

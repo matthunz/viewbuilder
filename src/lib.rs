@@ -7,6 +7,8 @@ use winit::{
     window::WindowId,
 };
 
+pub use viewbuilder_macros::main;
+
 pub mod element;
 
 pub mod view;
