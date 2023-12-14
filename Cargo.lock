@@ -177,11 +177,10 @@ checksum = "fd16c4719339c4530435d38e511904438d07cce7950afa3718a84ac36c10e89e"
 
 [[package]]
 name = "concoct"
-version = "0.10.1"
-source = "git+https://github.com/concoct-rs/concoct#fe809ce828f99d71dd88e9e615adc93567e2127c"
+version = "0.11.0"
+source = "git+https://github.com/concoct-rs/concoct#b17345e8c16fd5261e60f7f1fe4cc078d351021d"
 dependencies = [
  "futures",
- "hashbrown",
  "rustc-hash",
  "slotmap",
  "tokio",

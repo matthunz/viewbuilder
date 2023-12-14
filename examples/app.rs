@@ -6,7 +6,7 @@ struct App;
 impl Object for App {}
 
 impl Slot<window::Resized> for App {
-    fn handle(&mut self, _cx: Handle<Self>, msg: window::Resized) {
+    fn update(&mut self, _cx: Handle<Self>, msg: window::Resized) {
         dbg!(msg);
     }
 }

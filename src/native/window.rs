@@ -4,24 +4,23 @@ use std::ops::Deref;
 use winit::dpi::PhysicalSize;
 
 pub struct Window {
-    cx: Option<Handle<Self>>,
+    raw: Option<winit::window::Window>,
 }
 
 impl Window {
     pub fn new() -> Self {
-        Self { cx: None }
+        Self { raw: None }
+    }
+
+    pub fn raw(&self) -> &winit::window::Window {
+        self.raw.as_ref().unwrap()
     }
 }
 
 impl Object for Window {
     fn started(&mut self, cx: Handle<Self>) {
-        UserInterface::current()
-            .inner
-            .borrow_mut()
-            .pending_windows
-            .push(cx.slot());
-
-        self.cx = Some(cx);
+        let window = UserInterface::current().create_window(cx.slot());
+        self.raw = Some(window);
     }
 }
 
@@ -41,7 +40,7 @@ impl Signal<Resized> for Window {}
 pub struct SetSize {}
 
 impl Slot<SetSize> for Window {
-    fn handle(&mut self, _handle: Handle<Self>, _msg: SetSize) {}
+    fn update(&mut self, _cx: Handle<Self>, _msg: SetSize) {}
 }
 
 pub enum WindowMessage {
@@ -49,9 +48,9 @@ pub enum WindowMessage {
 }
 
 impl Slot<WindowMessage> for Window {
-    fn handle(&mut self, handle: Handle<Self>, msg: WindowMessage) {
+    fn update(&mut self, cx: Handle<Self>, msg: WindowMessage) {
         match msg {
-            WindowMessage::Resized(size) => handle.emit(Resized(size)),
+            WindowMessage::Resized(size) => cx.emit(Resized(size)),
         }
     }
 }

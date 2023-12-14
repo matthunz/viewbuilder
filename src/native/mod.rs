@@ -1,13 +1,11 @@
 use concoct::{rt::RuntimeGuard, Runtime, SlotHandle};
-use std::{cell::RefCell, collections::HashMap, rc::Rc};
+use std::{cell::RefCell, collections::HashMap, mem, rc::Rc};
 use window::WindowMessage;
 use winit::{
     event::{Event, WindowEvent},
-    event_loop::EventLoop,
+    event_loop::{EventLoop, EventLoopWindowTarget},
     window::WindowId,
 };
-
-pub mod element;
 
 pub mod window;
 pub use window::Window;
@@ -16,16 +14,32 @@ thread_local! {
     static CURRENT: RefCell<Option<UserInterface>> = RefCell::default();
 }
 
-#[derive(Default)]
-struct Inner {
-    pending_windows: Vec<SlotHandle<WindowMessage>>,
-    windows: HashMap<WindowId, (winit::window::Window, SlotHandle<WindowMessage>)>,
+enum EventLoopTarget {
+    EventLoop(EventLoop<()>),
+    WindowTarget(&'static EventLoopWindowTarget<()>),
 }
 
-#[derive(Clone, Default)]
+struct Inner {
+    event_loop: Option<EventLoopTarget>,
+    windows: HashMap<WindowId, SlotHandle<WindowMessage>>,
+}
+
+#[derive(Clone)]
 pub struct UserInterface {
     rt: Runtime,
     inner: Rc<RefCell<Inner>>,
+}
+
+impl Default for UserInterface {
+    fn default() -> Self {
+        Self {
+            rt: Default::default(),
+            inner: Rc::new(RefCell::new(Inner {
+                event_loop: Some(EventLoopTarget::EventLoop(EventLoop::new())),
+                windows: HashMap::new(),
+            })),
+        }
+    }
 }
 
 impl UserInterface {
@@ -47,34 +61,54 @@ impl UserInterface {
 
         let rt = self.rt.enter();
 
-        UserInterfaceGuard { rt }
+        UserInterfaceGuard { _rt: rt }
     }
 
     pub fn run(self) {
-        EventLoop::new().run(move |event, event_loop, _| {
+        let event_loop = if let EventLoopTarget::EventLoop(event_loop) =
+            self.inner.borrow_mut().event_loop.take().unwrap()
+        {
+            event_loop
+        } else {
+            todo!()
+        };
+
+        event_loop.run(move |event, event_loop, _| {
             self.rt.try_run();
 
             let mut me = self.inner.borrow_mut();
-            while let Some(handle) = me.pending_windows.pop() {
-                let window = winit::window::Window::new(&event_loop).unwrap();
-                me.windows.insert(window.id(), (window, handle));
-            }
+            me.event_loop = Some(EventLoopTarget::WindowTarget(unsafe {
+                mem::transmute(event_loop)
+            }));
 
             match event {
                 Event::WindowEvent { window_id, event } => match event {
                     WindowEvent::Resized(size) => {
-                        me.windows[&window_id].1.send(WindowMessage::Resized(size));
+                        me.windows[&window_id].send(WindowMessage::Resized(size));
                     }
                     _ => {}
                 },
                 _ => {}
-            }
+            };
+
+            me.event_loop.take();
         });
+    }
+
+    pub(crate) fn create_window(&self, handle: SlotHandle<WindowMessage>) -> winit::window::Window {
+        let mut me = self.inner.borrow_mut();
+        let event_loop = match me.event_loop.as_ref().unwrap() {
+            EventLoopTarget::EventLoop(event_loop) => &**event_loop,
+            EventLoopTarget::WindowTarget(event_loop) => event_loop,
+        };
+        let window = winit::window::Window::new(event_loop).unwrap();
+        me.windows.insert(window.id(), handle);
+        window
     }
 }
 
 pub struct UserInterfaceGuard {
-    rt: RuntimeGuard,
+    _rt: RuntimeGuard,
 }
 
 impl Drop for UserInterfaceGuard {
