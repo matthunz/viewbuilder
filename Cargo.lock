@@ -177,8 +177,9 @@ checksum = "fd16c4719339c4530435d38e511904438d07cce7950afa3718a84ac36c10e89e"
 
 [[package]]
 name = "concoct"
-version = "0.11.0"
-source = "git+https://github.com/concoct-rs/concoct#b17345e8c16fd5261e60f7f1fe4cc078d351021d"
+version = "0.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c5a35009dd102377411f647744d3eab86f15d332e75e6c9769f0a8cb8babd82f"
 dependencies = [
  "futures",
  "rustc-hash",
@@ -447,15 +448,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cee9c64da59eae3b50095c18d3e74f8b73c0b86d2792824ff01bbce68ba229ca"
 dependencies = [
  "wasm-bindgen",
-]
-
-[[package]]
-name = "kurbo"
-version = "0.9.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bd85a5776cd9500c2e2059c8c76c3b01528566b7fcbaf8098b55a33fc298849b"
-dependencies = [
- "arrayvec",
 ]
 
 [[package]]
@@ -1081,19 +1073,27 @@ checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
 
 [[package]]
 name = "viewbuilder"
-version = "0.6.2"
+version = "0.7.0"
 dependencies = [
  "concoct",
- "kurbo",
- "slotmap",
  "tokio",
- "viewbuilder-macros",
+ "viewbuilder-macros 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "winit",
 ]
 
 [[package]]
 name = "viewbuilder-macros"
-version = "0.1.0"
+version = "0.2.0"
+dependencies = [
+ "quote",
+ "syn 2.0.41",
+]
+
+[[package]]
+name = "viewbuilder-macros"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "aa12523ab9ba1233a73920fcd742026624f83ec59b70ec7f32ad3445f872f067"
 dependencies = [
  "quote",
  "syn 2.0.41",

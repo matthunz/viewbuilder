@@ -7,7 +7,11 @@ use winit::{
     window::{WindowBuilder, WindowId},
 };
 
+#[cfg(feature = "window")]
+#[cfg_attr(docsrs, doc(cfg(feature = "window")))]
 pub mod window;
+#[cfg(feature = "window")]
+#[cfg_attr(docsrs, doc(cfg(feature = "window")))]
 pub use window::Window;
 
 thread_local! {
@@ -95,7 +99,7 @@ impl UserInterface {
         });
     }
 
-    pub(crate) fn create_window(
+    pub fn create_window(
         &self,
         builder: WindowBuilder,
         handle: SlotHandle<RawWindowMessage>,
