@@ -4,7 +4,7 @@ use window::WindowMessage;
 use winit::{
     event::{Event, WindowEvent},
     event_loop::{EventLoop, EventLoopWindowTarget},
-    window::WindowId,
+    window::{WindowBuilder, WindowId},
 };
 
 pub mod window;
@@ -95,13 +95,17 @@ impl UserInterface {
         });
     }
 
-    pub(crate) fn create_window(&self, handle: SlotHandle<WindowMessage>) -> winit::window::Window {
+    pub(crate) fn create_window(
+        &self,
+        builder: WindowBuilder,
+        handle: SlotHandle<WindowMessage>,
+    ) -> winit::window::Window {
         let mut me = self.inner.borrow_mut();
-        let event_loop = match me.event_loop.as_ref().unwrap() {
+        let window_target = match me.event_loop.as_ref().unwrap() {
             EventLoopTarget::EventLoop(event_loop) => &**event_loop,
             EventLoopTarget::WindowTarget(event_loop) => event_loop,
         };
-        let window = winit::window::Window::new(event_loop).unwrap();
+        let window = builder.build(window_target).unwrap();
         me.windows.insert(window.id(), handle);
         window
     }

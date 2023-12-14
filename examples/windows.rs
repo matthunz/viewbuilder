@@ -15,6 +15,9 @@ impl Slot<window::Resized> for App {
 fn main() {
     let app = App.start();
 
-    let window = Window::new().start();
-    window.bind(&app);
+    let window_a = Window::builder().title("Window A").build().start();
+    window_a.bind(&app);
+
+    let window_b = Window::builder().title("Window B").build().start();
+    window_b.bind(&app);
 }
