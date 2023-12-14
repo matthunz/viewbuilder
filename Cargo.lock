@@ -1089,7 +1089,6 @@ dependencies = [
  "slotmap",
  "tokio",
  "viewbuilder-macros",
- "web-sys",
  "winit",
 ]
 
@@ -1232,14 +1231,6 @@ dependencies = [
  "dlib",
  "lazy_static",
  "pkg-config",
-]
-
-[[package]]
-name = "web-examples"
-version = "0.1.0"
-dependencies = [
- "concoct",
- "viewbuilder",
 ]
 
 [[package]]

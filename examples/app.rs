@@ -1,45 +1,20 @@
-use concoct::{ Handle, Object, Slot};
-use viewbuilder::native::{
-    view::{LinearLayout, Text},
-    window, Window,
-};
-use winit::dpi::PhysicalSize;
+use concoct::{Handle, Object, Slot};
+use viewbuilder::native::{window, Window};
 
-struct App {
-    width_text: Handle<Text>,
-    height_text: Handle<Text>,
-    size: PhysicalSize<u32>,
-}
+struct App;
 
 impl Object for App {}
 
 impl Slot<window::Resized> for App {
     fn handle(&mut self, _cx: Handle<Self>, msg: window::Resized) {
-        if msg.width != self.size.width {
-            self.width_text.send(format!("Width: {}", msg.width).into());
-            self.size.width = msg.width
-        }
-
-        if msg.height != self.size.height {
-            self.height_text
-                .send(format!("Height: {}", msg.height).into());
-            self.size.height = msg.height
-        }
+        dbg!(msg);
     }
 }
 
 #[viewbuilder::main]
 fn main() {
-    let width_text = Text::default().start();
-    let height_text = Text::default().start();
+    let app = App.start();
 
-    let app = App {
-        width_text: width_text.clone(),
-        height_text: height_text.clone(),
-        size: PhysicalSize::default(),
-    }
-    .start();
-
-    let window = Window::new(LinearLayout::new((width_text, height_text))).start();
+    let window = Window::new().start();
     window.bind(&app);
 }

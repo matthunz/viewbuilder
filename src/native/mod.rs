@@ -1,4 +1,4 @@
-use concoct::{Runtime, SlotHandle, rt::RuntimeGuard};
+use concoct::{rt::RuntimeGuard, Runtime, SlotHandle};
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 use window::WindowMessage;
 use winit::{
@@ -8,8 +8,6 @@ use winit::{
 };
 
 pub mod element;
-
-pub mod view;
 
 pub mod window;
 pub use window::Window;
