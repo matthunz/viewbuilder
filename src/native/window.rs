@@ -6,6 +6,7 @@ use winit::{
     window::WindowBuilder,
 };
 
+/// Builder for a window.
 pub struct Builder {
     raw: Option<WindowBuilder>,
 }
@@ -17,20 +18,28 @@ impl Default for Builder {
 }
 
 impl Builder {
+    /// Create a new window builder.
     pub fn new() -> Self {
         Self::default()
     }
 
+    /// Create a new window builder from its raw `winit` window builder.
     pub fn from_raw(raw: WindowBuilder) -> Self {
         Self { raw: Some(raw) }
     }
 
+    /// Set the title for this window.
     pub fn title(&mut self, title: impl Into<String>) -> &mut Self {
         let raw = self.raw.take().unwrap();
         self.raw = Some(raw.with_title(title));
         self
     }
 
+    /// Build a new window, consuming this builder.
+    /// 
+    /// ## Panics
+    /// 
+    /// This consumes the current builder, any further calls to `build` will panic.
     pub fn build(&mut self) -> Window {
         Window {
             raw: Some(WindowState::Builder(self.raw.take().unwrap())),
@@ -43,6 +52,7 @@ enum WindowState {
     Window(winit::window::Window),
 }
 
+/// Native application window.
 pub struct Window {
     raw: Option<WindowState>,
 }
@@ -54,14 +64,20 @@ impl Default for Window {
 }
 
 impl Window {
+    /// Create a default window.
     pub fn new() -> Self {
         Self::default()
     }
 
+    /// Create a new window builder.
     pub fn builder() -> Builder {
         Builder::default()
     }
 
+    /// Get a reference to the raw window.
+    /// 
+    /// ## Panics
+    /// This function will panic if the window hasn't been started with [`Object::start`].
     pub fn raw(&self) -> &winit::window::Window {
         match self.raw.as_ref().unwrap() {
             WindowState::Builder(_) => todo!(),
@@ -82,6 +98,7 @@ impl Object for Window {
     }
 }
 
+/// Signal for the window resize event.
 #[derive(Clone, Copy, Debug)]
 pub struct ResizedEvent(pub PhysicalSize<u32>);
 
@@ -95,10 +112,12 @@ impl Deref for ResizedEvent {
 
 impl Signal<ResizedEvent> for Window {}
 
+/// Signal for a custom message.
 pub struct CustomMessage(pub Box<dyn Any>);
 
 impl Signal<CustomMessage> for Window {}
 
+/// Slot to set the size of a window.
 pub struct SetSizeMessage<S>(pub S);
 
 impl<S: Into<Size>> Slot<SetSizeMessage<S>> for Window {
@@ -107,6 +126,7 @@ impl<S: Into<Size>> Slot<SetSizeMessage<S>> for Window {
     }
 }
 
+/// Slot to emit an event from the raw window.
 pub enum RawWindowMessage {
     UserEvent(Box<dyn Any>),
     Resized(PhysicalSize<u32>),
