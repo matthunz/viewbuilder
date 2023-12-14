@@ -33,8 +33,8 @@ struct App;
 
 impl Object for App {}
 
-impl Slot<window::Resized> for App {
-    fn update(&mut self, _cx: Handle<Self>, msg: window::Resized) {
+impl Slot<window::ResizedEvent> for App {
+    fn update(&mut self, _cx: Handle<Self>, msg: window::ResizedEvent) {
         dbg!(msg);
     }
 }
@@ -49,7 +49,11 @@ fn main() {
     let window_b = Window::builder().title("Window B").build().start();
     window_b.bind(&app);
 
-    window_a.send(window::SetSize(PhysicalSize::new(500, 500)));
+    window_a.map(&window_b, |&window::ResizedEvent(size)| {
+        window::SetSizeMessage(size)
+    });
+
+    window_a.send(window::SetSizeMessage(PhysicalSize::new(500, 500)));
 }
 ```
 
