@@ -1,6 +1,6 @@
 use concoct::{rt::RuntimeGuard, Runtime, SlotHandle};
 use std::{cell::RefCell, collections::HashMap, mem, rc::Rc};
-use window::WindowMessage;
+use window::RawWindowMessage;
 use winit::{
     event::{Event, WindowEvent},
     event_loop::{EventLoop, EventLoopWindowTarget},
@@ -21,7 +21,7 @@ enum EventLoopTarget {
 
 struct Inner {
     event_loop: Option<EventLoopTarget>,
-    windows: HashMap<WindowId, SlotHandle<WindowMessage>>,
+    windows: HashMap<WindowId, SlotHandle<RawWindowMessage>>,
 }
 
 #[derive(Clone)]
@@ -84,7 +84,7 @@ impl UserInterface {
             match event {
                 Event::WindowEvent { window_id, event } => match event {
                     WindowEvent::Resized(size) => {
-                        me.windows[&window_id].send(WindowMessage::Resized(size));
+                        me.windows[&window_id].send(RawWindowMessage::Resized(size));
                     }
                     _ => {}
                 },
@@ -98,7 +98,7 @@ impl UserInterface {
     pub(crate) fn create_window(
         &self,
         builder: WindowBuilder,
-        handle: SlotHandle<WindowMessage>,
+        handle: SlotHandle<RawWindowMessage>,
     ) -> winit::window::Window {
         let mut me = self.inner.borrow_mut();
         let window_target = match me.event_loop.as_ref().unwrap() {

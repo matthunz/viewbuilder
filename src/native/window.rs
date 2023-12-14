@@ -1,6 +1,6 @@
 use super::UserInterface;
 use concoct::{Handle, Object, Signal, Slot};
-use std::ops::Deref;
+use std::{any::Any, ops::Deref};
 use winit::{
     dpi::{PhysicalSize, Size},
     window::WindowBuilder,
@@ -83,9 +83,9 @@ impl Object for Window {
 }
 
 #[derive(Clone, Copy, Debug)]
-pub struct Resized(pub PhysicalSize<u32>);
+pub struct ResizedEvent(pub PhysicalSize<u32>);
 
-impl Deref for Resized {
+impl Deref for ResizedEvent {
     type Target = PhysicalSize<u32>;
 
     fn deref(&self) -> &Self::Target {
@@ -93,24 +93,30 @@ impl Deref for Resized {
     }
 }
 
-impl Signal<Resized> for Window {}
+impl Signal<ResizedEvent> for Window {}
 
-pub struct SetSize<S>(pub S);
+pub struct CustomMessage(pub Box<dyn Any>);
 
-impl<S: Into<Size>> Slot<SetSize<S>> for Window {
-    fn update(&mut self, _cx: Handle<Self>, msg: SetSize<S>) {
+impl Signal<CustomMessage> for Window {}
+
+pub struct SetSizeMessage<S>(pub S);
+
+impl<S: Into<Size>> Slot<SetSizeMessage<S>> for Window {
+    fn update(&mut self, _cx: Handle<Self>, msg: SetSizeMessage<S>) {
         self.raw().set_inner_size(msg.0.into())
     }
 }
 
-pub enum WindowMessage {
+pub enum RawWindowMessage {
+    UserEvent(Box<dyn Any>),
     Resized(PhysicalSize<u32>),
 }
 
-impl Slot<WindowMessage> for Window {
-    fn update(&mut self, cx: Handle<Self>, msg: WindowMessage) {
+impl Slot<RawWindowMessage> for Window {
+    fn update(&mut self, cx: Handle<Self>, msg: RawWindowMessage) {
         match msg {
-            WindowMessage::Resized(size) => cx.emit(Resized(size)),
+            RawWindowMessage::UserEvent(user_event) => cx.emit(CustomMessage(user_event)),
+            RawWindowMessage::Resized(size) => cx.emit(ResizedEvent(size)),
         }
     }
 }
