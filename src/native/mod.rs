@@ -7,6 +7,10 @@ use winit::{
     window::{WindowBuilder, WindowId},
 };
 
+#[cfg(feature = "layout")]
+#[cfg_attr(docsrs, doc(cfg(feature = "layout")))]
+pub mod layout;
+
 #[cfg(feature = "window")]
 #[cfg_attr(docsrs, doc(cfg(feature = "window")))]
 pub mod window;

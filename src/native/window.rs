@@ -36,9 +36,9 @@ impl Builder {
     }
 
     /// Build a new window, consuming this builder.
-    /// 
+    ///
     /// ## Panics
-    /// 
+    ///
     /// This consumes the current builder, any further calls to `build` will panic.
     pub fn build(&mut self) -> Window {
         Window {
@@ -75,7 +75,7 @@ impl Window {
     }
 
     /// Get a reference to the raw window.
-    /// 
+    ///
     /// ## Panics
     /// This function will panic if the window hasn't been started with [`Object::start`].
     pub fn raw(&self) -> &winit::window::Window {
