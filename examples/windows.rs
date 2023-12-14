@@ -22,5 +22,9 @@ fn main() {
     let window_b = Window::builder().title("Window B").build().start();
     window_b.bind(&app);
 
+    window_a.map(&window_b, |&window::ResizedEvent(size)| {
+        window::SetSizeMessage(size)
+    });
+
     window_a.send(window::SetSizeMessage(PhysicalSize::new(500, 500)));
 }

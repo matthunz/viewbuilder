@@ -177,9 +177,9 @@ checksum = "fd16c4719339c4530435d38e511904438d07cce7950afa3718a84ac36c10e89e"
 
 [[package]]
 name = "concoct"
-version = "0.12.0"
+version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c5a35009dd102377411f647744d3eab86f15d332e75e6c9769f0a8cb8babd82f"
+checksum = "91f18486e11599eca7d002b6af0ad9f211f3907a669698afd44f59b6a768cd5b"
 dependencies = [
  "futures",
  "rustc-hash",
@@ -1073,7 +1073,7 @@ checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
 
 [[package]]
 name = "viewbuilder"
-version = "0.7.1"
+version = "0.7.2"
 dependencies = [
  "concoct",
  "tokio",
