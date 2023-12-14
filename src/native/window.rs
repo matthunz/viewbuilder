@@ -1,7 +1,10 @@
 use super::UserInterface;
 use concoct::{Handle, Object, Signal, Slot};
 use std::ops::Deref;
-use winit::{dpi::PhysicalSize, window::WindowBuilder};
+use winit::{
+    dpi::{PhysicalSize, Size},
+    window::WindowBuilder,
+};
 
 pub struct Builder {
     raw: Option<WindowBuilder>,
@@ -92,10 +95,12 @@ impl Deref for Resized {
 
 impl Signal<Resized> for Window {}
 
-pub struct SetSize {}
+pub struct SetSize<S>(pub S);
 
-impl Slot<SetSize> for Window {
-    fn update(&mut self, _cx: Handle<Self>, _msg: SetSize) {}
+impl<S: Into<Size>> Slot<SetSize<S>> for Window {
+    fn update(&mut self, _cx: Handle<Self>, msg: SetSize<S>) {
+        self.raw().set_inner_size(msg.0.into())
+    }
 }
 
 pub enum WindowMessage {
