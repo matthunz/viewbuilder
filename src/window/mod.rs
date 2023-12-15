@@ -28,9 +28,9 @@ enum WindowState {
 /// 
 /// impl Object for App {}
 /// 
-/// let event_loop = EventLoop::<()>::new().start();
+/// let event_loop = EventLoop::<()>::create();
 /// 
-/// let window = Window::new().start();
+/// let window = Window::create;
 /// Window::insert(&mut window.cx(), &event_loop);
 /// 
 /// let app = App.start();
@@ -40,6 +40,12 @@ enum WindowState {
 /// ```
 pub struct Window {
     state: Option<WindowState>,
+}
+
+impl Default for Window {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl Window {

@@ -75,6 +75,12 @@ pub struct EventLoop<E: 'static> {
     control_flow: ControlFlow,
 }
 
+impl<E: 'static> Default for EventLoop<E> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<E: 'static> EventLoop<E> {
     pub fn new() -> Self {
         Self {

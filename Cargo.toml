@@ -1,6 +1,6 @@
 [package]
 name = "viewbuilder"
-version = "0.9.1"
+version = "0.9.2"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 description = "Cross-platform UI framework"
@@ -14,7 +14,7 @@ full = ["Window"]
 [dependencies]
 tokio = { version = "1.32.0", features = ["full"], optional = true }
 winit = { version = "0.28.1", optional = true }
-concoct = { version = "0.15.1", features = ["full"] }
+concoct = { version = "0.16.3", features = ["full"] }
 
 [package.metadata.docs.rs]
 features = ["full"]
