@@ -25,35 +25,29 @@ A cross-platform user interface framework for Rust.
 Viewbuilder is a moduler GUI library that can be used as an entire framework, or with individual parts.
 
 ```rust
-use concoct::{Handle, Object, Slot};
-use viewbuilder::native::{window, Window};
-use winit::dpi::PhysicalSize;
+use concoct::{Context, Object};
+use viewbuilder::{event_loop::WindowEvent, EventLoop, Window};
 
 struct App;
 
-impl Object for App {}
-
-impl Slot<window::ResizedEvent> for App {
-    fn update(&mut self, _cx: Handle<Self>, msg: window::ResizedEvent) {
-        dbg!(msg);
+impl App {
+    pub fn handle(cx: &mut Context<Self>, event: WindowEvent) {
+        dbg!(event);
     }
 }
 
-#[viewbuilder::main]
+impl Object for App {}
+
 fn main() {
+    let event_loop = EventLoop::<()>::new().start();
+
+    let window = Window::new().start();
+    Window::insert(&mut window.cx(), &event_loop);
+
     let app = App.start();
+    window.bind(&app, App::handle);
 
-    let window_a = Window::builder().title("Window A").build().start();
-    window_a.bind(&app);
-
-    let window_b = Window::builder().title("Window B").build().start();
-    window_b.bind(&app);
-
-    window_a.map(&window_b, |&window::ResizedEvent(size)| {
-        window::SetSizeMessage(size)
-    });
-
-    window_a.send(window::SetSizeMessage(PhysicalSize::new(500, 500)));
+    EventLoop::run(event_loop);
 }
 ```
 

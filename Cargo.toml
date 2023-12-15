@@ -14,7 +14,7 @@ full = ["Window"]
 [dependencies]
 tokio = { version = "1.32.0", features = ["full"], optional = true }
 winit = { version = "0.28.1", optional = true }
-concoct = { version = "0.15.0", features = ["full"] }
+concoct = { path = "../concoct", features = ["full"] }
 
 [package.metadata.docs.rs]
 features = ["full"]

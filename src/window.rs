@@ -13,6 +13,7 @@ enum WindowState<E: 'static> {
     },
 }
 
+
 pub struct Window<E: 'static> {
     state: Option<WindowState<E>>,
 }
