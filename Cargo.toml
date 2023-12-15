@@ -6,16 +6,10 @@ license = "MIT OR Apache-2.0"
 description = "Cross-platform UI framework"
 repository = "https://github.com/matthunz/viewbuilder"
 
-[workspace]
-members = [
-    ".",
-    "macros"
-]
-
 [features]
 native = ["dep:winit"]
 macros = ["dep:viewbuilder-macros"]
-window = []
+window = ["native"]
 layout = ["dep:slotmap", "dep:taffy"]
 full = ["native", "macros", "window", "layout"]
 
@@ -23,7 +17,7 @@ full = ["native", "macros", "window", "layout"]
 [dependencies]
 tokio = { version = "1.32.0", features = ["full"], optional = true }
 winit = { version = "0.28.1", optional = true }
-concoct = { version = "0.13.0", features = ["full"] }
+concoct = { version = "0.15.0", features = ["full"] }
 viewbuilder-macros = { version = "0.2.0", optional = true }
 taffy = { version = "0.3.18", optional = true }
 slotmap = { version = "1.0.7", optional = true }
@@ -33,9 +27,5 @@ features = ["full"]
 rustdoc-args = ["--cfg", "docsrs"]
 
 [[example]]
-name = "layout"
-required-features = ["native", "layout"]
-
-[[example]]
-name = "windows"
-required-features = ["native"]
+name = "window"
+required-features = ["window"]
