@@ -4,7 +4,7 @@ use viewbuilder::{event_loop::WindowEvent, EventLoop, Window};
 struct App;
 
 impl App {
-    pub fn handle(cx: &mut Context<Self>, event: WindowEvent) {
+    pub fn event(_cx: &mut Context<Self>, event: WindowEvent) {
         dbg!(event);
     }
 }
@@ -18,7 +18,7 @@ fn main() {
     Window::insert(&mut window.cx(), &event_loop);
 
     let app = App.start();
-    window.bind(&app, App::handle);
+    window.bind(&app, App::event);
 
     EventLoop::run(event_loop);
 }

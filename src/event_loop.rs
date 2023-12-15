@@ -1,9 +1,9 @@
 use concoct::{Handle, Object, Signal};
-use std::mem;
+use std::{mem, time::Instant};
 use winit::{
     dpi::{PhysicalPosition, PhysicalSize},
     event::{DeviceEvent, DeviceId, Event as RawEvent, StartCause, WindowEvent as RawWindowEvent},
-    event_loop::EventLoopWindowTarget,
+    event_loop::{ControlFlow, EventLoopWindowTarget},
     window::WindowId,
 };
 
@@ -25,7 +25,7 @@ pub enum WindowEvent {
     Destroyed,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Event<E> {
     Custom(E),
     Window {
@@ -50,6 +50,7 @@ pub(crate) enum EventLoopTarget<T: 'static> {
 
 pub struct EventLoop<E: 'static> {
     pub(crate) raw: Option<EventLoopTarget<E>>,
+    control_flow: ControlFlow,
 }
 
 impl<E: 'static> EventLoop<E> {
@@ -58,7 +59,20 @@ impl<E: 'static> EventLoop<E> {
             raw: Some(EventLoopTarget::EventLoop(
                 winit::event_loop::EventLoopBuilder::with_user_event().build(),
             )),
+            control_flow: ControlFlow::Poll,
         }
+    }
+
+    pub fn wait(&mut self) {
+        self.control_flow = ControlFlow::Wait;
+    }
+
+    pub fn wait_until(&mut self, instant: Instant) {
+        self.control_flow = ControlFlow::WaitUntil(instant);
+    }
+
+    pub fn exist(&mut self, code: i32) {
+        self.control_flow = ControlFlow::ExitWithCode(code);
     }
 
     pub fn run(handle: Handle<Self>) {
@@ -70,7 +84,7 @@ impl<E: 'static> EventLoop<E> {
         };
         drop(me);
 
-        raw.run(move |event, event_loop, _| {
+        raw.run(move |event, event_loop, control_flow| {
             handle.borrow_mut().raw = Some(EventLoopTarget::WindowTarget(unsafe {
                 mem::transmute(event_loop)
             }));
@@ -170,6 +184,7 @@ impl<E: 'static> EventLoop<E> {
 
             handle.cx().emit(event);
             handle.borrow_mut().raw = None;
+            *control_flow = handle.borrow().control_flow;
         });
     }
 }
