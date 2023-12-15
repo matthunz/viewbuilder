@@ -5,20 +5,46 @@ use crate::{
 use concoct::{Context, Handle, Object, Signal};
 use winit::window::{Window as RawWindow, WindowBuilder};
 
+mod builder;
+pub use self::builder::Builder;
+
 enum WindowState {
     Builder(WindowBuilder),
     Window { window: RawWindow },
 }
 
+/// Application window.
+/// ```no_run
+/// use concoct::{Context, Object};
+/// use viewbuilder::{event_loop::WindowEvent, EventLoop, Window};
+/// 
+/// let event_loop = EventLoop::<()>::new().start();
+///
+/// let window = Window::new().start();
+/// Window::insert(&mut window.cx(), &event_loop);
+///
+/// let app = App.start();
+/// window.bind(&app, App::event);
+///
+/// EventLoop::run(event_loop);
+/// ```
 pub struct Window {
     state: Option<WindowState>,
 }
 
 impl Window {
     pub fn new() -> Self {
+        Self::builder().build()
+    }
+
+    pub(crate) fn from_builder(builder: WindowBuilder) -> Self {
         Self {
-            state: Some(WindowState::Builder(WindowBuilder::new())),
+            state: Some(WindowState::Builder(builder)),
         }
+    }
+
+    pub fn builder() -> Builder {
+        Builder::default()
     }
 
     pub fn insert<E>(cx: &mut Context<Self>, event_loop: &Handle<EventLoop<E>>)

@@ -48,6 +48,28 @@ pub(crate) enum EventLoopTarget<T: 'static> {
     WindowTarget(&'static EventLoopWindowTarget<T>),
 }
 
+/// Application event loop.
+/// ```no_run
+/// use concoct::{Context, Object};
+/// use viewbuilder::{event_loop::Event, EventLoop, Window};
+/// 
+/// struct App;
+/// 
+/// impl Object for App {}
+/// 
+/// impl App {
+///     pub fn event(_cx: &mut Context<Self>, event: Event<()>) {
+///         dbg!(event);
+///     }
+/// }
+/// 
+/// let event_loop = EventLoop::<()>::new().start();
+/// 
+/// let app = App.start();
+/// event_loop.bind(&app, App::event);
+///
+/// EventLoop::run(event_loop);
+/// ```
 pub struct EventLoop<E: 'static> {
     pub(crate) raw: Option<EventLoopTarget<E>>,
     control_flow: ControlFlow,
