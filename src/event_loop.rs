@@ -71,7 +71,7 @@ impl<E: 'static> EventLoop<E> {
         self.control_flow = ControlFlow::WaitUntil(instant);
     }
 
-    pub fn exist(&mut self, code: i32) {
+    pub fn exit(&mut self, code: i32) {
         self.control_flow = ControlFlow::ExitWithCode(code);
     }
 
@@ -85,9 +85,12 @@ impl<E: 'static> EventLoop<E> {
         drop(me);
 
         raw.run(move |event, event_loop, control_flow| {
-            handle.borrow_mut().raw = Some(EventLoopTarget::WindowTarget(unsafe {
+            let mut me = handle.borrow_mut();
+            me.raw = Some(EventLoopTarget::WindowTarget(unsafe {
                 mem::transmute(event_loop)
             }));
+            me.control_flow = ControlFlow::Poll;
+            drop(me);
 
             let event = match event {
                 RawEvent::UserEvent(custom) => Event::Custom(custom),
