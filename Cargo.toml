@@ -9,12 +9,15 @@ repository = "https://github.com/matthunz/viewbuilder"
 [features]
 EventLoop = ["dep:winit"]
 Window = ["EventLoop"]
-full = ["Window"]
+web = ["dep:js-sys", "dep:web-sys"]
+full = ["Window", "web"]
 
 [dependencies]
 tokio = { version = "1.32.0", features = ["full"], optional = true }
 winit = { version = "0.28.1", optional = true }
 concoct = { version = "0.16.4", features = ["full"] }
+web-sys = { version = "0.3.66", features = ["Document", "HtmlElement", "Window"], optional = true }
+js-sys = { version = "0.3.66", optional = true }
 
 [package.metadata.docs.rs]
 features = ["full"]

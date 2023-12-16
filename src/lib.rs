@@ -25,3 +25,9 @@ cfg_flag!(
     pub mod window;
     pub use window::Window;
 );
+
+cfg_flag!(
+    "web";
+    pub mod web;
+    pub use web::Element;
+);

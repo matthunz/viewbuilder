@@ -1067,7 +1067,9 @@ name = "viewbuilder"
 version = "0.9.4"
 dependencies = [
  "concoct",
+ "js-sys",
  "tokio",
+ "web-sys",
  "winit",
 ]
 
