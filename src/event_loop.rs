@@ -63,7 +63,7 @@ pub(crate) enum EventLoopTarget<T: 'static> {
 ///     }
 /// }
 /// 
-/// let event_loop = EventLoop::<()>::new().start();
+/// let event_loop = EventLoop::<()>::create();
 /// 
 /// let app = App.start();
 /// event_loop.bind(&app, App::event);

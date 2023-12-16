@@ -23,6 +23,7 @@
 A cross-platform user interface framework for Rust.
 
 Viewbuilder is a moduler GUI library that can be used as an entire framework, or with individual parts.
+This crate provides reactive objects for UI using the [`concoct`](https://github.com/concoct-rs/concoct) runtime.
 
 ```rust
 use concoct::{Context, Object};
@@ -39,7 +40,7 @@ impl App {
 impl Object for App {}
 
 fn main() {
-    let event_loop = EventLoop::<()>::new().start();
+    let event_loop = EventLoop::<()>::create();
 
     let window = Window::create();
     Window::insert(&mut window.cx(), &event_loop);
