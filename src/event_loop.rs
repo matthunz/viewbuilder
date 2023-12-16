@@ -51,7 +51,7 @@ pub(crate) enum EventLoopTarget<T: 'static> {
 /// Application event loop.
 /// ```no_run
 /// use concoct::{Context, Object};
-/// use viewbuilder::{event_loop::Event, EventLoop, Window};
+/// use viewbuilder::{event_loop::Event, EventLoop};
 /// 
 /// struct App;
 /// 

@@ -30,7 +30,7 @@ enum WindowState {
 /// 
 /// let event_loop = EventLoop::<()>::create();
 /// 
-/// let window = Window::create;
+/// let window = Window::create();
 /// Window::insert(&mut window.cx(), &event_loop);
 /// 
 /// let app = App.start();
