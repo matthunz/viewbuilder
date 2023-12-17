@@ -1,33 +1,26 @@
-//! A cross-platform user interface framework for Rust.
-//! Viewbuilder is a moduler GUI library that can be used as an entire framework,
-//! or with individual parts. This crate provides reactive objects for UI using the
-//! [`concoct`](https://docs.rs/concoct/latest/concoct/) runtime.
-#![cfg_attr(docsrs, feature(doc_cfg))]
+use std::sync::Arc;
 
-macro_rules! cfg_flag {
-    ($flag:tt; $($i:item)*) => {
-        $(
-            #[cfg(feature = $flag)]
-            #[cfg_attr(docsrs, doc(cfg(feature = $flag)))]
-            $i
-        )*
-    };
+pub mod view;
+pub use self::view::ViewBuilder;
+
+pub struct Context<M> {
+    send: Arc<dyn Fn(M) + Send + Sync>,
 }
 
-cfg_flag!(
-    "EventLoop";
-    pub mod event_loop;
-    pub use event_loop::EventLoop;
-);
+impl<M> Context<M> {
+    pub fn new(send: Arc<dyn Fn(M) + Send + Sync>) -> Self {
+        Self { send }
+    }
 
-cfg_flag!(
-    "Window";
-    pub mod window;
-    pub use window::Window;
-);
+    pub fn send(&self, msg: M) {
+        (self.send)(msg)
+    }
+}
 
-cfg_flag!(
-    "web";
-    pub mod web;
-    pub use web::Element;
-);
+impl<M> Clone for Context<M> {
+    fn clone(&self) -> Self {
+        Self {
+            send: self.send.clone(),
+        }
+    }
+}
