@@ -7,22 +7,18 @@ description = "Cross-platform UI framework"
 repository = "https://github.com/matthunz/viewbuilder"
 
 [features]
-EventLoop = ["dep:winit"]
-Window = ["EventLoop"]
-web = ["dep:js-sys", "dep:web-sys"]
-full = ["Window", "web"]
+full = []
 
 [dependencies]
-tokio = { version = "1.32.0", features = ["full"], optional = true }
-winit = { version = "0.28.1", optional = true }
-concoct = { version = "0.16.4", features = ["full"] }
-web-sys = { version = "0.3.66", features = ["Document", "HtmlElement", "Window"], optional = true }
-js-sys = { version = "0.3.66", optional = true }
+anyhow = "1.0.79"
+pollster = "0.3.0"
+slotmap = "1.0.7"
+tokio = { version = "1.35.1", features = ["full"] }
+vello = { git = "https://github.com/linebender/vello" }
+wgpu = { version = "0.18" }
+winit = "0.28.1"
 
 [package.metadata.docs.rs]
 features = ["full"]
 rustdoc-args = ["--cfg", "docsrs"]
 
-[[example]]
-name = "window"
-required-features = ["Window"]
