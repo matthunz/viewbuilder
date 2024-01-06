@@ -10,12 +10,7 @@ repository = "https://github.com/matthunz/viewbuilder"
 full = []
 
 [dependencies]
-anyhow = "1.0.79"
-pollster = "0.3.0"
-slotmap = "1.0.7"
-tokio = { version = "1.35.1", features = ["full"] }
-vello = { git = "https://github.com/linebender/vello" }
-wgpu = { version = "0.18" }
+concoct = { git = "https://github.com/concoct-rs/concoct" }
 winit = "0.28.1"
 
 [package.metadata.docs.rs]

@@ -1,23 +1,25 @@
-use viewbuilder::{Context, View};
+use concoct::{Composer, Model};
+use viewbuilder::{run, Window};
 
-struct App;
+#[derive(Default)]
+struct App {
+    count: i32,
+}
 
-impl View<()> for App {
-    type Element = ();
-
-    fn build(&mut self, cx: &mut Context<()>) -> Self::Element {
-        cx.send(())
+impl Model<()> for App {
+    fn handle(&mut self, msg: ()) {
+        self.count += 1;
     }
 }
 
-fn app() -> impl View<i32> {
-    App.map(|()| 2)
-}
-
-#[tokio::main]
-async fn main() {
-    let (mut cx, mut rx) = Context::new();
-    app().build(&mut cx);
-
-    dbg!(rx.recv().await);
+fn main() {
+    let composer = Composer::new(App::default(), |model: &App| {
+        Window::builder()
+            .title(model.count.to_string())
+            .on_event(|msg| {
+                dbg!(msg);
+            })
+            .build()
+    });
+    run(composer)
 }
