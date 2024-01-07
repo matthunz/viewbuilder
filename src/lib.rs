@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 pub mod view;
-pub use self::view::ViewBuilder;
+pub use self::view::View;
 
 pub struct Context<M> {
     send: Arc<dyn Fn(M) + Send + Sync>,
