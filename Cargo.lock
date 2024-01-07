@@ -317,6 +317,7 @@ name = "viewbuilder"
 version = "0.9.4"
 dependencies = [
  "concoct",
+ "tokio",
 ]
 
 [[package]]
