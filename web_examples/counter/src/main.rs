@@ -1,5 +1,8 @@
-use std::{cell::RefCell, rc::Rc, sync::Arc};
-use viewbuilder::{view, web::html, Application, ControlFlow, Model, View, Web};
+use viewbuilder::{
+    view,
+    web::{self, html, Web},
+    ControlFlow, Model, View,
+};
 
 enum Message {
     Increment,
@@ -21,7 +24,7 @@ impl Model<Message> for App {
     }
 }
 
-fn app(model: &App) -> impl View<Web, Message> {
+fn view(model: &App) -> impl View<Web, Message> {
     (
         format!("High five count: {}", model.count),
         view::once(html::div(html::on_click(|| Message::Increment), "Up high!")),
@@ -33,21 +36,5 @@ fn app(model: &App) -> impl View<Web, Message> {
 }
 
 fn main() {
-    let cell = Rc::new(RefCell::new(None::<Application<_, _, _, _, _>>));
-    let cell_clone = cell.clone();
-    let mut app = Application::new(
-        Arc::new(move |msg| {
-            let mut g = cell_clone.borrow_mut();
-            let app = g.as_mut().unwrap();
-            if let ControlFlow::Rebuild = app.handle(msg) {
-                app.rebuild();
-            }
-        }),
-        App::default(),
-        app,
-        Web::default(),
-    );
-    app.build();
-
-    *cell.borrow_mut() = Some(app);
+    web::run(App::default(), view)
 }

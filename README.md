@@ -25,6 +25,13 @@ A cross-platform user interface framework for Rust.
 Viewbuilder is a moduler GUI library that can be used as an entire framework, or with individual parts.
 
 ```rust
+use std::{cell::RefCell, rc::Rc, sync::Arc};
+use viewbuilder::{
+    view,
+    web::{self, html, Web},
+    Application, ControlFlow, Model, View,
+};
+
 enum Message {
     Increment,
     Decrement,
@@ -45,7 +52,7 @@ impl Model<Message> for App {
     }
 }
 
-fn app(model: &App) -> impl View<Web, Message> {
+fn view(model: &App) -> impl View<Web, Message> {
     (
         format!("High five count: {}", model.count),
         view::once(html::div(html::on_click(|| Message::Increment), "Up high!")),
@@ -54,6 +61,10 @@ fn app(model: &App) -> impl View<Web, Message> {
             "Down low!",
         )),
     )
+}
+
+fn main() {
+    web::run(App::default(), view)
 }
 ```
 

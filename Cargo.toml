@@ -17,7 +17,6 @@ members = [
 full = []
 
 [dependencies]
-tokio = { version = "1.35.1", features = ["full"], optional = true }
 web-sys = { version = "0.3.66", features = ["Document", "HtmlElement", "Window", "Text"] }
 
 [package.metadata.docs.rs]

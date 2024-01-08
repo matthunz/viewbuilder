@@ -1,4 +1,5 @@
-use crate::{Context, HtmlAttributes, View, Web};
+use super::{HtmlAttributes, Web};
+use crate::{Context, View};
 use std::{fmt, marker::PhantomData, mem};
 use web_sys::wasm_bindgen::{closure::Closure, JsCast};
 
@@ -170,9 +171,9 @@ where
 
     fn rebuild(
         &mut self,
-        cx: &mut Context<M>,
-        tree: &mut HtmlAttributes,
-        element: &mut Self::Element,
+        _cx: &mut Context<M>,
+        _tree: &mut HtmlAttributes,
+        _element: &mut Self::Element,
     ) {
         todo!()
     }
@@ -198,12 +199,17 @@ where
 {
     type Element = (K, V);
 
-    fn build(&mut self, cx: &mut Context<M>, tree: &mut StyleTree) -> Self::Element {
+    fn build(&mut self, _cx: &mut Context<M>, tree: &mut StyleTree) -> Self::Element {
         tree.s.push_str(&format!("{}: {};", &self.key, &self.value));
         (self.key.clone(), self.value.clone())
     }
 
-    fn rebuild(&mut self, cx: &mut Context<M>, tree: &mut StyleTree, element: &mut Self::Element) {
+    fn rebuild(
+        &mut self,
+        _cx: &mut Context<M>,
+        _tree: &mut StyleTree,
+        _element: &mut Self::Element,
+    ) {
         todo!()
     }
 }

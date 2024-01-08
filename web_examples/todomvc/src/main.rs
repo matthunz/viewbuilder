@@ -1,5 +1,7 @@
-use std::{cell::RefCell, rc::Rc, sync::Arc};
-use viewbuilder::{web::html, Application, ControlFlow, Model, View, Web};
+use viewbuilder::{
+    web::{self, html, Web},
+    ControlFlow, Model, View,
+};
 
 enum Message {
     Check { id: u64, is_checked: bool },
@@ -90,21 +92,5 @@ impl Model<Message> for App {
 }
 
 fn main() {
-    let cell = Rc::new(RefCell::new(None::<Application<_, _, _, _, _>>));
-    let cell_clone = cell.clone();
-    let mut app = Application::new(
-        Arc::new(move |msg| {
-            let mut g = cell_clone.borrow_mut();
-            let app = g.as_mut().unwrap();
-            if let ControlFlow::Rebuild = app.handle(msg) {
-                app.rebuild();
-            }
-        }),
-        App::default(),
-        view,
-        Web::default(),
-    );
-    app.build();
-
-    *cell.borrow_mut() = Some(app);
+    web::run(App::default(), view)
 }
