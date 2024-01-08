@@ -83,9 +83,10 @@ where
         self.attrs.rebuild(cx, &mut element.0, &mut element.1)
     }
 
-    fn remove(&mut self, _cx: &mut Context<M>, _state: &mut Web, _element: Self::Element) {
+    fn remove(&mut self, _cx: &mut Context<M>, _state: &mut Web, element: Self::Element) {
         #[cfg(feature = "tracing")]
         crate::remove_span!("Element");
+        element.0.element.remove();
     }
 }
 
@@ -167,7 +168,6 @@ where
         _tree: &mut HtmlAttributes,
         _element: &mut Self::Element,
     ) {
-        
     }
 
     fn remove(
@@ -270,7 +270,7 @@ where
 
 pub fn class<T>(name: T) -> Class<T>
 where
-    T: AsRef<str>  + PartialEq+ Clone,
+    T: AsRef<str> + PartialEq + Clone,
 {
     Class { name }
 }
@@ -281,7 +281,7 @@ pub struct Class<T> {
 
 impl<M, T> View<HtmlAttributes, M> for Class<T>
 where
-    T: AsRef<str>  + PartialEq + Clone,
+    T: AsRef<str> + PartialEq + Clone,
 {
     type Element = T;
 

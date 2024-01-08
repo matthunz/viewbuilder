@@ -56,7 +56,7 @@ impl<M> View<Web, M> for &'static str {
 
     fn build(&mut self, _cx: &mut Context<M>, tree: &mut Web) -> Self::Element {
         #[cfg(feature = "tracing")]
-        crate::build_span!("String");
+        crate::build_span!("&'static str");
 
         let text = tree.document.create_text_node(self);
         tree.parent.append_child(&text).unwrap();
@@ -66,7 +66,7 @@ impl<M> View<Web, M> for &'static str {
 
     fn rebuild(&mut self, _cx: &mut Context<M>, _tree: &mut Web, element: &mut Self::Element) {
         #[cfg(feature = "tracing")]
-        crate::rebuild_span!("String");
+        crate::rebuild_span!("&'static str");
 
         if *self != element.0 {
             element.0 = self;
@@ -74,9 +74,11 @@ impl<M> View<Web, M> for &'static str {
         }
     }
 
-    fn remove(&mut self, _cx: &mut Context<M>, _state: &mut Web, _element: Self::Element) {
+    fn remove(&mut self, _cx: &mut Context<M>, _state: &mut Web, element: Self::Element) {
         #[cfg(feature = "tracing")]
-        crate::remove_span!("String");
+        crate::remove_span!("&'static str");
+
+        element.1.remove();
     }
 }
 
@@ -105,5 +107,10 @@ impl<M> View<Web, M> for String {
         }
     }
 
-    fn remove(&mut self, _cx: &mut Context<M>, _state: &mut Web, _element: Self::Element) {}
+    fn remove(&mut self, _cx: &mut Context<M>, _state: &mut Web, element: Self::Element) {
+        #[cfg(feature = "tracing")]
+        crate::remove_span!("String");
+
+        element.1.remove();
+    }
 }

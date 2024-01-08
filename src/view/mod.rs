@@ -1,4 +1,5 @@
 use crate::Context;
+use std::mem;
 use std::{marker::PhantomData, sync::Arc};
 
 mod from_fn;
@@ -72,6 +73,100 @@ impl<T, M, V: View<T, M>> View<T, M> for Option<V> {
     fn remove(&mut self, cx: &mut Context<M>, state: &mut T, element: Self::Element) {
         if let Some((mut view, element)) = element {
             view.remove(cx, state, element)
+        }
+    }
+}
+
+pub struct OneOf<A, B> {
+    data: Option<OneOfData<A, B>>,
+}
+
+impl<A, B> OneOf<A, B> {
+    pub fn a(value: A) -> Self {
+        Self {
+            data: Some(OneOfData::A(value)),
+        }
+    }
+
+    pub fn b(value: B) -> Self {
+        Self {
+            data: Some(OneOfData::B(value)),
+        }
+    }
+
+    pub fn data(&self) -> &OneOfData<A, B> {
+        self.data.as_ref().unwrap()
+    }
+}
+
+pub enum OneOfData<A, B> {
+    A(A),
+    B(B),
+}
+
+impl<ViewT, ViewM, A, B> View<ViewT, ViewM> for OneOf<A, B>
+where
+    A: View<ViewT, ViewM>,
+    B: View<ViewT, ViewM>,
+{
+    type Element = OneOfData<(A, A::Element), (B, B::Element)>;
+
+    fn build(&mut self, cx: &mut Context<ViewM>, state: &mut ViewT) -> Self::Element {
+        match self.data.take().unwrap() {
+            OneOfData::A(mut view) => {
+                let elem = view.build(cx, state);
+                OneOfData::A((view, elem))
+            }
+            OneOfData::B(mut view) => {
+                let elem = view.build(cx, state);
+                OneOfData::B((view, elem))
+            }
+        }
+    }
+
+    fn rebuild(&mut self, cx: &mut Context<ViewM>, state: &mut ViewT, element: &mut Self::Element) {
+        match self.data.take().unwrap() {
+            OneOfData::A(mut view) => match element {
+                OneOfData::A((last_view, elem)) => {
+                    view.rebuild(cx, state, elem);
+                    *last_view = view;
+                }
+                OneOfData::B(_) => {
+                    let elem = view.build(cx, state);
+
+                    let last_element = mem::replace(element, OneOfData::A((view, elem)));
+                    match last_element {
+                        OneOfData::B((mut last_view, last_elem)) => {
+                            last_view.remove(cx, state, last_elem)
+                        }
+                        _ => unimplemented!(),
+                    }
+                }
+            },
+            OneOfData::B(mut view) => match element {
+                OneOfData::A(_) => {
+                    let elem = view.build(cx, state);
+
+                    let last_element = mem::replace(element, OneOfData::B((view, elem)));
+                    match last_element {
+                        OneOfData::A((mut last_view, last_elem)) => {
+                            last_view.remove(cx, state, last_elem)
+                        }
+                        _ => unimplemented!(),
+                    }
+                }
+                OneOfData::B((last_view, elem)) => {
+                    view.rebuild(cx, state, elem);
+                    *last_view = view;
+                }
+            },
+        }
+    }
+
+    fn remove(&mut self, cx: &mut Context<ViewM>, state: &mut ViewT, element: Self::Element) {
+        match element {
+            OneOfData::A((mut view, elem)) => view.remove(cx, state, elem),
+            OneOfData::B((mut view, elem)) => view.remove(cx, state, elem),
         }
     }
 }
