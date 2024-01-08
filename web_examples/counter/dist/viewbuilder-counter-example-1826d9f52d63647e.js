@@ -201,7 +201,7 @@ function makeMutClosure(arg0, arg1, dtor, f) {
     return real;
 }
 function __wbg_adapter_14(arg0, arg1) {
-    wasm._dyn_core__ops__function__FnMut_____Output___R_as_wasm_bindgen__closure__WasmClosure___describe__invoke__hf0b81a8520a648fb(arg0, arg1);
+    wasm._dyn_core__ops__function__FnMut_____Output___R_as_wasm_bindgen__closure__WasmClosure___describe__invoke__h67b5727e7f591b9b(arg0, arg1);
 }
 
 function isLikeNone(x) {
@@ -340,7 +340,7 @@ function __wbg_get_imports() {
     imports.wbg.__wbindgen_throw = function(arg0, arg1) {
         throw new Error(getStringFromWasm0(arg0, arg1));
     };
-    imports.wbg.__wbindgen_closure_wrapper99 = function(arg0, arg1, arg2) {
+    imports.wbg.__wbindgen_closure_wrapper70 = function(arg0, arg1, arg2) {
         const ret = makeMutClosure(arg0, arg1, 20, __wbg_adapter_14);
         return addHeapObject(ret);
     };
@@ -382,7 +382,7 @@ async function __wbg_init(input) {
     if (wasm !== undefined) return wasm;
 
     if (typeof input === 'undefined') {
-        input = new URL('web-example-d4ee296f4030d402_bg.wasm', import.meta.url);
+        input = new URL('viewbuilder-counter-example-1826d9f52d63647e_bg.wasm', import.meta.url);
     }
     const imports = __wbg_get_imports();
 

@@ -1,5 +1,5 @@
 use crate::{Context, HtmlAttributes, View, Web};
-use std::{marker::PhantomData, mem};
+use std::{fmt, marker::PhantomData, mem};
 use web_sys::wasm_bindgen::{closure::Closure, JsCast};
 
 macro_rules! tags {
@@ -22,9 +22,9 @@ tags!(
     dl, dt, em, embed, fieldset, figcaption, figure, footer, form, h1, h2, h3, h4, h5, h6, head,
     header, hr, html, i, iframe, img, input, ins, kbd, label, legend, li, link, main, map, mark,
     meta, meter, nav, noscript, object, ol, optgroup, option, output, p, param, picture, pre,
-    progress, q, rp, rt, ruby, s, samp, script, section, select, small, source, span, strong,
-    style, sub, summary, sup, svg, table, tbody, td, template, textarea, tfoot, th, thead, time,
-    title, tr, track, u, ul, var, video, wbr
+    progress, q, rp, rt, ruby, s, samp, script, section, select, small, source, span, strong, sub,
+    summary, sup, svg, table, tbody, td, template, textarea, tfoot, th, thead, time, title, tr,
+    track, u, ul, var, video, wbr
 );
 
 pub fn element<T, A, C, M>(tag: T, attrs: A, content: C) -> Element<T, A, C, M>
@@ -131,5 +131,79 @@ where
         _tree: &mut HtmlAttributes,
         _element: &mut Self::Element,
     ) {
+    }
+}
+
+pub fn style<M, V>(view: V) -> Style<V, M>
+where
+    V: View<StyleTree, M>,
+{
+    Style {
+        view,
+        _marker: PhantomData,
+    }
+}
+
+pub struct StyleTree {
+    s: String,
+}
+
+pub struct Style<V, M> {
+    view: V,
+    _marker: PhantomData<M>,
+}
+
+impl<M, V> View<HtmlAttributes, M> for Style<V, M>
+where
+    V: View<StyleTree, M>,
+{
+    type Element = StyleTree;
+
+    fn build(&mut self, cx: &mut Context<M>, tree: &mut HtmlAttributes) -> Self::Element {
+        let mut element = StyleTree { s: String::new() };
+        self.view.build(cx, &mut element);
+
+        tree.element.set_attribute("style", &element.s).unwrap();
+
+        element
+    }
+
+    fn rebuild(
+        &mut self,
+        cx: &mut Context<M>,
+        tree: &mut HtmlAttributes,
+        element: &mut Self::Element,
+    ) {
+        todo!()
+    }
+}
+
+pub fn css<K, V>(key: K, value: V) -> Css<K, V>
+where
+    K: fmt::Display + Clone,
+    V: fmt::Display + Clone,
+{
+    Css { key, value }
+}
+
+pub struct Css<K, V> {
+    key: K,
+    value: V,
+}
+
+impl<M, K, V> View<StyleTree, M> for Css<K, V>
+where
+    K: fmt::Display + Clone,
+    V: fmt::Display + Clone,
+{
+    type Element = (K, V);
+
+    fn build(&mut self, cx: &mut Context<M>, tree: &mut StyleTree) -> Self::Element {
+        tree.s.push_str(&format!("{}: {};", &self.key, &self.value));
+        (self.key.clone(), self.value.clone())
+    }
+
+    fn rebuild(&mut self, cx: &mut Context<M>, tree: &mut StyleTree, element: &mut Self::Element) {
+        todo!()
     }
 }

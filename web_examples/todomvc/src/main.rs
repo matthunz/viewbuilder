@@ -1,5 +1,4 @@
 use std::{cell::RefCell, rc::Rc, sync::Arc};
-
 use viewbuilder::{web::html, Application, ControlFlow, Model, View, Web};
 
 enum Message {
