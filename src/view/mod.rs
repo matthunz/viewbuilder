@@ -66,10 +66,16 @@ macro_rules! impl_viewbuilder_for_tuple {
             type Element = ($($t::Element),*);
 
             fn build(&mut self, cx: &mut Context<M>, tree: &mut T) -> Self::Element {
+                let span = tracing::trace_span!("View::Build", view = stringify!(($($t),*)));
+                let _g = span.enter();
+                
                 ($(self.$idx.build(cx, tree)),*)
             }
 
             fn rebuild(&mut self, cx: &mut Context<M>, tree: &mut T, element: &mut Self::Element) {
+                let span = tracing::trace_span!("View::Rebuild", view = stringify!(($($t),*)));
+                let _g = span.enter();
+
                 $(self.$idx.rebuild(cx, tree, &mut element.$idx));*
             }
         }

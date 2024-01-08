@@ -54,8 +54,11 @@ impl Model<Message> for App {
 fn view(model: &App) -> impl View<Web, Message> {
     (
         format!("High five count: {}", model.count),
-        view::once(html::div(html::on_click(|| Message::Increment), "Up high!")),
-        view::once(html::div(
+        view::once(html::button(
+            html::on_click(|| Message::Increment),
+            "Up high!",
+        )),
+        view::once(html::button(
             html::on_click(|| Message::Decrement),
             "Down low!",
         )),

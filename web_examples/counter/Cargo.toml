@@ -3,7 +3,8 @@ name = "viewbuilder-counter-example"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-viewbuilder = { path = "../../" }
+viewbuilder = { path = "../../", features = ["full"] }
+console_error_panic_hook = "0.1.7"
+tracing-wasm = { version = "0.2.1" }
+tracing = "0.1.40"

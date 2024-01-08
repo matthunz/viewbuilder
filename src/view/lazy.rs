@@ -26,12 +26,20 @@ where
     type Element = (u64, V::Element);
 
     fn build(&mut self, cx: &mut crate::Context<M>, tree: &mut T) -> Self::Element {
+        let span = tracing::trace_span!("View::Build", view = "Lazy");
+        let _g = span.enter();
+
         let element = self.view.build(cx, tree);
         (self.hash, element)
     }
 
     fn rebuild(&mut self, cx: &mut crate::Context<M>, tree: &mut T, element: &mut Self::Element) {
+        let span = tracing::trace_span!("View::Rebuild", view = "Lazy");
+        let _g = span.enter();
+
         if self.hash != element.0 {
+            tracing::trace!(name: "Hash change", new = self.hash, old = element.0);
+
             element.0 = self.hash;
             self.view.rebuild(cx, tree, &mut element.1);
         }

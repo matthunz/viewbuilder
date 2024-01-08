@@ -14,10 +14,22 @@ members = [
 ]
 
 [features]
-full = []
+web = ["web-sys"]
+full = ["web", "tracing"]
 
 [dependencies]
-web-sys = { version = "0.3.66", features = ["Document", "Event", "HtmlElement", "Window", "Text"] }
+tracing = { version = "0.1.40", optional = true }
+
+[dependencies.web-sys]
+version = "0.3.66"
+optional = true
+features = [
+    "Document",
+    "Event",
+    "HtmlElement",
+    "Window",
+    "Text"
+]
 
 [package.metadata.docs.rs]
 features = ["full"]
