@@ -24,4 +24,6 @@ where
     fn rebuild(&mut self, cx: &mut Context<M>, tree: &mut T, _state: &mut Self::Element) {
         (self.f)(cx, tree)
     }
+
+    fn remove(&mut self, _cx: &mut Context<M>, _state: &mut T, _element: Self::Element) {}
 }

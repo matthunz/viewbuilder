@@ -1,6 +1,6 @@
 use crate::View;
-use std::hash::{ Hash, Hasher};
 use rustc_hash::FxHasher;
+use std::hash::{Hash, Hasher};
 
 /// Create a lazy view that only renders when the given value changes.
 pub fn lazy<T, M, V>(value: impl Hash, view: V) -> Lazy<V>
@@ -49,5 +49,14 @@ where
             element.0 = self.hash;
             self.view.rebuild(cx, tree, &mut element.1);
         }
+    }
+
+    fn remove(&mut self, cx: &mut crate::Context<M>, state: &mut T, element: Self::Element) {
+        #[cfg(feature = "tracing")]
+        let span = tracing::trace_span!("View::Remove", view = "Lazy");
+        #[cfg(feature = "tracing")]
+        let _g = span.enter();
+
+        self.view.remove(cx, state, element.1);
     }
 }

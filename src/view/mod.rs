@@ -20,6 +20,8 @@ pub trait View<T, M> {
 
     fn rebuild(&mut self, cx: &mut Context<M>, state: &mut T, element: &mut Self::Element);
 
+    fn remove(&mut self, cx: &mut Context<M>, state: &mut T, element: Self::Element);
+
     fn map<F, M1>(self, f: F) -> Map<Self, F, M>
     where
         Self: Sized,
@@ -40,6 +42,8 @@ impl<T, M> View<T, M> for () {
     fn build(&mut self, _cx: &mut Context<M>, _tree: &mut T) -> Self::Element {}
 
     fn rebuild(&mut self, _cx: &mut Context<M>, _tree: &mut T, _element: &mut Self::Element) {}
+
+    fn remove(&mut self, _cx: &mut Context<M>, _state: &mut T, _element: Self::Element) {}
 }
 
 impl<T, M, V, K> View<T, M> for Vec<(K, V)>
@@ -58,6 +62,8 @@ where
     fn rebuild(&mut self, _cx: &mut Context<M>, _tree: &mut T, _element: &mut Self::Element) {
         todo!()
     }
+
+    fn remove(&mut self, _cx: &mut Context<M>, _state: &mut T, _element: Self::Element) {}
 }
 
 macro_rules! impl_viewbuilder_for_tuple {
@@ -70,7 +76,7 @@ macro_rules! impl_viewbuilder_for_tuple {
                 let span = tracing::trace_span!("View::Build", view = stringify!(($($t),*)));
                 #[cfg(feature = "tracing")]
                 let _g = span.enter();
-                
+
                 ($(self.$idx.build(cx, tree)),*)
             }
 
@@ -81,6 +87,15 @@ macro_rules! impl_viewbuilder_for_tuple {
                 let _g = span.enter();
 
                 $(self.$idx.rebuild(cx, tree, &mut element.$idx));*
+            }
+
+            fn remove(&mut self, cx: &mut Context<M>, tree: &mut T, element: Self::Element) {
+                #[cfg(feature = "tracing")]
+                let span = tracing::trace_span!("View::Rebuild", view = stringify!(($($t),*)));
+                #[cfg(feature = "tracing")]
+                let _g = span.enter();
+
+                $(self.$idx.remove(cx, tree, element.$idx));*
             }
         }
     };

@@ -75,6 +75,8 @@ impl<M> View<Web, M> for &'static str {
             element.1.set_text_content(Some(self));
         }
     }
+
+    fn remove(&mut self, _cx: &mut Context<M>, _state: &mut Web, _element: Self::Element) {}
 }
 
 impl<M> View<Web, M> for String {
@@ -105,4 +107,6 @@ impl<M> View<Web, M> for String {
             element.1.set_text_content(Some(self));
         }
     }
+
+    fn remove(&mut self, _cx: &mut Context<M>, _state: &mut Web, _element: Self::Element) {}
 }

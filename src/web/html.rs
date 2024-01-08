@@ -94,6 +94,8 @@ where
 
         self.attrs.rebuild(cx, &mut element.0, &mut element.1)
     }
+
+    fn remove(&mut self, _cx: &mut Context<M>, _state: &mut Web, _element: Self::Element) {}
 }
 
 pub trait EventHandler<Marker, M>: Clone + 'static {
@@ -175,6 +177,14 @@ where
         _element: &mut Self::Element,
     ) {
     }
+
+    fn remove(
+        &mut self,
+        _cx: &mut Context<M>,
+        _state: &mut HtmlAttributes,
+        _element: Self::Element,
+    ) {
+    }
 }
 
 pub fn style<M, V>(view: V) -> Style<V, M>
@@ -219,6 +229,14 @@ where
     ) {
         todo!()
     }
+
+    fn remove(
+        &mut self,
+        _cx: &mut Context<M>,
+        _state: &mut HtmlAttributes,
+        _element: Self::Element,
+    ) {
+    }
 }
 
 pub fn css<K, V>(key: K, value: V) -> Css<K, V>
@@ -254,4 +272,6 @@ where
     ) {
         todo!()
     }
+
+    fn remove(&mut self, _cx: &mut Context<M>, _state: &mut StyleTree, _element: Self::Element) {}
 }
