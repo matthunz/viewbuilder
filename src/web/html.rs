@@ -1,7 +1,10 @@
 use super::{HtmlAttributes, Web};
 use crate::{Context, View};
 use std::{fmt, marker::PhantomData, mem};
-use web_sys::wasm_bindgen::{closure::Closure, JsCast};
+use web_sys::{
+    wasm_bindgen::{closure::Closure, JsCast},
+    Event,
+};
 
 macro_rules! tags {
     ($($name:tt),*) => {
@@ -75,53 +78,74 @@ where
     }
 }
 
-pub fn on_click<M, F>(f: F) -> impl View<HtmlAttributes, M>
+pub trait EventHandler<Marker, M>: Clone + 'static {
+    fn handle(&mut self, event: Event) -> M;
+}
+
+impl<M, F: FnMut() -> M + Clone + 'static> EventHandler<(), M> for F {
+    fn handle(&mut self, _event: Event) -> M {
+        self()
+    }
+}
+
+impl<M, F: FnMut(Event) -> M + Clone + 'static> EventHandler<Event, M> for F {
+    fn handle(&mut self, event: Event) -> M {
+        self(event)
+    }
+}
+
+pub fn on_click<Marker, M, F>(f: F) -> impl View<HtmlAttributes, M>
 where
-    F: FnMut() -> M + Clone + 'static,
+    F: EventHandler<Marker, M>,
     M: 'static,
 {
     handler("click", f)
 }
 
-pub fn on_double_click<M, F>(f: F) -> impl View<HtmlAttributes, M>
+pub fn on_double_click<Marker, M, F>(f: F) -> impl View<HtmlAttributes, M>
 where
-    F: FnMut() -> M + Clone + 'static,
+    F: EventHandler<Marker, M>,
     M: 'static,
 {
     handler("dblclick", f)
 }
 
-pub fn handler<M, T, F>(event: T, handler: F) -> impl View<HtmlAttributes, M>
+pub fn handler<Marker, M, T, F>(event: T, handler: F) -> impl View<HtmlAttributes, M>
 where
     T: AsRef<str>,
-    F: FnMut() -> M + Clone + 'static,
+    F: EventHandler<Marker, M>,
     M: 'static,
 {
-    Handler { event, f: handler }
+    Handler {
+        event,
+        f: handler,
+        _marker: PhantomData,
+    }
 }
 
-pub struct Handler<T, F> {
+pub struct Handler<T, F, Marker> {
     event: T,
     f: F,
+    _marker: PhantomData<Marker>,
 }
 
-impl<M, T, F> View<HtmlAttributes, M> for Handler<T, F>
+impl<Marker, M, T, F> View<HtmlAttributes, M> for Handler<T, F, Marker>
 where
     T: AsRef<str>,
-    F: FnMut() -> M + Clone + 'static,
+    F: EventHandler<Marker, M>,
     M: 'static,
 {
-    type Element = Closure<dyn FnMut()>;
+    type Element = Closure<dyn FnMut(Event)>;
 
     fn build(&mut self, cx: &mut Context<M>, tree: &mut HtmlAttributes) -> Self::Element {
         let mut handler = self.f.clone();
         let cx = cx.clone();
-        let closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
-            let msg = handler();
+        let closure: Closure<dyn FnMut(Event)> = Closure::wrap(Box::new(move |event| {
+            let msg = handler.handle(event);
             cx.send(msg);
         }));
         tree.element
-            .add_event_listener_with_callback("click", closure.as_ref().unchecked_ref())
+            .add_event_listener_with_callback(self.event.as_ref(), closure.as_ref().unchecked_ref())
             .unwrap();
         closure
     }
