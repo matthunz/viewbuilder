@@ -8,6 +8,18 @@ function getObject(idx) { return heap[idx]; }
 
 let heap_next = heap.length;
 
+function dropObject(idx) {
+    if (idx < 132) return;
+    heap[idx] = heap_next;
+    heap_next = idx;
+}
+
+function takeObject(idx) {
+    const ret = getObject(idx);
+    dropObject(idx);
+    return ret;
+}
+
 function addHeapObject(obj) {
     if (heap_next === heap.length) heap.push(heap.length + 1);
     const idx = heap_next;
@@ -155,18 +167,6 @@ function getInt32Memory0() {
     return cachedInt32Memory0;
 }
 
-function dropObject(idx) {
-    if (idx < 132) return;
-    heap[idx] = heap_next;
-    heap_next = idx;
-}
-
-function takeObject(idx) {
-    const ret = getObject(idx);
-    dropObject(idx);
-    return ret;
-}
-
 const cachedTextDecoder = (typeof TextDecoder !== 'undefined' ? new TextDecoder('utf-8', { ignoreBOM: true, fatal: true }) : { decode: () => { throw Error('TextDecoder not available') } } );
 
 if (typeof TextDecoder !== 'undefined') { cachedTextDecoder.decode(); };
@@ -174,6 +174,34 @@ if (typeof TextDecoder !== 'undefined') { cachedTextDecoder.decode(); };
 function getStringFromWasm0(ptr, len) {
     ptr = ptr >>> 0;
     return cachedTextDecoder.decode(getUint8Memory0().subarray(ptr, ptr + len));
+}
+
+function makeMutClosure(arg0, arg1, dtor, f) {
+    const state = { a: arg0, b: arg1, cnt: 1, dtor };
+    const real = (...args) => {
+        // First up with a closure we increment the internal reference
+        // count. This ensures that the Rust closure environment won't
+        // be deallocated while we're invoking it.
+        state.cnt++;
+        const a = state.a;
+        state.a = 0;
+        try {
+            return f(a, state.b, ...args);
+        } finally {
+            if (--state.cnt === 0) {
+                wasm.__wbindgen_export_2.get(state.dtor)(a, state.b);
+
+            } else {
+                state.a = a;
+            }
+        }
+    };
+    real.original = state;
+
+    return real;
+}
+function __wbg_adapter_14(arg0, arg1) {
+    wasm._dyn_core__ops__function__FnMut_____Output___R_as_wasm_bindgen__closure__WasmClosure___describe__invoke__hf0b81a8520a648fb(arg0, arg1);
 }
 
 function isLikeNone(x) {
@@ -222,6 +250,15 @@ async function __wbg_load(module, imports) {
 function __wbg_get_imports() {
     const imports = {};
     imports.wbg = {};
+    imports.wbg.__wbindgen_cb_drop = function(arg0) {
+        const obj = takeObject(arg0).original;
+        if (obj.cnt-- == 1) {
+            obj.a = 0;
+            return true;
+        }
+        const ret = false;
+        return ret;
+    };
     imports.wbg.__wbg_instanceof_Window_3e5cd1f48c152d01 = function(arg0) {
         let result;
         try {
@@ -244,8 +281,15 @@ function __wbg_get_imports() {
         const ret = getObject(arg0).createElement(getStringFromWasm0(arg1, arg2));
         return addHeapObject(ret);
     }, arguments) };
-    imports.wbg.__wbg_setclassName_4b720df7b12cb674 = function(arg0, arg1, arg2) {
-        getObject(arg0).className = getStringFromWasm0(arg1, arg2);
+    imports.wbg.__wbg_createTextNode_7ff0c034b2855f66 = function(arg0, arg1, arg2) {
+        const ret = getObject(arg0).createTextNode(getStringFromWasm0(arg1, arg2));
+        return addHeapObject(ret);
+    };
+    imports.wbg.__wbg_addEventListener_9bf60ea8a362e5e4 = function() { return handleError(function (arg0, arg1, arg2, arg3) {
+        getObject(arg0).addEventListener(getStringFromWasm0(arg1, arg2), getObject(arg3));
+    }, arguments) };
+    imports.wbg.__wbg_settextContent_3ebccdd9354e1601 = function(arg0, arg1, arg2) {
+        getObject(arg0).textContent = arg1 === 0 ? undefined : getStringFromWasm0(arg1, arg2);
     };
     imports.wbg.__wbg_appendChild_d30e6b83791d04c0 = function() { return handleError(function (arg0, arg1) {
         const ret = getObject(arg0).appendChild(getObject(arg1));
@@ -296,6 +340,10 @@ function __wbg_get_imports() {
     imports.wbg.__wbindgen_throw = function(arg0, arg1) {
         throw new Error(getStringFromWasm0(arg0, arg1));
     };
+    imports.wbg.__wbindgen_closure_wrapper99 = function(arg0, arg1, arg2) {
+        const ret = makeMutClosure(arg0, arg1, 20, __wbg_adapter_14);
+        return addHeapObject(ret);
+    };
 
     return imports;
 }
@@ -334,7 +382,7 @@ async function __wbg_init(input) {
     if (wasm !== undefined) return wasm;
 
     if (typeof input === 'undefined') {
-        input = new URL('web-example-5cb32d7efee65622_bg.wasm', import.meta.url);
+        input = new URL('web-example-d4ee296f4030d402_bg.wasm', import.meta.url);
     }
     const imports = __wbg_get_imports();
 

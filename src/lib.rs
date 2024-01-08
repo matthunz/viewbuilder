@@ -1,10 +1,15 @@
-use std::{cell::RefCell, collections::VecDeque, mem, rc::Rc, sync::Arc};
+use std::{mem, sync::Arc};
 #[cfg(feature = "tokio")]
 use tokio::sync::mpsc;
-use web_sys::{wasm_bindgen::JsCast, Document, Element, HtmlElement};
+use web_sys::{
+    wasm_bindgen::{closure::Closure, JsCast},
+    Document, Element, Text,
+};
 
 pub mod view;
 pub use self::view::View;
+
+pub mod web;
 
 pub struct Context<M> {
     send: Arc<dyn Fn(M)>,
@@ -43,27 +48,21 @@ pub struct Application<T, F, S, M, Tree> {
     state: Option<S>,
     cx: Context<M>,
     tree: Tree,
-    queue: Rc<RefCell<VecDeque<M>>>,
 }
 
 impl<T, F, S, M, Tree> Application<T, F, S, M, Tree> {
-    pub fn new(model: T, composable: F, tree: Tree) -> Self
+    pub fn new(send: Arc<dyn Fn(M)>, model: T, composable: F, tree: Tree) -> Self
     where
         M: Send + 'static,
     {
-        let queue = Rc::new(RefCell::new(VecDeque::new()));
-        let queue_tx = queue.clone();
-
-        let cx = Context::new(Arc::new(move |msg| {
-            queue_tx.borrow_mut().push_front(msg);
-        }));
+        let cx = Context::new(send);
 
         Self {
             model,
             composable,
             state: None,
             cx,
-            queue,
+
             tree,
         }
     }
@@ -88,16 +87,12 @@ impl<T, F, S, M, Tree> Application<T, F, S, M, Tree> {
         (self.composable)(&self.model).rebuild(&mut self.cx, &mut self.tree, state);
     }
 
-    pub fn try_handle(&mut self) -> Option<ControlFlow>
+    pub fn handle(&mut self, msg: M) -> ControlFlow
     where
         T: Model<M>,
         M: 'static,
     {
-        if let Some(msg) = self.queue.borrow_mut().pop_back() {
-            Some(self.model.handle(msg))
-        } else {
-            None
-        }
+        self.model.handle(msg)
     }
 }
 #[cfg(feature = "tokio")]
@@ -217,46 +212,36 @@ pub struct HtmlAttributes {
     element: Element,
 }
 
-pub fn div<A, C, M>(attrs: A, content: C) -> Div<A, C>
-where
-    A: View<HtmlAttributes, M>,
-    C: View<Web, M>,
-{
-    Div { attrs, content }
-}
+impl<M> View<Web, M> for &'static str {
+    type Element = (Self, Text);
 
-pub struct Div<A, C> {
-    attrs: A,
-    content: C,
-}
-
-impl<M, A, C> View<Web, M> for Div<A, C>
-where
-    A: View<HtmlAttributes, M>,
-    C: View<Web, M>,
-{
-    type Element = (HtmlAttributes, A::Element);
-
-    fn build(&mut self, cx: &mut Context<M>, tree: &mut Web) -> Self::Element {
-        let element = tree.document.create_element("div").unwrap();
-        tree.parent.append_child(&element).unwrap();
-
-        let parent = mem::replace(&mut tree.parent, element);
-        self.content.build(cx, tree);
-        let element = mem::replace(&mut tree.parent, parent);
-
-        let mut element_attrs = HtmlAttributes { element };
-        let attrs = self.attrs.build(cx, &mut element_attrs);
-        (element_attrs, attrs)
+    fn build(&mut self, _cx: &mut Context<M>, tree: &mut Web) -> Self::Element {
+        let text = tree.document.create_text_node(self);
+        tree.parent.append_child(&text).unwrap();
+        (self, text)
     }
 
-    fn rebuild(&mut self, cx: &mut Context<M>, tree: &mut Web, element: &mut Self::Element) {
-        self.attrs.rebuild(cx, &mut element.0, &mut element.1)
+    fn rebuild(&mut self, _cx: &mut Context<M>, _tree: &mut Web, element: &mut Self::Element) {
+        if *self != element.0 {
+            element.0 = self;
+            element.1.set_text_content(Some(self));
+        }
     }
 }
 
-pub fn class<M>(name: impl AsRef<str> + 'static) -> impl View<HtmlAttributes, M> {
-    view::from_fn(move |_cx, tree: &mut HtmlAttributes| {
-        tree.element.set_class_name(name.as_ref());
-    })
+impl<M> View<Web, M> for String {
+    type Element = (Self, Text);
+
+    fn build(&mut self, _cx: &mut Context<M>, tree: &mut Web) -> Self::Element {
+        let text = tree.document.create_text_node(self);
+        tree.parent.append_child(&text).unwrap();
+        (self.clone(), text)
+    }
+
+    fn rebuild(&mut self, _cx: &mut Context<M>, _tree: &mut Web, element: &mut Self::Element) {
+        if *self != element.0 {
+            element.0 = self.clone();
+            element.1.set_text_content(Some(self));
+        }
+    }
 }

@@ -1,23 +1,34 @@
-use std::{any::Any, cell::RefCell, mem};
+use std::{any::Any, cell::RefCell, rc::Rc, sync::Arc};
+use viewbuilder::{view, web::html, Application, ControlFlow, Model, View, Web};
 
-use viewbuilder::{
-    class, div,
-    view::{self, once},
-    Application, ControlFlow, Model, View, Web,
-};
+enum Message {
+    Increment,
+    Decrement,
+}
 
-struct AppModel;
+#[derive(Default)]
+struct App {
+    count: i32,
+}
 
-impl Model<()> for AppModel {
-    fn handle(&mut self, _msg: ()) -> ControlFlow {
-        ControlFlow::Pending
+impl Model<Message> for App {
+    fn handle(&mut self, msg: Message) -> ControlFlow {
+        match msg {
+            Message::Decrement => self.count -= 1,
+            Message::Increment => self.count += 1,
+        }
+        ControlFlow::Rebuild
     }
 }
 
-fn app(_model: &AppModel) -> impl View<Web, ()> {
-    div(
-        view::once(class("parent")),
-        div(view::once(class("child")), ()),
+fn app(model: &App) -> impl View<Web, Message> {
+    (
+        format!("High five count: {}", model.count),
+        view::once(html::div(html::on_click(|| Message::Increment), "Up high!")),
+        view::once(html::div(
+            html::on_click(|| Message::Decrement),
+            "Down low!",
+        )),
     )
 }
 
@@ -26,9 +37,21 @@ thread_local! {
 }
 
 fn main() {
-    let mut app = Application::new(AppModel, app, Web::default());
+    let cell = Rc::new(RefCell::new(None::<Application<_, _, _, _, _>>));
+    let cell_clone = cell.clone();
+    let mut app = Application::new(
+        Arc::new(move |msg| {
+            let mut g = cell_clone.borrow_mut();
+            let app = g.as_mut().unwrap();
+            if let ControlFlow::Rebuild = app.handle(msg) {
+                app.rebuild();
+            }
+        }),
+        App::default(),
+        app,
+        Web::default(),
+    );
     app.build();
 
-    APP.try_with(|cell| *cell.borrow_mut() = Some(Box::new(app)))
-        .unwrap();
+    *cell.borrow_mut() = Some(app);
 }
