@@ -36,16 +36,16 @@ pub trait Model<M> {
     fn handle(&mut self, msg: M) -> ControlFlow;
 }
 
-pub struct Application<T, F, S, M, Tree> {
+pub struct Runtime<T, VB, E, M, S> {
     model: T,
-    composable: F,
-    state: Option<S>,
+    view_builder: VB,
+    element: Option<E>,
     cx: Context<M>,
-    tree: Tree,
+    state: S,
 }
 
-impl<T, F, S, M, Tree> Application<T, F, S, M, Tree> {
-    pub fn new(send: Arc<dyn Fn(M)>, model: T, composable: F, tree: Tree) -> Self
+impl<T, VB, E, M, S> Runtime<T, VB, E, M, S> {
+    pub fn new(send: Arc<dyn Fn(M)>, model: T, view_builder: VB, state: S) -> Self
     where
         M: Send + 'static,
     {
@@ -53,32 +53,31 @@ impl<T, F, S, M, Tree> Application<T, F, S, M, Tree> {
 
         Self {
             model,
-            composable,
-            state: None,
+            view_builder,
+            element: None,
             cx,
-
-            tree,
+            state,
         }
     }
 
-    pub fn build<C>(&mut self)
+    pub fn build<V>(&mut self)
     where
         T: Model<M>,
-        F: FnMut(&T) -> C,
-        C: View<Tree, M, Element = S>,
+        VB: FnMut(&T) -> V,
+        V: View<S, M, Element = E>,
     {
-        let state = (self.composable)(&self.model).build(&mut self.cx, &mut self.tree);
-        self.state = Some(state);
+        let state = (self.view_builder)(&self.model).build(&mut self.cx, &mut self.state);
+        self.element = Some(state);
     }
 
-    pub fn rebuild<C>(&mut self)
+    pub fn rebuild<V>(&mut self)
     where
         T: Model<M>,
-        F: FnMut(&T) -> C,
-        C: View<Tree, M, Element = S>,
+        VB: FnMut(&T) -> V,
+        V: View<S, M, Element = E>,
     {
-        let state = self.state.as_mut().unwrap();
-        (self.composable)(&self.model).rebuild(&mut self.cx, &mut self.tree, state);
+        let state = self.element.as_mut().unwrap();
+        (self.view_builder)(&self.model).rebuild(&mut self.cx, &mut self.state, state);
     }
 
     pub fn handle(&mut self, msg: M) -> ControlFlow

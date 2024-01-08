@@ -16,9 +16,9 @@ pub use self::once::{once, Once};
 pub trait View<T, M> {
     type Element;
 
-    fn build(&mut self, cx: &mut Context<M>, tree: &mut T) -> Self::Element;
+    fn build(&mut self, cx: &mut Context<M>, state: &mut T) -> Self::Element;
 
-    fn rebuild(&mut self, cx: &mut Context<M>, tree: &mut T, element: &mut Self::Element);
+    fn rebuild(&mut self, cx: &mut Context<M>, state: &mut T, element: &mut Self::Element);
 
     fn map<F, M1>(self, f: F) -> Map<Self, F, M>
     where

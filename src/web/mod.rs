@@ -1,4 +1,4 @@
-use crate::{Application, Context, ControlFlow, Model, View};
+use crate::{Runtime, Context, ControlFlow, Model, View};
 use std::{cell::RefCell, rc::Rc, sync::Arc};
 use web_sys::{wasm_bindgen::JsCast, Document, Element, Text};
 
@@ -13,9 +13,9 @@ where
 
     M: Send + 'static,
 {
-    let cell = Rc::new(RefCell::new(None::<Application<_, _, _, _, _>>));
+    let cell = Rc::new(RefCell::new(None::<Runtime<_, _, _, _, _>>));
     let cell_clone = cell.clone();
-    let mut app = Application::new(
+    let mut app = Runtime::new(
         Arc::new(move |msg| {
             let mut g = cell_clone.borrow_mut();
             let app = g.as_mut().unwrap();
