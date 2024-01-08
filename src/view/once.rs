@@ -1,25 +1,25 @@
 use crate::{Context, View};
 
-pub fn once<C, M>(composable: C) -> Once<C>
+pub fn once<V, T, M>(view: V) -> Once<V>
 where
-    C: View<M>,
+    V: View<T, M>,
 {
-    Once { composable }
+    Once { view }
 }
 
-pub struct Once<C> {
-    composable: C,
+pub struct Once<V> {
+    view: V,
 }
 
-impl<M, C> View<M> for Once<C>
+impl<V, T, M> View<T, M> for Once<V>
 where
-    C: View<M>,
+    V: View<T, M>,
 {
-    type Element = C::Element;
+    type Element = V::Element;
 
-    fn build(&mut self, cx: &mut Context<M>) -> Self::Element {
-        self.composable.build(cx)
+    fn build(&mut self, cx: &mut Context<M>, tree: &mut T) -> Self::Element {
+        self.view.build(cx, tree)
     }
 
-    fn rebuild(&mut self, _cx: &mut Context<M>, _state: &mut Self::Element) {}
+    fn rebuild(&mut self, _cx: &mut Context<M>, _tree: &mut T, _element: &mut Self::Element) {}
 }

@@ -35,16 +35,17 @@ pub trait Model<M> {
     fn handle(&mut self, msg: M) -> ControlFlow;
 }
 
-pub struct Tree<T, F, S, M> {
+pub struct App<T, F, S, M, Tree> {
     model: T,
     composable: F,
     state: Option<S>,
     cx: Context<M>,
+    tree: Tree,
     rx: mpsc::UnboundedReceiver<M>,
 }
 
-impl<T, F, S, M> Tree<T, F, S, M> {
-    pub fn new(model: T, composable: F) -> Self
+impl<T, F, S, M, Tree> App<T, F, S, M, Tree> {
+    pub fn new(model: T, composable: F, tree: Tree) -> Self
     where
         M: Send + 'static,
     {
@@ -58,6 +59,7 @@ impl<T, F, S, M> Tree<T, F, S, M> {
             state: None,
             cx,
             rx,
+            tree,
         }
     }
 
@@ -65,9 +67,9 @@ impl<T, F, S, M> Tree<T, F, S, M> {
     where
         T: Model<M>,
         F: FnMut(&T) -> C,
-        C: View<M, Element = S>,
+        C: View<Tree, M, Element = S>,
     {
-        let state = (self.composable)(&self.model).build(&mut self.cx);
+        let state = (self.composable)(&self.model).build(&mut self.cx, &mut self.tree);
         self.state = Some(state);
     }
 
@@ -75,10 +77,10 @@ impl<T, F, S, M> Tree<T, F, S, M> {
     where
         T: Model<M>,
         F: FnMut(&T) -> C,
-        C: View<M, Element = S>,
+        C: View<Tree, M, Element = S>,
     {
         let state = self.state.as_mut().unwrap();
-        (self.composable)(&self.model).rebuild(&mut self.cx, state);
+        (self.composable)(&self.model).rebuild(&mut self.cx, &mut self.tree, state);
     }
 
     pub async fn handle(&mut self) -> ControlFlow
@@ -106,7 +108,7 @@ impl<T, F, S, M> Tree<T, F, S, M> {
     where
         T: Model<M>,
         F: FnMut(&T) -> C,
-        C: View<M, Element = S>,
+        C: View<Tree, M, Element = S>,
         M: 'static,
     {
         match self.try_handle() {
@@ -119,7 +121,7 @@ impl<T, F, S, M> Tree<T, F, S, M> {
     where
         T: Model<M>,
         F: FnMut(&T) -> C,
-        C: View<M, Element = S>,
+        C: View<Tree, M, Element = S>,
         M: 'static,
     {
         match self.handle().await {
@@ -128,3 +130,15 @@ impl<T, F, S, M> Tree<T, F, S, M> {
         }
     }
 }
+
+pub struct Web;
+
+pub struct HtmlAttributes;
+
+pub fn div<M>(
+    _attrs: impl View<HtmlAttributes, M>,
+    _children: impl View<Web, M>,
+) -> impl View<Web, M> {
+}
+
+pub fn class<M>(_name: impl AsRef<str>) -> impl View<HtmlAttributes, M> {}

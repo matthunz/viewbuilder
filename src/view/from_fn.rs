@@ -11,17 +11,17 @@ pub struct FromFn<F> {
     f: F,
 }
 
-impl<M, F> View<M> for FromFn<F>
+impl<T, M, F> View<T, M> for FromFn<F>
 where
     F: FnMut(&mut Context<M>),
 {
     type Element = ();
 
-    fn build(&mut self, cx: &mut Context<M>) -> Self::Element {
+    fn build(&mut self, cx: &mut Context<M>, _tree: &mut T) -> Self::Element {
         (self.f)(cx)
     }
 
-    fn rebuild(&mut self, cx: &mut Context<M>, _state: &mut Self::Element) {
+    fn rebuild(&mut self, cx: &mut Context<M>, _tree: &mut T, _state: &mut Self::Element) {
         (self.f)(cx)
     }
 }

@@ -13,12 +13,12 @@ pub use self::map::Map;
 mod once;
 pub use self::once::{once, Once};
 
-pub trait View<M> {
+pub trait View<T, M> {
     type Element;
 
-    fn build(&mut self, cx: &mut Context<M>) -> Self::Element;
+    fn build(&mut self, cx: &mut Context<M>, tree: &mut T) -> Self::Element;
 
-    fn rebuild(&mut self, cx: &mut Context<M>, element: &mut Self::Element);
+    fn rebuild(&mut self, cx: &mut Context<M>, tree: &mut T, element: &mut Self::Element);
 
     fn map<F, M1>(self, f: F) -> Map<Self, F, M>
     where
@@ -34,25 +34,25 @@ pub trait View<M> {
     }
 }
 
-impl<M> View<M> for () {
+impl<T, M> View<T, M> for () {
     type Element = ();
 
-    fn build(&mut self, _cx: &mut Context<M>) -> Self::Element {}
+    fn build(&mut self, _cx: &mut Context<M>, _tree: &mut T) -> Self::Element {}
 
-    fn rebuild(&mut self, _cx: &mut Context<M>, _element: &mut Self::Element) {}
+    fn rebuild(&mut self, _cx: &mut Context<M>, _tree: &mut T, _element: &mut Self::Element) {}
 }
 
 macro_rules! impl_viewbuilder_for_tuple {
     ($($t:tt: $idx:tt),*) => {
-        impl<M, $($t: View<M>),*> View<M> for ($($t),*) {
+        impl<T, M, $($t: View<T, M>),*> View<T, M> for ($($t),*) {
             type Element = ($($t::Element),*);
 
-            fn build(&mut self, cx: &mut Context<M>) -> Self::Element {
-                ($(self.$idx.build(cx)),*)
+            fn build(&mut self, cx: &mut Context<M>, tree: &mut T) -> Self::Element {
+                ($(self.$idx.build(cx, tree)),*)
             }
 
-            fn rebuild(&mut self, cx: &mut Context<M>, element: &mut Self::Element) {
-                $(self.$idx.rebuild(cx, &mut element.$idx));*
+            fn rebuild(&mut self, cx: &mut Context<M>, tree: &mut T, element: &mut Self::Element) {
+                $(self.$idx.rebuild(cx, tree, &mut element.$idx));*
             }
         }
     };
