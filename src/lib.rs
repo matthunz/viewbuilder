@@ -1,6 +1,6 @@
 //! A high performance UI framework.
 //!
-//! Viewbuilder is a moduler GUI library that can be used as an entire framework,
+//! Viewbuilder is a modular GUI library that can be used as an entire framework,
 //! or with individual parts.
 //!
 //! ## Features
@@ -61,7 +61,7 @@ pub trait Model<M> {
 }
 
 #[cfg(feature = "tracing")]
-#[cfg_attr(docsrs, doc_cfg(feature = "tracing"))]
+#[cfg_attr(docsrs, doc(cfg(feature = "tracing")))]
 #[macro_export]
 macro_rules! build_span {
     ($name:tt) => {
@@ -70,7 +70,7 @@ macro_rules! build_span {
 }
 
 #[cfg(feature = "tracing")]
-#[cfg_attr(docsrs, doc_cfg(feature = "tracing"))]
+#[cfg_attr(docsrs, doc(cfg(feature = "tracing")))]
 #[macro_export]
 macro_rules! rebuild_span {
     ($name:tt) => {
@@ -79,7 +79,7 @@ macro_rules! rebuild_span {
 }
 
 #[cfg(feature = "tracing")]
-#[cfg_attr(docsrs, doc_cfg(feature = "tracing"))]
+#[cfg_attr(docsrs, doc(cfg(feature = "tracing")))]
 #[macro_export]
 macro_rules! remove_span {
     ($name:tt) => {
@@ -88,7 +88,7 @@ macro_rules! remove_span {
 }
 
 #[cfg(feature = "tracing")]
-#[cfg_attr(docsrs, doc_cfg(feature = "tracing"))]
+#[cfg_attr(docsrs, doc(cfg(feature = "tracing")))]
 #[macro_export]
 macro_rules! span {
     ($method:tt, $name:tt) => {

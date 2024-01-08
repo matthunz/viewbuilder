@@ -22,7 +22,7 @@
 
 A cross-platform user interface framework for Rust.
 
-Viewbuilder is a moduler GUI library that can be used as an entire framework, or with individual parts.
+Viewbuilder is a modular GUI library that can be used as an entire framework, or with individual parts.
 
 ```rust
 use viewbuilder::{

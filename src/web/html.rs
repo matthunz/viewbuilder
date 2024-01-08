@@ -167,6 +167,7 @@ where
         _tree: &mut HtmlAttributes,
         _element: &mut Self::Element,
     ) {
+        
     }
 
     fn remove(
@@ -265,4 +266,47 @@ where
     }
 
     fn remove(&mut self, _cx: &mut Context<M>, _state: &mut StyleTree, _element: Self::Element) {}
+}
+
+pub fn class<T>(name: T) -> Class<T>
+where
+    T: AsRef<str>  + PartialEq+ Clone,
+{
+    Class { name }
+}
+
+pub struct Class<T> {
+    name: T,
+}
+
+impl<M, T> View<HtmlAttributes, M> for Class<T>
+where
+    T: AsRef<str>  + PartialEq + Clone,
+{
+    type Element = T;
+
+    fn build(&mut self, cx: &mut Context<M>, tree: &mut HtmlAttributes) -> Self::Element {
+        tree.element.set_class_name(self.name.as_ref());
+        self.name.clone()
+    }
+
+    fn rebuild(
+        &mut self,
+        _cx: &mut Context<M>,
+        tree: &mut HtmlAttributes,
+        element: &mut Self::Element,
+    ) {
+        if &self.name != &*element {
+            *element = self.name.clone();
+            tree.element.set_class_name(self.name.as_ref());
+        }
+    }
+
+    fn remove(
+        &mut self,
+        _cx: &mut Context<M>,
+        _state: &mut HtmlAttributes,
+        _element: Self::Element,
+    ) {
+    }
 }
