@@ -172,7 +172,7 @@ checksum = "3354b9ac3fae1ff6755cb6db53683adb661634f67557942dea4facebec0fee4b"
 
 [[package]]
 name = "viewbuilder"
-version = "0.10.0-alpha.3"
+version = "0.10.0-alpha.4"
 dependencies = [
  "rustc-hash",
  "tracing",
