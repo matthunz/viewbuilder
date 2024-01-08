@@ -286,6 +286,9 @@ where
     type Element = T;
 
     fn build(&mut self, cx: &mut Context<M>, tree: &mut HtmlAttributes) -> Self::Element {
+        #[cfg(feature = "tracing")]
+        crate::build_span!("Class");
+
         tree.element.set_class_name(self.name.as_ref());
         self.name.clone()
     }
@@ -296,6 +299,9 @@ where
         tree: &mut HtmlAttributes,
         element: &mut Self::Element,
     ) {
+        #[cfg(feature = "tracing")]
+        crate::rebuild_span!("Class");
+
         if &self.name != &*element {
             *element = self.name.clone();
             tree.element.set_class_name(self.name.as_ref());
@@ -305,8 +311,12 @@ where
     fn remove(
         &mut self,
         _cx: &mut Context<M>,
-        _state: &mut HtmlAttributes,
+        state: &mut HtmlAttributes,
         _element: Self::Element,
     ) {
+        #[cfg(feature = "tracing")]
+        crate::remove_span!("Class");
+
+        state.element.set_class_name("");
     }
 }

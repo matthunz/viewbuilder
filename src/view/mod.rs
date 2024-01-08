@@ -46,6 +46,36 @@ impl<T, M> View<T, M> for () {
     fn remove(&mut self, _cx: &mut Context<M>, _state: &mut T, _element: Self::Element) {}
 }
 
+impl<T, M, V: View<T, M>> View<T, M> for Option<V> {
+    type Element = Option<(V, V::Element)>;
+
+    fn build(&mut self, cx: &mut Context<M>, state: &mut T) -> Self::Element {
+        self.take().map(|mut view| {
+            let element = view.build(cx, state);
+            (view, element)
+        })
+    }
+
+    fn rebuild(&mut self, cx: &mut Context<M>, state: &mut T, element: &mut Self::Element) {
+        if let Some(mut view) = self.take() {
+            if let Some((_, element)) = element {
+                view.rebuild(cx, state, element);
+            } else {
+                let elem = view.build(cx, state);
+                *element = Some((view, elem));
+            }
+        } else if let Some((mut view, elem)) = element.take() {
+            view.remove(cx, state, elem);
+        }
+    }
+
+    fn remove(&mut self, cx: &mut Context<M>, state: &mut T, element: Self::Element) {
+        if let Some((mut view, element)) = element {
+            view.remove(cx, state, element)
+        }
+    }
+}
+
 impl<T, M, V, K> View<T, M> for Vec<(K, V)>
 where
     K: PartialEq,
@@ -66,7 +96,7 @@ where
     fn remove(&mut self, _cx: &mut Context<M>, _state: &mut T, _element: Self::Element) {}
 }
 
-macro_rules! impl_viewbuilder_for_tuple {
+macro_rules! impl_view_for_tuple {
     ($($t:tt: $idx:tt),*) => {
         impl<T, M, $($t: View<T, M>),*> View<T, M> for ($($t),*) {
             type Element = ($($t::Element),*);
@@ -101,10 +131,10 @@ macro_rules! impl_viewbuilder_for_tuple {
     };
 }
 
-impl_viewbuilder_for_tuple!(V1: 0, V2: 1);
-impl_viewbuilder_for_tuple!(V1: 0, V2: 1, V3: 2);
-impl_viewbuilder_for_tuple!(V1: 0, V2: 1, V3: 2, V4: 3);
-impl_viewbuilder_for_tuple!(V1: 0, V2: 1, V3: 2, V4: 3, V5: 4);
-impl_viewbuilder_for_tuple!(V1: 0, V2: 1, V3: 2, V4: 3, V5: 4, V6: 5);
-impl_viewbuilder_for_tuple!(V1: 0, V2: 1, V3: 2, V4: 3, V5: 4, V6: 5, V7: 6);
-impl_viewbuilder_for_tuple!(V1: 0, V2: 1, V3: 2, V4: 3, V5: 4, V6: 5, V7: 6, V8: 7);
+impl_view_for_tuple!(V1: 0, V2: 1);
+impl_view_for_tuple!(V1: 0, V2: 1, V3: 2);
+impl_view_for_tuple!(V1: 0, V2: 1, V3: 2, V4: 3);
+impl_view_for_tuple!(V1: 0, V2: 1, V3: 2, V4: 3, V5: 4);
+impl_view_for_tuple!(V1: 0, V2: 1, V3: 2, V4: 3, V5: 4, V6: 5);
+impl_view_for_tuple!(V1: 0, V2: 1, V3: 2, V4: 3, V5: 4, V6: 5, V7: 6);
+impl_view_for_tuple!(V1: 0, V2: 1, V3: 2, V4: 3, V5: 4, V6: 5, V7: 6, V8: 7);
