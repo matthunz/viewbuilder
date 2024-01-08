@@ -1,10 +1,7 @@
-use std::{mem, sync::Arc};
+use std::sync::Arc;
 #[cfg(feature = "tokio")]
 use tokio::sync::mpsc;
-use web_sys::{
-    wasm_bindgen::{closure::Closure, JsCast},
-    Document, Element, Text,
-};
+use web_sys::{wasm_bindgen::JsCast, Document, Element, Text};
 
 pub mod view;
 pub use self::view::View;

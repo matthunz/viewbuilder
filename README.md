@@ -23,32 +23,37 @@
 A cross-platform user interface framework for Rust.
 
 Viewbuilder is a moduler GUI library that can be used as an entire framework, or with individual parts.
-This crate provides reactive objects for UI using the [`concoct`](https://github.com/concoct-rs/concoct) runtime.
 
 ```rust
-use concoct::{Context, Object};
-use viewbuilder::{event_loop::WindowEvent, EventLoop, Window};
+enum Message {
+    Increment,
+    Decrement,
+}
 
-struct App;
+#[derive(Default)]
+struct App {
+    count: i32,
+}
 
-impl App {
-    pub fn event(_cx: &mut Context<Self>, event: WindowEvent) {
-        dbg!(event);
+impl Model<Message> for App {
+    fn handle(&mut self, msg: Message) -> ControlFlow {
+        match msg {
+            Message::Decrement => self.count -= 1,
+            Message::Increment => self.count += 1,
+        }
+        ControlFlow::Rebuild
     }
 }
 
-impl Object for App {}
-
-fn main() {
-    let event_loop = EventLoop::<()>::create();
-
-    let window = Window::create();
-    Window::insert(&mut window.cx(), &event_loop);
-
-    let app = App.start();
-    window.bind(&app, App::event);
-
-    EventLoop::run(event_loop);
+fn app(model: &App) -> impl View<Web, Message> {
+    (
+        format!("High five count: {}", model.count),
+        view::once(html::div(html::on_click(|| Message::Increment), "Up high!")),
+        view::once(html::div(
+            html::on_click(|| Message::Decrement),
+            "Down low!",
+        )),
+    )
 }
 ```
 

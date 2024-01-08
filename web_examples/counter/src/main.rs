@@ -1,4 +1,4 @@
-use std::{any::Any, cell::RefCell, rc::Rc, sync::Arc};
+use std::{cell::RefCell, rc::Rc, sync::Arc};
 use viewbuilder::{view, web::html, Application, ControlFlow, Model, View, Web};
 
 enum Message {
@@ -30,10 +30,6 @@ fn app(model: &App) -> impl View<Web, Message> {
             "Down low!",
         )),
     )
-}
-
-thread_local! {
-    static APP: RefCell<Option<Box<dyn Any>>> = RefCell::new(None);
 }
 
 fn main() {

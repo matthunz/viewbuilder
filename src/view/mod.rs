@@ -42,6 +42,24 @@ impl<T, M> View<T, M> for () {
     fn rebuild(&mut self, _cx: &mut Context<M>, _tree: &mut T, _element: &mut Self::Element) {}
 }
 
+impl<T, M, V, K> View<T, M> for Vec<(K, V)>
+where
+    K: PartialEq,
+    V: View<T, M>,
+{
+    type Element = Vec<V::Element>;
+
+    fn build(&mut self, cx: &mut Context<M>, tree: &mut T) -> Self::Element {
+        self.iter_mut()
+            .map(|(_key, view)| view.build(cx, tree))
+            .collect()
+    }
+
+    fn rebuild(&mut self, _cx: &mut Context<M>, _tree: &mut T, _element: &mut Self::Element) {
+        todo!()
+    }
+}
+
 macro_rules! impl_viewbuilder_for_tuple {
     ($($t:tt: $idx:tt),*) => {
         impl<T, M, $($t: View<T, M>),*> View<T, M> for ($($t),*) {

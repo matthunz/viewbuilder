@@ -1,31 +1,63 @@
-use std::mem;
-
+use crate::{Context, HtmlAttributes, View, Web};
+use std::{marker::PhantomData, mem};
 use web_sys::wasm_bindgen::{closure::Closure, JsCast};
 
-use crate::{Context, HtmlAttributes, View, Web};
+macro_rules! tags {
+    ($($name:tt),*) => {
+        $(
+            pub fn $name<A, C, M>(attrs: A, content: C) -> Element<&'static str, A, C, M>
+            where
+                A: View<HtmlAttributes, M>,
+                C: View<Web, M>,
+            {
+                element(stringify!($name), attrs, content)
+            }
+        )*
+    };
+}
 
-pub fn div<A, C, M>(attrs: A, content: C) -> Div<A, C>
+tags!(
+    a, abbr, address, area, article, aside, audio, b, base, bdi, bdo, blockquote, body, br, button,
+    canvas, caption, cite, code, col, colgroup, data, datalist, dd, del, details, dfn, dialog, div,
+    dl, dt, em, embed, fieldset, figcaption, figure, footer, form, h1, h2, h3, h4, h5, h6, head,
+    header, hr, html, i, iframe, img, input, ins, kbd, label, legend, li, link, main, map, mark,
+    meta, meter, nav, noscript, object, ol, optgroup, option, output, p, param, picture, pre,
+    progress, q, rp, rt, ruby, s, samp, script, section, select, small, source, span, strong,
+    style, sub, summary, sup, svg, table, tbody, td, template, textarea, tfoot, th, thead, time,
+    title, tr, track, u, ul, var, video, wbr
+);
+
+pub fn element<T, A, C, M>(tag: T, attrs: A, content: C) -> Element<T, A, C, M>
 where
+    T: AsRef<str>,
     A: View<HtmlAttributes, M>,
     C: View<Web, M>,
 {
-    Div { attrs, content }
+    Element {
+        tag,
+        attrs,
+        content,
+        _marker: PhantomData,
+    }
 }
 
-pub struct Div<A, C> {
+pub struct Element<T, A, C, M> {
+    tag: T,
     attrs: A,
     content: C,
+    _marker: PhantomData<M>,
 }
 
-impl<M, A, C> View<Web, M> for Div<A, C>
+impl<M, T, A, C> View<Web, M> for Element<T, A, C, M>
 where
+    T: AsRef<str>,
     A: View<HtmlAttributes, M>,
     C: View<Web, M>,
 {
     type Element = (HtmlAttributes, A::Element);
 
     fn build(&mut self, cx: &mut Context<M>, tree: &mut Web) -> Self::Element {
-        let element = tree.document.create_element("div").unwrap();
+        let element = tree.document.create_element(self.tag.as_ref()).unwrap();
         tree.parent.append_child(&element).unwrap();
 
         let parent = mem::replace(&mut tree.parent, element);
@@ -42,20 +74,39 @@ where
     }
 }
 
-pub fn on_click<M, F>(handler: F) -> impl View<HtmlAttributes, M>
+pub fn on_click<M, F>(f: F) -> impl View<HtmlAttributes, M>
 where
     F: FnMut() -> M + Clone + 'static,
     M: 'static,
 {
-    OnClick { f: handler }
+    handler("click", f)
 }
 
-pub struct OnClick<F> {
+pub fn on_double_click<M, F>(f: F) -> impl View<HtmlAttributes, M>
+where
+    F: FnMut() -> M + Clone + 'static,
+    M: 'static,
+{
+    handler("dblclick", f)
+}
+
+pub fn handler<M, T, F>(event: T, handler: F) -> impl View<HtmlAttributes, M>
+where
+    T: AsRef<str>,
+    F: FnMut() -> M + Clone + 'static,
+    M: 'static,
+{
+    Handler { event, f: handler }
+}
+
+pub struct Handler<T, F> {
+    event: T,
     f: F,
 }
 
-impl<M, F> View<HtmlAttributes, M> for OnClick<F>
+impl<M, T, F> View<HtmlAttributes, M> for Handler<T, F>
 where
+    T: AsRef<str>,
     F: FnMut() -> M + Clone + 'static,
     M: 'static,
 {

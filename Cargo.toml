@@ -1,4 +1,3 @@
-
 [package]
 name = "viewbuilder"
 version = "0.9.4"
@@ -10,7 +9,8 @@ repository = "https://github.com/matthunz/viewbuilder"
 [workspace]
 members = [
     ".",
-    "web_examples/counter"
+    "web_examples/counter",
+    "web_examples/todomvc"
 ]
 
 [features]
