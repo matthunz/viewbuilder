@@ -1,7 +1,9 @@
+use std::{any::Any, cell::RefCell, mem};
+
 use viewbuilder::{
     class, div,
     view::{self, once},
-    App, ControlFlow, Model, View, Web,
+    Application, ControlFlow, Model, View, Web,
 };
 
 struct AppModel;
@@ -19,7 +21,14 @@ fn app(_model: &AppModel) -> impl View<Web, ()> {
     )
 }
 
+thread_local! {
+    static APP: RefCell<Option<Box<dyn Any>>> = RefCell::new(None);
+}
+
 fn main() {
-    let mut app = App::new(AppModel, app, Web::default());
+    let mut app = Application::new(AppModel, app, Web::default());
     app.build();
+
+    APP.try_with(|cell| *cell.borrow_mut() = Some(Box::new(app)))
+        .unwrap();
 }

@@ -1,3 +1,4 @@
+
 [package]
 name = "viewbuilder"
 version = "0.9.4"
@@ -6,12 +7,18 @@ license = "MIT OR Apache-2.0"
 description = "Cross-platform UI framework"
 repository = "https://github.com/matthunz/viewbuilder"
 
+[workspace]
+members = [
+    ".",
+    "web_examples/counter"
+]
+
 [features]
 full = []
 
 [dependencies]
-concoct = { git = "https://github.com/concoct-rs/concoct" }
-tokio = { version = "1.35.1", features = ["full"] }
+tokio = { version = "1.35.1", features = ["full"], optional = true }
+web-sys = { version = "0.3.66", features = ["Document", "HtmlElement", "Window"] }
 
 [package.metadata.docs.rs]
 features = ["full"]
