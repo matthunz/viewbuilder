@@ -4,8 +4,14 @@ use std::{marker::PhantomData, sync::Arc};
 mod from_fn;
 pub use self::from_fn::{from_fn, FromFn};
 
+mod lazy;
+pub use self::lazy::{lazy, Lazy};
+
 mod map;
 pub use self::map::Map;
+
+mod once;
+pub use self::once::{once, Once};
 
 pub trait View<M> {
     type Element;
