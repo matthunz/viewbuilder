@@ -1,12 +1,13 @@
 use crate::View;
-use std::hash::{DefaultHasher, Hash, Hasher};
+use std::hash::{ Hash, Hasher};
+use rustc_hash::FxHasher;
 
 /// Create a lazy view that only renders when the given value changes.
 pub fn lazy<T, M, V>(value: impl Hash, view: V) -> Lazy<V>
 where
     V: View<T, M>,
 {
-    let mut hasher = DefaultHasher::new();
+    let mut hasher = FxHasher::default();
     value.hash(&mut hasher);
     let hash = hasher.finish();
 
