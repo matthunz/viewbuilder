@@ -19,7 +19,7 @@ where
     fn build(&mut self, cx: &mut Context<M1>, tree: &mut T) -> Self::Element {
         let f = self.f.clone();
         let send = cx.send.clone();
-        let mut cx = Context::new(Arc::new(move |msg| send(f(msg))));
+        let mut cx = Context::new(move |msg| send(f(msg)));
 
         self.view.build(&mut cx, tree)
     }
@@ -27,7 +27,7 @@ where
     fn rebuild(&mut self, cx: &mut Context<M1>, tree: &mut T, element: &mut Self::Element) {
         let f = self.f.clone();
         let send = cx.send.clone();
-        let mut cx = Context::new(Arc::new(move |msg| send(f(msg))));
+        let mut cx = Context::new(move |msg| send(f(msg)));
 
         self.view.rebuild(&mut cx, tree, element)
     }
@@ -35,7 +35,7 @@ where
     fn remove(&mut self, cx: &mut Context<M1>, state: &mut T, element: Self::Element) {
         let f = self.f.clone();
         let send = cx.send.clone();
-        let mut cx = Context::new(Arc::new(move |msg| send(f(msg))));
+        let mut cx = Context::new(move |msg| send(f(msg)));
 
         self.view.remove(&mut cx, state, element)
     }

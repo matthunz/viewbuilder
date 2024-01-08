@@ -10,7 +10,10 @@
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
-use std::sync::Arc;
+use std::rc::Rc;
+
+mod rt;
+pub use self::rt::Runtime;
 
 pub mod view;
 pub use self::view::View;
@@ -20,12 +23,14 @@ pub use self::view::View;
 pub mod web;
 
 pub struct Context<M> {
-    send: Arc<dyn Fn(M)>,
+    send: Rc<dyn Fn(M)>,
 }
 
 impl<M> Context<M> {
-    pub fn new(send: Arc<dyn Fn(M)>) -> Self {
-        Self { send }
+    pub fn new(send: impl Fn(M) + 'static) -> Self {
+        Self {
+            send: Rc::new(send),
+        }
     }
 
     pub fn send(&self, msg: M) {
@@ -55,56 +60,41 @@ pub trait Model<M> {
     fn handle(&mut self, msg: M) -> ControlFlow;
 }
 
-/// Runtime for a model and view builder.
-pub struct Runtime<T, VB, E, M, S> {
-    model: T,
-    view_builder: VB,
-    element: Option<E>,
-    cx: Context<M>,
-    state: S,
+#[cfg(feature = "tracing")]
+#[cfg_attr(docsrs, doc_cfg(feature = "tracing"))]
+#[macro_export]
+macro_rules! build_span {
+    ($name:tt) => {
+        $crate::span!("build", $name)
+    };
 }
 
-impl<T, VB, E, M, S> Runtime<T, VB, E, M, S> {
-    pub fn new(send: Arc<dyn Fn(M)>, model: T, view_builder: VB, state: S) -> Self
-    where
-        M: Send + 'static,
-    {
-        let cx = Context::new(send);
+#[cfg(feature = "tracing")]
+#[cfg_attr(docsrs, doc_cfg(feature = "tracing"))]
+#[macro_export]
+macro_rules! rebuild_span {
+    ($name:tt) => {
+        $crate::span!("rebuild", $name)
+    };
+}
 
-        Self {
-            model,
-            view_builder,
-            element: None,
-            cx,
-            state,
-        }
-    }
+#[cfg(feature = "tracing")]
+#[cfg_attr(docsrs, doc_cfg(feature = "tracing"))]
+#[macro_export]
+macro_rules! remove_span {
+    ($name:tt) => {
+        $crate::span!("remove", $name)
+    };
+}
 
-    pub fn build<V>(&mut self)
-    where
-        T: Model<M>,
-        VB: FnMut(&T) -> V,
-        V: View<S, M, Element = E>,
-    {
-        let state = (self.view_builder)(&self.model).build(&mut self.cx, &mut self.state);
-        self.element = Some(state);
-    }
-
-    pub fn rebuild<V>(&mut self)
-    where
-        T: Model<M>,
-        VB: FnMut(&T) -> V,
-        V: View<S, M, Element = E>,
-    {
-        let state = self.element.as_mut().unwrap();
-        (self.view_builder)(&self.model).rebuild(&mut self.cx, &mut self.state, state);
-    }
-
-    pub fn handle(&mut self, msg: M) -> ControlFlow
-    where
-        T: Model<M>,
-        M: 'static,
-    {
-        self.model.handle(msg)
-    }
+#[cfg(feature = "tracing")]
+#[cfg_attr(docsrs, doc_cfg(feature = "tracing"))]
+#[macro_export]
+macro_rules! span {
+    ($method:tt, $name:tt) => {
+        #[cfg(feature = "tracing")]
+        let span = tracing::trace_span!(concat!("View::", $method), view = $name);
+        #[cfg(feature = "tracing")]
+        let _g = span.enter();
+    };
 }

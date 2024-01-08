@@ -28,9 +28,7 @@ where
 
     fn build(&mut self, cx: &mut crate::Context<M>, tree: &mut T) -> Self::Element {
         #[cfg(feature = "tracing")]
-        let span = tracing::trace_span!("View::Build", view = "Lazy");
-        #[cfg(feature = "tracing")]
-        let _g = span.enter();
+        crate::build_span!("Lazy");
 
         let element = self.view.build(cx, tree);
         (self.hash, element)
@@ -38,9 +36,7 @@ where
 
     fn rebuild(&mut self, cx: &mut crate::Context<M>, tree: &mut T, element: &mut Self::Element) {
         #[cfg(feature = "tracing")]
-        let span = tracing::trace_span!("View::Rebuild", view = "Lazy");
-        #[cfg(feature = "tracing")]
-        let _g = span.enter();
+        crate::rebuild_span!("Lazy");
 
         if self.hash != element.0 {
             #[cfg(feature = "tracing")]
@@ -53,9 +49,7 @@ where
 
     fn remove(&mut self, cx: &mut crate::Context<M>, state: &mut T, element: Self::Element) {
         #[cfg(feature = "tracing")]
-        let span = tracing::trace_span!("View::Remove", view = "Lazy");
-        #[cfg(feature = "tracing")]
-        let _g = span.enter();
+        crate::remove_span!("Lazy");
 
         self.view.remove(cx, state, element.1);
     }

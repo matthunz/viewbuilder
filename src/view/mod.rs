@@ -73,27 +73,27 @@ macro_rules! impl_viewbuilder_for_tuple {
 
             fn build(&mut self, cx: &mut Context<M>, tree: &mut T) -> Self::Element {
                 #[cfg(feature = "tracing")]
-                let span = tracing::trace_span!("View::Build", view = stringify!(($($t),*)));
+                let name = stringify!(($($t),*));
                 #[cfg(feature = "tracing")]
-                let _g = span.enter();
+                crate::build_span!(name);
 
                 ($(self.$idx.build(cx, tree)),*)
             }
 
             fn rebuild(&mut self, cx: &mut Context<M>, tree: &mut T, element: &mut Self::Element) {
                 #[cfg(feature = "tracing")]
-                let span = tracing::trace_span!("View::Rebuild", view = stringify!(($($t),*)));
+                let name = stringify!(($($t),*));
                 #[cfg(feature = "tracing")]
-                let _g = span.enter();
+                crate::rebuild_span!(name);
 
                 $(self.$idx.rebuild(cx, tree, &mut element.$idx));*
             }
 
             fn remove(&mut self, cx: &mut Context<M>, tree: &mut T, element: Self::Element) {
                 #[cfg(feature = "tracing")]
-                let span = tracing::trace_span!("View::Rebuild", view = stringify!(($($t),*)));
+                let name = stringify!(($($t),*));
                 #[cfg(feature = "tracing")]
-                let _g = span.enter();
+                crate::remove_span!(name);
 
                 $(self.$idx.remove(cx, tree, element.$idx));*
             }

@@ -62,13 +62,7 @@ where
 
     fn build(&mut self, cx: &mut Context<M>, tree: &mut Web) -> Self::Element {
         #[cfg(feature = "tracing")]
-        let span = tracing::span!(
-            tracing::Level::TRACE,
-            "HTML element",
-            tag = self.tag.as_ref()
-        );
-        #[cfg(feature = "tracing")]
-        let _g = span.enter();
+        crate::build_span!("Element");
 
         let element = tree.document.create_element(self.tag.as_ref()).unwrap();
         tree.parent.append_child(&element).unwrap();
@@ -84,18 +78,15 @@ where
 
     fn rebuild(&mut self, cx: &mut Context<M>, _tree: &mut Web, element: &mut Self::Element) {
         #[cfg(feature = "tracing")]
-        let span = tracing::span!(
-            tracing::Level::TRACE,
-            "HTML element",
-            tag = self.tag.as_ref()
-        );
-        #[cfg(feature = "tracing")]
-        let _g = span.enter();
+        crate::rebuild_span!("Element");
 
         self.attrs.rebuild(cx, &mut element.0, &mut element.1)
     }
 
-    fn remove(&mut self, _cx: &mut Context<M>, _state: &mut Web, _element: Self::Element) {}
+    fn remove(&mut self, _cx: &mut Context<M>, _state: &mut Web, _element: Self::Element) {
+        #[cfg(feature = "tracing")]
+        crate::remove_span!("Element");
+    }
 }
 
 pub trait EventHandler<Marker, M>: Clone + 'static {

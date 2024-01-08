@@ -16,13 +16,13 @@ where
     let cell = Rc::new(RefCell::new(None::<Runtime<_, _, _, _, _>>));
     let cell_clone = cell.clone();
     let mut app = Runtime::new(
-        Arc::new(move |msg| {
+        move |msg| {
             let mut g = cell_clone.borrow_mut();
             let app = g.as_mut().unwrap();
             if let ControlFlow::Rebuild = app.handle(msg) {
                 app.rebuild();
             }
-        }),
+        },
         model,
         view_builder,
         Web::default(),
@@ -55,8 +55,8 @@ impl<M> View<Web, M> for &'static str {
     type Element = (Self, Text);
 
     fn build(&mut self, _cx: &mut Context<M>, tree: &mut Web) -> Self::Element {
-        let span = tracing::trace_span!("View::Build", view = "&'static str",);
-        let _g = span.enter();
+        #[cfg(feature = "tracing")]
+        crate::build_span!("String");
 
         let text = tree.document.create_text_node(self);
         tree.parent.append_child(&text).unwrap();
@@ -66,9 +66,7 @@ impl<M> View<Web, M> for &'static str {
 
     fn rebuild(&mut self, _cx: &mut Context<M>, _tree: &mut Web, element: &mut Self::Element) {
         #[cfg(feature = "tracing")]
-        let span = tracing::trace_span!("View::Rebuild", view = "&'static str",);
-        #[cfg(feature = "tracing")]
-        let _g = span.enter();
+        crate::rebuild_span!("String");
 
         if *self != element.0 {
             element.0 = self;
@@ -76,7 +74,10 @@ impl<M> View<Web, M> for &'static str {
         }
     }
 
-    fn remove(&mut self, _cx: &mut Context<M>, _state: &mut Web, _element: Self::Element) {}
+    fn remove(&mut self, _cx: &mut Context<M>, _state: &mut Web, _element: Self::Element) {
+        #[cfg(feature = "tracing")]
+        crate::remove_span!("String");
+    }
 }
 
 impl<M> View<Web, M> for String {
@@ -84,9 +85,7 @@ impl<M> View<Web, M> for String {
 
     fn build(&mut self, _cx: &mut Context<M>, tree: &mut Web) -> Self::Element {
         #[cfg(feature = "tracing")]
-        let span = tracing::trace_span!("View::Build", view = "String");
-        #[cfg(feature = "tracing")]
-        let _g = span.enter();
+        crate::build_span!("String");
 
         let text = tree.document.create_text_node(self);
         tree.parent.append_child(&text).unwrap();
@@ -95,9 +94,7 @@ impl<M> View<Web, M> for String {
 
     fn rebuild(&mut self, _cx: &mut Context<M>, _tree: &mut Web, element: &mut Self::Element) {
         #[cfg(feature = "tracing")]
-        let span = tracing::trace_span!("View::Rebuild", view = "String");
-        #[cfg(feature = "tracing")]
-        let _g = span.enter();
+        crate::rebuild_span!("String");
 
         if *self != element.0 {
             #[cfg(feature = "tracing")]
