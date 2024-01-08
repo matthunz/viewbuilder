@@ -1,7 +1,6 @@
 use super::{HtmlAttributes, Web};
 use crate::{Context, View};
 use std::{fmt, marker::PhantomData, mem};
-use tracing::{event, span, Level};
 use web_sys::{
     wasm_bindgen::{closure::Closure, JsCast},
     Event,
@@ -62,9 +61,14 @@ where
     type Element = (HtmlAttributes, A::Element);
 
     fn build(&mut self, cx: &mut Context<M>, tree: &mut Web) -> Self::Element {
-        let span = span!(Level::TRACE, "HTML element", tag = self.tag.as_ref());
+        #[cfg(feature = "tracing")]
+        let span = tracing::span!(
+            tracing::Level::TRACE,
+            "HTML element",
+            tag = self.tag.as_ref()
+        );
+        #[cfg(feature = "tracing")]
         let _g = span.enter();
-        event!(Level::TRACE, "Build");
 
         let element = tree.document.create_element(self.tag.as_ref()).unwrap();
         tree.parent.append_child(&element).unwrap();
@@ -79,9 +83,14 @@ where
     }
 
     fn rebuild(&mut self, cx: &mut Context<M>, _tree: &mut Web, element: &mut Self::Element) {
-        let span = span!(Level::TRACE, "HTML element", tag = self.tag.as_ref());
+        #[cfg(feature = "tracing")]
+        let span = tracing::span!(
+            tracing::Level::TRACE,
+            "HTML element",
+            tag = self.tag.as_ref()
+        );
+        #[cfg(feature = "tracing")]
         let _g = span.enter();
-        event!(Level::TRACE, "Rebuild");
 
         self.attrs.rebuild(cx, &mut element.0, &mut element.1)
     }

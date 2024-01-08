@@ -65,7 +65,9 @@ impl<M> View<Web, M> for &'static str {
     }
 
     fn rebuild(&mut self, _cx: &mut Context<M>, _tree: &mut Web, element: &mut Self::Element) {
+        #[cfg(feature = "tracing")]
         let span = tracing::trace_span!("View::Rebuild", view = "&'static str",);
+        #[cfg(feature = "tracing")]
         let _g = span.enter();
 
         if *self != element.0 {
@@ -79,7 +81,9 @@ impl<M> View<Web, M> for String {
     type Element = (Self, Text);
 
     fn build(&mut self, _cx: &mut Context<M>, tree: &mut Web) -> Self::Element {
+        #[cfg(feature = "tracing")]
         let span = tracing::trace_span!("View::Build", view = "String");
+        #[cfg(feature = "tracing")]
         let _g = span.enter();
 
         let text = tree.document.create_text_node(self);
@@ -88,10 +92,13 @@ impl<M> View<Web, M> for String {
     }
 
     fn rebuild(&mut self, _cx: &mut Context<M>, _tree: &mut Web, element: &mut Self::Element) {
+        #[cfg(feature = "tracing")]
         let span = tracing::trace_span!("View::Rebuild", view = "String");
+        #[cfg(feature = "tracing")]
         let _g = span.enter();
 
         if *self != element.0 {
+            #[cfg(feature = "tracing")]
             tracing::event!(name: "Text change", tracing::Level::TRACE,  new = &*self, old = element.0);
 
             element.0 = self.clone();

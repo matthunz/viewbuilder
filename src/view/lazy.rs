@@ -26,7 +26,9 @@ where
     type Element = (u64, V::Element);
 
     fn build(&mut self, cx: &mut crate::Context<M>, tree: &mut T) -> Self::Element {
+        #[cfg(feature = "tracing")]
         let span = tracing::trace_span!("View::Build", view = "Lazy");
+        #[cfg(feature = "tracing")]
         let _g = span.enter();
 
         let element = self.view.build(cx, tree);
@@ -34,10 +36,13 @@ where
     }
 
     fn rebuild(&mut self, cx: &mut crate::Context<M>, tree: &mut T, element: &mut Self::Element) {
+        #[cfg(feature = "tracing")]
         let span = tracing::trace_span!("View::Rebuild", view = "Lazy");
+        #[cfg(feature = "tracing")]
         let _g = span.enter();
 
         if self.hash != element.0 {
+            #[cfg(feature = "tracing")]
             tracing::trace!(name: "Hash change", new = self.hash, old = element.0);
 
             element.0 = self.hash;
