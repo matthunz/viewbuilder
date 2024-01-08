@@ -1,12 +1,14 @@
-/// A high performance UI framework.
-/// 
-/// Viewbuilder is a moduler GUI library that can be used as an entire framework,
-/// or with individual parts.
-/// 
-/// ## Features
-/// - `full`: Enables all the features below.
-/// - `tracing`: Enables structured logging and performance metrics with the `tracing` crate.
-/// - `web`: Enables web support.
+//! A high performance UI framework.
+//!
+//! Viewbuilder is a moduler GUI library that can be used as an entire framework,
+//! or with individual parts.
+//!
+//! ## Features
+//! - `full`: Enables all the features below.
+//! - `tracing`: Enables structured logging and performance metrics with the `tracing` crate.
+//! - `web`: Enables web support.
+
+#![cfg_attr(docsrs, feature(doc_cfg))]
 
 use std::sync::Arc;
 
