@@ -82,7 +82,9 @@ where
 
         self.attrs.rebuild(cx, &mut element.0, &mut element.1);
 
+        mem::swap(&mut state.parent, &mut element.0.element);
         self.content.rebuild(cx, state, &mut element.2);
+        mem::swap(&mut state.parent, &mut element.0.element);
     }
 
     fn remove(&mut self, cx: &mut Context<M>, state: &mut Web, element: Self::Element) {

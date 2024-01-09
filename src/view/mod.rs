@@ -299,22 +299,51 @@ where
 
 impl<T, M, V, K> View<T, M> for Vec<(K, V)>
 where
-    K: PartialEq,
+    K: PartialEq + Clone,
     V: View<T, M>,
 {
-    type Element = Vec<V::Element>;
+    type Element = Vec<(K, V, V::Element)>;
 
     fn build(&mut self, cx: &mut Context<M>, tree: &mut T) -> Self::Element {
-        self.iter_mut()
-            .map(|(_key, view)| view.build(cx, tree))
+        self.drain(..)
+            .map(|(key, mut view)| {
+                let elem = view.build(cx, tree);
+                (key, view, elem)
+            })
             .collect()
     }
 
-    fn rebuild(&mut self, _cx: &mut Context<M>, _tree: &mut T, _element: &mut Self::Element) {
-        todo!()
+    fn rebuild(&mut self, cx: &mut Context<M>, state: &mut T, element: &mut Self::Element) {
+        let mut visited = Vec::new();
+        for (idx, (key, mut view)) in self.drain(..).enumerate() {
+            if let Some((key, last_view, element)) = element
+                .iter_mut()
+                .find(|(view_key, view, element)| view_key == &key)
+            {
+                view.rebuild(cx, state, element)
+            } else {
+                let elem = view.build(cx, state);
+                element.insert(idx, (key.clone(), view, elem))
+            }
+            visited.push(key);
+        }
+
+        let mut removes = Vec::new();
+        for (idx, (key, view, elem)) in element.iter_mut().enumerate() {
+            if !visited.contains(key) {
+                removes.push(idx);
+            }
+        }
+        for idx in removes {
+            element.remove(idx);
+        }
     }
 
-    fn remove(&mut self, _cx: &mut Context<M>, _state: &mut T, _element: Self::Element) {}
+    fn remove(&mut self, cx: &mut Context<M>, state: &mut T, element: Self::Element) {
+        for (key, mut view, elem) in element {
+            view.remove(cx, state, elem);
+        }
+    }
 }
 
 macro_rules! impl_view_for_tuple {
