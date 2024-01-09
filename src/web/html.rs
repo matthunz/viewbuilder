@@ -291,7 +291,7 @@ where
 {
     type Element = T;
 
-    fn build(&mut self, cx: &mut Context<M>, tree: &mut HtmlAttributes) -> Self::Element {
+    fn build(&mut self, _cx: &mut Context<M>, tree: &mut HtmlAttributes) -> Self::Element {
         #[cfg(feature = "tracing")]
         crate::build_span!("Class");
 

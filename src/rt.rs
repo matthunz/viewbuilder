@@ -4,9 +4,9 @@ use crate::{Context, ControlFlow, Model, View};
 pub struct Runtime<T, VB, E, M, S> {
     model: T,
     view_builder: VB,
-    element: Option<E>,
+    pub element: Option<E>,
     cx: Context<M>,
-    state: S,
+    pub state: S,
 }
 
 impl<T, VB, E, M, S> Runtime<T, VB, E, M, S> {

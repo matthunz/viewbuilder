@@ -316,9 +316,9 @@ where
     fn rebuild(&mut self, cx: &mut Context<M>, state: &mut T, element: &mut Self::Element) {
         let mut visited = Vec::new();
         for (idx, (key, mut view)) in self.drain(..).enumerate() {
-            if let Some((key, last_view, element)) = element
+            if let Some((_key, _last_view, element)) = element
                 .iter_mut()
-                .find(|(view_key, view, element)| view_key == &key)
+                .find(|(view_key, _view, _element)| view_key == &key)
             {
                 view.rebuild(cx, state, element)
             } else {
@@ -329,7 +329,7 @@ where
         }
 
         let mut removes = Vec::new();
-        for (idx, (key, view, elem)) in element.iter_mut().enumerate() {
+        for (idx, (key, _view, _elem)) in element.iter_mut().enumerate() {
             if !visited.contains(key) {
                 removes.push(idx);
             }
@@ -340,7 +340,7 @@ where
     }
 
     fn remove(&mut self, cx: &mut Context<M>, state: &mut T, element: Self::Element) {
-        for (key, mut view, elem) in element {
+        for (_key, mut view, elem) in element {
             view.remove(cx, state, elem);
         }
     }

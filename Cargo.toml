@@ -14,12 +14,14 @@ members = [
 ]
 
 [features]
+native = ["winit"]
 web = ["web-sys"]
-full = ["web", "tracing"]
+full = ["web", "tracing", "native"]
 
 [dependencies]
 rustc-hash = "1.1.0"
 tracing = { version = "0.1.40", optional = true }
+winit = { version = "0.29.9", optional = true }
 
 [dependencies.web-sys]
 version = "0.3.66"

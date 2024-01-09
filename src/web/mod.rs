@@ -1,5 +1,5 @@
 use crate::{Context, ControlFlow, Model, Runtime, View};
-use std::{borrow::Cow, cell::RefCell, rc::Rc, sync::Arc};
+use std::{borrow::Cow, cell::RefCell, rc::Rc};
 use web_sys::{wasm_bindgen::JsCast, Document, Element, Text};
 
 pub mod html;

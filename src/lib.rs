@@ -18,6 +18,10 @@ pub use self::rt::Runtime;
 pub mod view;
 pub use self::view::View;
 
+#[cfg(feature = "native")]
+#[cfg_attr(docsrs, doc(cfg(feature = "native")))]
+pub mod native;
+
 #[cfg(feature = "web")]
 #[cfg_attr(docsrs, doc(cfg(feature = "web")))]
 pub mod web;
