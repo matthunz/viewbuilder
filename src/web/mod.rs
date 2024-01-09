@@ -69,6 +69,9 @@ impl<M> View<Web, M> for &'static str {
         crate::rebuild_span!("&'static str");
 
         if *self != element.0 {
+            #[cfg(feature = "tracing")]
+            tracing::trace!(name: "Text changed", new = self, old = element.0);
+
             element.0 = self;
             element.1.set_text_content(Some(self));
         }

@@ -58,7 +58,7 @@ where
     A: View<HtmlAttributes, M>,
     C: View<Web, M>,
 {
-    type Element = (HtmlAttributes, A::Element);
+    type Element = (HtmlAttributes, A::Element, C::Element);
 
     fn build(&mut self, cx: &mut Context<M>, tree: &mut Web) -> Self::Element {
         #[cfg(feature = "tracing")]
@@ -68,25 +68,29 @@ where
         tree.parent.append_child(&element).unwrap();
 
         let parent = mem::replace(&mut tree.parent, element);
-        self.content.build(cx, tree);
+        let content = self.content.build(cx, tree);
         let element = mem::replace(&mut tree.parent, parent);
 
         let mut element_attrs = HtmlAttributes { element };
         let attrs = self.attrs.build(cx, &mut element_attrs);
-        (element_attrs, attrs)
+        (element_attrs, attrs, content)
     }
 
-    fn rebuild(&mut self, cx: &mut Context<M>, _tree: &mut Web, element: &mut Self::Element) {
+    fn rebuild(&mut self, cx: &mut Context<M>, state: &mut Web, element: &mut Self::Element) {
         #[cfg(feature = "tracing")]
         crate::rebuild_span!("Element");
 
-        self.attrs.rebuild(cx, &mut element.0, &mut element.1)
+        self.attrs.rebuild(cx, &mut element.0, &mut element.1);
+
+        self.content.rebuild(cx, state, &mut element.2);
     }
 
-    fn remove(&mut self, _cx: &mut Context<M>, _state: &mut Web, element: Self::Element) {
+    fn remove(&mut self, cx: &mut Context<M>, state: &mut Web, element: Self::Element) {
         #[cfg(feature = "tracing")]
         crate::remove_span!("Element");
         element.0.element.remove();
+
+        self.content.remove(cx, state, element.2)
     }
 }
 

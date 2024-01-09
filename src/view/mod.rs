@@ -1,4 +1,5 @@
 use crate::Context;
+use std::any::Any;
 use std::mem;
 use std::{marker::PhantomData, sync::Arc};
 
@@ -76,6 +77,131 @@ impl<T, M, V: View<T, M>> View<T, M> for Option<V> {
         }
     }
 }
+
+pub trait AnyView<T, M> {
+    fn build_any(&mut self, cx: &mut Context<M>, state: &mut T) -> Box<dyn Any>;
+
+    fn rebuild_any(&mut self, cx: &mut Context<M>, state: &mut T, element: &mut Box<dyn Any>);
+
+    fn remove_any(&mut self, cx: &mut Context<M>, state: &mut T, element: Box<dyn Any>);
+}
+
+impl<T, M, V> AnyView<T, M> for V
+where
+    V: View<T, M>,
+    V::Element: 'static,
+{
+    fn build_any(&mut self, cx: &mut Context<M>, state: &mut T) -> Box<dyn Any> {
+        Box::new((&mut *self).build(cx, state))
+    }
+
+    fn rebuild_any(&mut self, cx: &mut Context<M>, state: &mut T, element: &mut Box<dyn Any>) {
+        if element.is::<V::Element>() {
+            (&mut *self).rebuild(cx, state, element.downcast_mut().unwrap())
+        } else {
+            *element = self.build_any(cx, state);
+        }
+    }
+
+    fn remove_any(&mut self, cx: &mut Context<M>, state: &mut T, element: Box<dyn Any>) {
+        (&mut *self).remove(cx, state, *element.downcast().unwrap())
+    }
+}
+
+impl<T, M> View<T, M> for Box<dyn AnyView<T, M>> {
+    type Element = Box<dyn Any>;
+
+    fn build(&mut self, cx: &mut Context<M>, state: &mut T) -> Self::Element {
+        (&mut **self).build_any(cx, state)
+    }
+
+    fn rebuild(&mut self, cx: &mut Context<M>, state: &mut T, element: &mut Self::Element) {
+        (&mut **self).rebuild_any(cx, state, element)
+    }
+
+    fn remove(&mut self, cx: &mut Context<M>, state: &mut T, element: Self::Element) {
+        (&mut **self).remove_any(cx, state, element)
+    }
+}
+
+macro_rules! generate_on_of {
+    ($id:ident, $data_id:ident, $($name:tt: $t:tt),*) => {
+        pub struct $id<$($t),*> {
+            data: Option<$data_id<$($t),*>>,
+        }
+
+        impl<$($t),*> $id<$($t),*> {
+            $(
+                pub fn $name(value: $t) -> Self {
+                    Self {
+                        data: Some($data_id::$t(value)),
+                    }
+                }
+            )*
+
+            pub fn data(&self) -> &$data_id<$($t),*> {
+                self.data.as_ref().unwrap()
+            }
+        }
+
+        pub enum $data_id<$($t),*> {
+            $($t($t)),*
+        }
+
+        impl<ViewT, ViewM, $($t: View<ViewT, ViewM>),*> View<ViewT, ViewM> for $id<$($t),*> {
+            type Element = $data_id<$(($t, $t::Element)),*>;
+
+            fn build(&mut self, cx: &mut Context<ViewM>, state: &mut ViewT) -> Self::Element {
+                match self.data.take().unwrap() {
+                    $(
+                        $data_id::$t(mut view) => {
+                            let elem = view.build(cx, state);
+                            $data_id::$t((view, elem))
+                        },
+                    )*
+                }
+
+            }
+
+            fn rebuild(&mut self, cx: &mut Context<ViewM>, state: &mut ViewT, element: &mut Self::Element) {
+                match (self.data.take().unwrap(), element) {
+                    $(
+                        ($data_id::$t(mut view), $data_id::$t((last_view, last_elem))) => {
+                            view.rebuild(cx, state, last_elem);
+                            *last_view = view
+                        }
+                    )*
+                    (data, element) => {
+                        let elem = mem::replace(element, Self { data: Some(data) }.build(cx, state));
+                        match elem {
+                            $(
+                                $data_id::$t((mut view, element)) => {
+                                    view.remove(cx, state, element);
+                                }
+                            )*
+                        }
+                    }
+                }
+            }
+
+            fn remove(&mut self, cx: &mut Context<ViewM>, state: &mut ViewT, element: Self::Element) {
+                match element {
+                    $(
+                        $data_id::$t((mut view, elem)) => view.remove(cx, state, elem),
+                    )*
+                }
+            }
+        }
+    };
+}
+
+generate_on_of!(OneOf2, OneOf2Data, a: A, b: B);
+generate_on_of!(OneOf3, OneOf3Data, a: A, b: B, c: C);
+generate_on_of!(OneOf4, OneOf4Data, a: A, b: B, c: C, d: D);
+generate_on_of!(OneOf5, OneOf5Data, a: A, b: B, c: C, d: D, e: E);
+generate_on_of!(OneOf6, OneOf6Data, a: A, b: B, c: C, d: D, e: E, f: F);
+generate_on_of!(OneOf7, OneOf7Data, a: A, b: B, c: C, d: D, e: E, f: F, g: G);
+generate_on_of!(OneOf8, OneOf8Data, a: A, b: B, c: C, d: D, e: E, f: F, g: G, h: H);
 
 pub struct OneOf<A, B> {
     data: Option<OneOfData<A, B>>,
