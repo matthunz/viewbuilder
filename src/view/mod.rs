@@ -1,11 +1,11 @@
-use crate::Context;
+use crate::{Context, Element};
 use std::{marker::PhantomData, rc::Rc};
 
 mod adapt;
 pub use self::adapt::Adapt;
 
 pub trait View<M, A> {
-    type Element;
+    type Element: Element;
 
     fn build(&mut self, cx: &mut Context<M, A>) -> Self::Element;
 

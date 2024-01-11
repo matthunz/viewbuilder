@@ -12,8 +12,8 @@ web = []
 full = []
 
 [dependencies]
-concoct = { path = "../concoct" }
 kurbo = "0.10.4"
+web-sys = { version = "0.3.66", features = ["Element"] }
 
 [package.metadata.docs.rs]
 features = ["full"]
