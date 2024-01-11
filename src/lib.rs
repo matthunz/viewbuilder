@@ -1,104 +1,38 @@
-//! A high performance UI framework.
-//!
-//! Viewbuilder is a modular GUI library that can be used as an entire framework,
-//! or with individual parts.
-//!
-//! ## Features
-//! - `full`: Enables all the features below.
-//! - `tracing`: Enables structured logging and performance metrics with the `tracing` crate.
-//! - `web`: Enables web support.
+use std::{marker::PhantomData, rc::Rc};
 
-#![cfg_attr(docsrs, feature(doc_cfg))]
-
-use std::rc::Rc;
-
-mod rt;
-pub use self::rt::Runtime;
-
-pub mod view;
+mod view;
 pub use self::view::View;
 
-#[cfg(feature = "native")]
-#[cfg_attr(docsrs, doc(cfg(feature = "native")))]
-pub mod native;
-
-#[cfg(feature = "web")]
-#[cfg_attr(docsrs, doc(cfg(feature = "web")))]
-pub mod web;
-
-pub struct Context<M> {
-    send: Rc<dyn Fn(M)>,
+pub struct Waker<M, A> {
+    updater: Rc<dyn Fn(&dyn Fn(&mut M) -> Option<A>)>,
 }
 
-impl<M> Context<M> {
-    pub fn new(send: impl Fn(M) + 'static) -> Self {
-        Self {
-            send: Rc::new(send),
-        }
+impl<M, A> Waker<M, A> {
+    pub fn new(updater: Rc<dyn Fn(&dyn Fn(&mut M) -> Option<A>)>,) -> Self {
+        Self { updater }
     }
-
-    pub fn send(&self, msg: M) {
-        (self.send)(msg)
+    
+    pub fn wake(self, update: &dyn Fn(&mut M) -> Option<A>) {
+        (self.updater)(update)
     }
 }
 
-impl<M> Clone for Context<M> {
+impl<M, A> Clone for Waker<M, A> {
     fn clone(&self) -> Self {
         Self {
-            send: self.send.clone(),
+            updater: self.updater.clone(),
         }
     }
 }
 
-/// Control flow returned from [`Model::handle`].
-pub enum ControlFlow {
-    /// This model is pending changes, do not rebuild the view.
-    Pending,
-
-    /// Rebuild the view with the updated model.
-    Rebuild,
+pub struct Context<'a, M, A> {
+    pub waker: &'a Waker<M, A>,
 }
 
-/// Model for a view builder.
-pub trait Model<M> {
-    fn handle(&mut self, msg: M) -> ControlFlow;
-}
+impl<M, A> View<M, A> for () {
+    type Element = ();
 
-#[cfg(feature = "tracing")]
-#[cfg_attr(docsrs, doc(cfg(feature = "tracing")))]
-#[macro_export]
-macro_rules! build_span {
-    ($name:tt) => {
-        $crate::span!("build", $name)
-    };
-}
+    fn build(&mut self, cx: &mut Context<M, A>) -> Self::Element {}
 
-#[cfg(feature = "tracing")]
-#[cfg_attr(docsrs, doc(cfg(feature = "tracing")))]
-#[macro_export]
-macro_rules! rebuild_span {
-    ($name:tt) => {
-        $crate::span!("rebuild", $name)
-    };
-}
-
-#[cfg(feature = "tracing")]
-#[cfg_attr(docsrs, doc(cfg(feature = "tracing")))]
-#[macro_export]
-macro_rules! remove_span {
-    ($name:tt) => {
-        $crate::span!("remove", $name)
-    };
-}
-
-#[cfg(feature = "tracing")]
-#[cfg_attr(docsrs, doc(cfg(feature = "tracing")))]
-#[macro_export]
-macro_rules! span {
-    ($method:tt, $name:tt) => {
-        #[cfg(feature = "tracing")]
-        let span = tracing::trace_span!(concat!("View::", $method), view = $name);
-        #[cfg(feature = "tracing")]
-        let _g = span.enter();
-    };
+    fn rebuild(&mut self, cx: &mut Context<M, A>, element: &mut Self::Element) {}
 }
