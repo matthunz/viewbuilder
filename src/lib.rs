@@ -1,100 +1,60 @@
-//! A high performance UI framework.
-//!
-//! Viewbuilder is a moduler GUI library that can be used as an entire framework,
-//! or with individual parts.
-//!
-//! ## Features
-//! - `full`: Enables all the features below.
-//! - `tracing`: Enables structured logging and performance metrics with the `tracing` crate.
-//! - `web`: Enables web support.
+use std::{any, fmt, ops::Index};
+use slotmap::{DefaultKey, SlotMap};
 
-#![cfg_attr(docsrs, feature(doc_cfg))]
+pub trait Element {}
 
-use std::rc::Rc;
-
-mod rt;
-pub use self::rt::Runtime;
-
-pub mod view;
-pub use self::view::View;
-
-#[cfg(feature = "web")]
-#[cfg_attr(docsrs, doc(cfg(feature = "web")))]
-pub mod web;
-
-pub struct Context<M> {
-    send: Rc<dyn Fn(M)>,
+pub trait AnyElement {
+    fn name(&self) -> &'static str;
 }
 
-impl<M> Context<M> {
-    pub fn new(send: impl Fn(M) + 'static) -> Self {
-        Self {
-            send: Rc::new(send),
+impl<E: Element> AnyElement for E {
+    fn name(&self) -> &'static str {
+        any::type_name::<E>()
+    }
+}
+
+struct Node {
+    element: Box<dyn AnyElement>,
+    children: Vec<DefaultKey>,
+}
+
+#[derive(Default)]
+pub struct Tree {
+    nodes: SlotMap<DefaultKey, Node>,
+}
+
+impl Tree {
+    pub fn insert(&mut self, element: impl Element + 'static)  -> DefaultKey{
+        let node = Node {
+            element: Box::new(element),
+            children: Vec::new(),
+        };
+        self.nodes.insert(node)
+    }
+
+    pub fn slice(&self, root: DefaultKey) -> Slice {
+        let node = &self.nodes[root];
+        Slice { tree: self, node }
+    }
+}
+
+pub struct Slice<'a> {
+    tree: &'a Tree,
+    node: &'a Node,
+}
+
+impl fmt::Debug for Slice<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut tuple = f.debug_tuple(self.node.element.name());
+
+        for child_key in &self.node.children {
+            let child = &self.tree.nodes[*child_key];
+            tuple.field(&Slice {
+                tree: self.tree,
+                node: child,
+            });
         }
+
+        tuple.finish()
     }
-
-    pub fn send(&self, msg: M) {
-        (self.send)(msg)
-    }
-}
-
-impl<M> Clone for Context<M> {
-    fn clone(&self) -> Self {
-        Self {
-            send: self.send.clone(),
-        }
-    }
-}
-
-/// Control flow returned from [`Model::handle`].
-pub enum ControlFlow {
-    /// This model is pending changes, do not rebuild the view.
-    Pending,
-
-    /// Rebuild the view with the updated model.
-    Rebuild,
-}
-
-/// Model for a view builder.
-pub trait Model<M> {
-    fn handle(&mut self, msg: M) -> ControlFlow;
-}
-
-#[cfg(feature = "tracing")]
-#[cfg_attr(docsrs, doc_cfg(feature = "tracing"))]
-#[macro_export]
-macro_rules! build_span {
-    ($name:tt) => {
-        $crate::span!("build", $name)
-    };
-}
-
-#[cfg(feature = "tracing")]
-#[cfg_attr(docsrs, doc_cfg(feature = "tracing"))]
-#[macro_export]
-macro_rules! rebuild_span {
-    ($name:tt) => {
-        $crate::span!("rebuild", $name)
-    };
-}
-
-#[cfg(feature = "tracing")]
-#[cfg_attr(docsrs, doc_cfg(feature = "tracing"))]
-#[macro_export]
-macro_rules! remove_span {
-    ($name:tt) => {
-        $crate::span!("remove", $name)
-    };
-}
-
-#[cfg(feature = "tracing")]
-#[cfg_attr(docsrs, doc_cfg(feature = "tracing"))]
-#[macro_export]
-macro_rules! span {
-    ($method:tt, $name:tt) => {
-        #[cfg(feature = "tracing")]
-        let span = tracing::trace_span!(concat!("View::", $method), view = $name);
-        #[cfg(feature = "tracing")]
-        let _g = span.enter();
-    };
 }
