@@ -1,5 +1,7 @@
-use std::{any, fmt, ops::Index};
 use slotmap::{DefaultKey, SlotMap};
+use std::{any, fmt, ops::Index};
+
+mod renderer;
 
 pub trait Element {}
 
@@ -24,7 +26,7 @@ pub struct Tree {
 }
 
 impl Tree {
-    pub fn insert(&mut self, element: impl Element + 'static)  -> DefaultKey{
+    pub fn insert(&mut self, element: impl Element + 'static) -> DefaultKey {
         let node = Node {
             element: Box::new(element),
             children: Vec::new(),
